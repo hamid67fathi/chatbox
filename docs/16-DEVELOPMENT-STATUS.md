@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** فاز 0 تا 3 کامل شد. پروژه آماده MVP است.
+> **الان:** فاز 0 تا 3 کامل شد (MVP). فاز 4 (احراز هویت) آماده شروع — مسیر تولید P4→P10.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -64,6 +64,80 @@ rule: >
 | P3.3 | پروفایل observability dev | AGT-DEVX-01 | انجام شد | 2026-05-13 | — | docker-compose.observability.yml — Prometheus + Grafana + Loki |
 | P3.4 | متن لندینگ قیمت | AGT-GTM-01 | انجام شد | 2026-05-13 | — | docs/marketing/ — hero, features, pricing (Persian) |
 | P3.5 | چک‌لیست pre-prod | AGT-SEC-01 | انجام شد | 2026-05-13 | — | docs/security/preprod-checklist.md — 16 PASS, 7 P4, 3 OPS, 3 WARN |
+
+---
+
+## جدول وضعیت (مراحل P4 → P10 — مسیر تولید)
+
+> **هدف:** تبدیل MVP به محصول قابل عرضه عمومی با احراز هویت، داشبورد کامل، AI پیشرفته، لندینگ، billing واقعی و زیرساخت تولید.
+
+### فاز ۴ — احراز هویت و امنیت
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P4.1 | سیستم Auth سمت API | JWT (jose) + bcrypt + sessions/otp tables + register/login/refresh/logout + auth middleware | شروع نشده | — | — |
+| P4.2 | RBAC و Workspace Isolation | استخراج workspace از JWT، role check، جلوگیری cross-workspace | شروع نشده | — | — |
+| P4.3 | Widget Visitor Token | visitor_token (JWT 24h)، ذخیره در ویجت، اعتبارسنجی Socket.IO | شروع نشده | — | — |
+| P4.4 | Login/Signup داشبورد | صفحات login + signup، auth context، httpOnly cookie، redirect guard | شروع نشده | — | — |
+| P4.5 | امنیت تکمیلی | unauthorized/forbidden errors، فیلتر PII لاگ، CSRF، محدود CORS | شروع نشده | — | — |
+
+### فاز ۵ — داشبورد محصول
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P5.1 | UI Framework Setup | Tailwind CSS + RTL + shadcn/ui، layout (sidebar + header)، dark mode | شروع نشده | — | — |
+| P5.2 | Inbox کامل | جستجو، فیلتر، مرتب‌سازی، pagination، typing indicator، read receipts | شروع نشده | — | — |
+| P5.3 | مدیریت مکالمه | Assignment، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote | شروع نشده | — | — |
+| P5.4 | پاسخ‌های آماده | CRUD canned responses، جستجوی /shortcut، متغیرها | شروع نشده | — | — |
+| P5.5 | تنظیمات و مدیریت تیم | Settings، invite اعضا، تغییر role، workspace management | شروع نشده | — | — |
+| P5.6 | Knowledge Base UI | آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index | شروع نشده | — | — |
+
+### فاز ۶ — ویجت و تجربه چت
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P6.1 | Theming و سفارشی‌سازی | Config: color/position/welcome/avatar، CSS variables، widget config API | شروع نشده | — | — |
+| P6.2 | Pre-chat Form | فرم نام/ایمیل/تلفن، ذخیره contact، قابل تنظیم از داشبورد | شروع نشده | — | — |
+| P6.3 | File Upload | آپلود تصویر/فایل (ویجت + داشبورد)، ذخیره MinIO/local، پیش‌نمایش | شروع نشده | — | — |
+| P6.4 | تجربه چت پیشرفته | Emoji، وضعیت پیام، welcome message، triggers، mobile responsive | شروع نشده | — | — |
+
+### فاز ۷ — ارتقاء سرویس AI
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P7.1 | Intent Classifier + Router | کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation | شروع نشده | — | — |
+| P7.2 | Copilot (پیشنهاد پاسخ) | /v1/copilot، ۳ پیشنهاد، SSE streaming، UI داشبورد | شروع نشده | — | — |
+| P7.3 | Summarizer و Sentiment | خلاصه مکالمه، امتیاز sentiment، mood indicator | شروع نشده | — | — |
+| P7.4 | بهبود RAG | Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback | شروع نشده | — | — |
+| P7.5 | هزینه و مانیتورینگ AI | per-workspace credits، budget enforcement، Langfuse | شروع نشده | — | — |
+
+### فاز ۸ — لندینگ پیج و Billing واقعی
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P8.1 | اپلیکیشن لندینگ پیج | apps/landing (Next.js static)، Home/Pricing/About/Contact، دمو ویجت | شروع نشده | — | — |
+| P8.2 | Billing واقعی (Zarinpal) | SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook | شروع نشده | — | — |
+| P8.3 | اعمال محدودیت پلن‌ها | محدودیت agent/مکالمه/AI credits، نمایش usage، هشدار سقف | شروع نشده | — | — |
+
+### فاز ۹ — زیرساخت و Deploy تولید
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P9.1 | Dockerfiles | multi-stage build برای api/dashboard/widget/ai-service/landing | شروع نشده | — | — |
+| P9.2 | Production Compose | docker-compose.prod.yml، Nginx + SSL (Let's Encrypt)، health checks | شروع نشده | — | — |
+| P9.3 | CI/CD کامل | Docker build+push GHCR، تست Python، E2E، audit، deploy trigger | شروع نشده | — | — |
+| P9.4 | Backup خودکار | cron pg_dump هر ۶ ساعت، rotation ۳۰ روز، بازیابی، Redis snapshot | شروع نشده | — | — |
+| P9.5 | Monitoring و Alerting | Prometheus alerts، Grafana dashboards، uptime، Loki logs | شروع نشده | — | — |
+
+### فاز ۱۰ — پولیش و آمادگی لانچ
+
+| کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
+|----|-------|-------|--------|-------|---------|
+| P10.1 | i18n (چندزبانگی) | next-intl، FA + EN، تغییر زبان، auto-detect ویجت | شروع نشده | — | — |
+| P10.2 | Accessibility | ARIA، focus management، keyboard nav، screen reader، WCAG 2.1 AA | شروع نشده | — | — |
+| P10.3 | Performance | Widget <30KB، API P95 <300ms، query optimization، assets | شروع نشده | — | — |
+| P10.4 | تست جامع | E2E Playwright، k6 load test، AI eval gate، security pentest | شروع نشده | — | — |
+| P10.5 | مستندات نهایی | OpenAPI/Swagger، user guide فارسی، developer onboarding، changelog | شروع نشده | — | — |
 
 ---
 

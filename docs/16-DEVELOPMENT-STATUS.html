@@ -52,6 +52,7 @@
       <li><a href="#sec-1">Machine-readable (برای Agent)</a></li>
       <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
       <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
+      <li><a href="#sec-3b">جدول وضعیت (مراحل P4 → P10 — تولید)</a></li>
       <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
     </ul>
   </aside>
@@ -130,7 +131,7 @@ rule: &gt;
 <hr />
 <h2 id="sec-3">جدول وضعیت (مراحل P0 → P3)</h2>
 <blockquote>
-<p><strong>الان:</strong> فاز 0 تا 3 کامل شد. پروژه آماده MVP است.</p>
+<p><strong>الان:</strong> فاز 0 تا 3 کامل شد (MVP). فاز 4 (احراز هویت) آماده شروع — مسیر تولید P4→P10.</p>
 </blockquote>
 <div class="table-wrap"><table>
 <thead>
@@ -336,6 +337,304 @@ rule: &gt;
 </tr>
 </tbody>
 </table></div>
+
+<hr />
+<h2 id="sec-3b">جدول وضعیت (مراحل P4 → P10 — مسیر تولید)</h2>
+<blockquote>
+<p><strong>هدف:</strong> تبدیل MVP به محصول قابل عرضه عمومی با احراز هویت، داشبورد کامل، AI پیشرفته، لندینگ، billing واقعی و زیرساخت تولید.</p>
+</blockquote>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>کد</th>
+<th>عنوان کوتاه</th>
+<th>توضیح</th>
+<th>وضعیت</th>
+<th>تاریخ</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="6"><strong>فاز ۴ — احراز هویت و امنیت</strong></td></tr>
+<tr>
+<td>P4.1</td>
+<td>سیستم Auth سمت API</td>
+<td>JWT (jose) + bcrypt + جداول sessions/otp + endpointهای register/login/refresh/logout + auth middleware</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P4.2</td>
+<td>RBAC و Workspace Isolation</td>
+<td>استخراج workspace از JWT، role check (owner/admin/agent/viewer)، جلوگیری cross-workspace</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P4.3</td>
+<td>Widget Visitor Token</td>
+<td>visitor_token (JWT 24h) از session endpoint، ذخیره در ویجت، اعتبارسنجی Socket.IO</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P4.4</td>
+<td>Login/Signup داشبورد</td>
+<td>صفحات login + signup، auth context/provider، httpOnly cookie، redirect guard</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P4.5</td>
+<td>امنیت تکمیلی</td>
+<td>unauthorized/forbidden errors، فیلتر PII از لاگ، CSRF، محدود کردن CORS origin</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۵ — داشبورد محصول</strong></td></tr>
+<tr>
+<td>P5.1</td>
+<td>UI Framework Setup</td>
+<td>Tailwind CSS + RTL plugin + shadcn/ui، layout اصلی (sidebar + header)، dark mode</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5.2</td>
+<td>Inbox کامل</td>
+<td>جستجو، فیلتر (status/channel/agent)، مرتب‌سازی، pagination، typing indicator، read receipts</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5.3</td>
+<td>مدیریت مکالمه</td>
+<td>Assignment اپراتور، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5.4</td>
+<td>پاسخ‌های آماده</td>
+<td>CRUD canned responses، جستجوی /shortcut، متغیرها ({{name}})</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5.5</td>
+<td>تنظیمات و مدیریت تیم</td>
+<td>Settings (پروفایل، workspace، notifications)، invite اعضا، تغییر role</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P5.6</td>
+<td>Knowledge Base UI</td>
+<td>آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۶ — ویجت و تجربه چت</strong></td></tr>
+<tr>
+<td>P6.1</td>
+<td>Theming و سفارشی‌سازی</td>
+<td>Config: color/position/welcome/avatar/title، CSS variables، widget config API</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P6.2</td>
+<td>Pre-chat Form</td>
+<td>فرم اطلاعات اولیه (نام/ایمیل/تلفن)، ذخیره در contact، قابل تنظیم از داشبورد</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P6.3</td>
+<td>File Upload</td>
+<td>آپلود تصویر/فایل (ویجت + داشبورد)، ذخیره MinIO/local، پیش‌نمایش</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P6.4</td>
+<td>تجربه چت پیشرفته</td>
+<td>Emoji picker، وضعیت پیام، welcome message، triggers، mobile responsive، auto RTL/LTR</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۷ — ارتقاء سرویس AI</strong></td></tr>
+<tr>
+<td>P7.1</td>
+<td>Intent Classifier + Router</td>
+<td>کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P7.2</td>
+<td>Copilot (پیشنهاد پاسخ)</td>
+<td>endpoint /v1/copilot، ۳ پیشنهاد (مختصر/دوستانه/مفصل)، SSE streaming، UI داشبورد</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P7.3</td>
+<td>Summarizer و Sentiment</td>
+<td>خلاصه مکالمه، امتیاز sentiment [-1..+1]، mood indicator در inbox</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P7.4</td>
+<td>بهبود RAG</td>
+<td>Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P7.5</td>
+<td>هزینه و مانیتورینگ AI</td>
+<td>per-workspace credits، budget enforcement، Langfuse integration</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۸ — لندینگ پیج و Billing واقعی</strong></td></tr>
+<tr>
+<td>P8.1</td>
+<td>اپلیکیشن لندینگ پیج</td>
+<td>apps/landing (Next.js static)، صفحات Home/Pricing/About/Contact، دمو ویجت زنده</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P8.2</td>
+<td>Billing واقعی (Zarinpal)</td>
+<td>SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook واقعی</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P8.3</td>
+<td>اعمال محدودیت پلن‌ها</td>
+<td>محدودیت agent/مکالمه/AI credits بر اساس پلن، نمایش usage، هشدار سقف</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۹ — زیرساخت و Deploy تولید</strong></td></tr>
+<tr>
+<td>P9.1</td>
+<td>Dockerfiles</td>
+<td>Dockerfile multi-stage برای api/dashboard/widget/ai-service/landing + .dockerignore</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P9.2</td>
+<td>Production Compose</td>
+<td>docker-compose.prod.yml، Nginx reverse proxy + SSL (Let's Encrypt)، health checks</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P9.3</td>
+<td>CI/CD کامل</td>
+<td>Docker build+push GHCR، تست Python، E2E Playwright، dependency audit، deploy trigger</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P9.4</td>
+<td>Backup خودکار</td>
+<td>cron pg_dump هر ۶ ساعت، rotation ۳۰ روز، script بازیابی، Redis snapshot</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P9.5</td>
+<td>Monitoring و Alerting</td>
+<td>Prometheus alerting rules، Grafana dashboards، uptime monitoring، Loki log aggregation</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+
+<tr><td colspan="6"><strong>فاز ۱۰ — پولیش و آمادگی لانچ</strong></td></tr>
+<tr>
+<td>P10.1</td>
+<td>i18n (چندزبانگی)</td>
+<td>next-intl، فایل‌های FA + EN، تغییر زبان از settings، auto-detect در ویجت</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P10.2</td>
+<td>Accessibility</td>
+<td>ARIA attributes، focus management، keyboard navigation، screen reader، WCAG 2.1 AA</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P10.3</td>
+<td>Performance</td>
+<td>Widget bundle &lt;30KB، API P95 &lt;300ms، query optimization، asset optimization</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P10.4</td>
+<td>تست جامع</td>
+<td>E2E Playwright، load test k6 (1000 concurrent)، AI eval gate در CI، security pentest</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P10.5</td>
+<td>مستندات نهایی</td>
+<td>OpenAPI/Swagger، user guide فارسی، developer onboarding، changelog</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+
 <hr />
 <h2 id="sec-4">چک‌لیست‌های دیگر کجا هستند؟</h2>
 <div class="table-wrap"><table>
