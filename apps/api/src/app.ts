@@ -1,6 +1,8 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { sql } from "drizzle-orm";
 import Fastify from "fastify";
@@ -16,6 +18,10 @@ export function buildApp() {
 	const app = Fastify({ logger: false });
 
 	app.register(cors, { origin: true });
+	app.register(helmet, { contentSecurityPolicy: false });
+	app.register(rateLimit, {
+		global: false,
+	});
 
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const widgetRoot = resolve(__dirname, "../../widget");

@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** P2.4 (UI وضعیت AI) انجام شد؛ P2.5 (مرور امنیتی) آماده شروع.
+> **الان:** فاز 2 کامل شد. فاز 3 آماده شروع.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -57,8 +57,8 @@ rule: >
 | P2.2 | سرویس AI + RAG حداقلی | AGT-AI-01 | انجام شد | 2026-05-13 | — | FastAPI: ingest+chunk+embed, retrieve top-k, LLM reply+confidence, PII redaction, stub mode |
 | P2.3 | اتصال API به AI | AGT-API-01 | انجام شد | 2026-05-13 | — | AI client with timeout+circuit breaker, auto-reply on contact message, ai_interactions log |
 | P2.4 | UI وضعیت AI / escalation | AGT-FE-01 | انجام شد | 2026-05-13 | — | AI vs human badges on messages, needs_human badge on conv list, real-time conv:needs_human |
-| P2.5 | مرور امنیتی PR | AGT-SEC-01 | شروع نشده | — | — | — |
-| P2.6 | fixture / eval سبک | AGT-QA-01 | شروع نشده | — | — | — |
+| P2.5 | مرور امنیتی PR | AGT-SEC-01 | انجام شد | 2026-05-13 | — | helmet + rate-limit on widget, security review doc PASS |
+| P2.6 | fixture / eval سبک | AGT-QA-01 | انجام شد | 2026-05-13 | — | 10 Persian FAQ fixtures + smoke eval script |
 | P3.1 | Billing webhook حداقلی | AGT-API-01 | شروع نشده | — | — | — |
 | P3.2 | Runbook + بکاپ spec | AGT-INF-01 | شروع نشده | — | — | — |
 | P3.3 | پروفایل observability dev | AGT-DEVX-01 | شروع نشده | — | — | — |

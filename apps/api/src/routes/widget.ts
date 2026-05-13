@@ -10,49 +10,53 @@ export async function widgetRoutes(app: FastifyInstance) {
 			workspace_slug: string;
 			visitor_id?: string | null;
 		};
-	}>("/widget/v1/sessions", async (request, reply) => {
-		const { workspace_slug, visitor_id } = request.body ?? {};
-		if (!workspace_slug)
-			throw validationError("workspace_slug is required.", "workspace_slug");
+	}>(
+		"/widget/v1/sessions",
+		{ config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
+		async (request, reply) => {
+			const { workspace_slug, visitor_id } = request.body ?? {};
+			if (!workspace_slug)
+				throw validationError("workspace_slug is required.", "workspace_slug");
 
-		const ws = await db.query.workspaces.findFirst({
-			where: eq(workspaces.slug, workspace_slug),
-		});
-		if (!ws) throw notFound("Workspace not found.");
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.slug, workspace_slug),
+			});
+			if (!ws) throw notFound("Workspace not found.");
 
-		let contact = visitor_id
-			? await db.query.contacts.findFirst({
-					where: eq(contacts.externalId, visitor_id),
-				})
-			: null;
+			let contact = visitor_id
+				? await db.query.contacts.findFirst({
+						where: eq(contacts.externalId, visitor_id),
+					})
+				: null;
 
-		if (!contact) {
-			const newVisitorId = visitor_id ?? crypto.randomUUID();
-			const [created] = await db
-				.insert(contacts)
+			if (!contact) {
+				const newVisitorId = visitor_id ?? crypto.randomUUID();
+				const [created] = await db
+					.insert(contacts)
+					.values({
+						workspaceId: ws.id,
+						externalId: newVisitorId,
+						fullName: "Visitor",
+					})
+					.returning();
+				contact = created;
+			}
+
+			const [conv] = await db
+				.insert(conversations)
 				.values({
 					workspaceId: ws.id,
-					externalId: newVisitorId,
-					fullName: "Visitor",
+					contactId: contact.id,
+					channel: "widget",
+					status: "open",
 				})
 				.returning();
-			contact = created;
-		}
 
-		const [conv] = await db
-			.insert(conversations)
-			.values({
-				workspaceId: ws.id,
-				contactId: contact.id,
-				channel: "widget",
-				status: "open",
-			})
-			.returning();
-
-		return reply.status(201).send({
-			workspace_id: ws.id,
-			conversation_id: conv.id,
-			contact_id: contact.id,
-		});
-	});
+			return reply.status(201).send({
+				workspace_id: ws.id,
+				conversation_id: conv.id,
+				contact_id: contact.id,
+			});
+		},
+	);
 }
