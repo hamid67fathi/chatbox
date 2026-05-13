@@ -200,6 +200,8 @@
     let conversationId = '';
     let contactId = '';
     let socket = null;
+    const seenIds = new Set();
+    let lastSentBody = null;
 
     const messagesEl = document.getElementById('messages');
     const inputEl = document.getElementById('input');
@@ -213,6 +215,10 @@
     }
 
     function addMessage(msg) {
+      const id = msg.id || '';
+      if (id && seenIds.has(id)) return;
+      if (id) seenIds.add(id);
+
       const div = document.createElement('div');
       const type = msg.senderType || msg.sender_type || 'agent';
       div.className = 'msg ' + type;
@@ -257,7 +263,12 @@
         });
         socket.on('message:new', (data) => {
           const m = data.message || data;
-          if ((m.senderType || m.sender_type) !== 'contact') {
+          const type = m.senderType || m.sender_type;
+          if (type === 'contact' && m.body === lastSentBody) {
+            lastSentBody = null;
+            return;
+          }
+          if (type !== 'contact') {
             addMessage(m);
           }
         });
@@ -276,6 +287,7 @@
       inputEl.value = '';
       sendBtn.disabled = true;
 
+      lastSentBody = body;
       addMessage({ body, senderType: 'contact', createdAt: new Date().toISOString() });
 
       try {
