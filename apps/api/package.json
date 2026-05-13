@@ -17,9 +17,12 @@
 	},
 	"dependencies": {
 		"@chatbox/config": "workspace:*",
+		"@socket.io/redis-adapter": "^8.3.0",
 		"drizzle-orm": "^0.45.2",
 		"fastify": "^4.29.0",
-		"postgres": "^3.4.9"
+		"ioredis": "^5.10.1",
+		"postgres": "^3.4.9",
+		"socket.io": "^4.8.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",

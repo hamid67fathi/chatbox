@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** P1.2 (REST حداقلی) انجام شد؛ P1.3 (WebSocket) آماده شروع.
+> **الان:** P1.3 (WebSocket) انجام شد؛ P1.4 (ویجت) آماده شروع.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -49,7 +49,7 @@ rule: >
 | P0.4 | CI سبز (lint/typecheck) | AGT-QA-01 | انجام شد | 2026-05-13 | — | `.github/workflows/ci.yml` — lint + typecheck + build |
 | P1.1 | Schema + migration + RLS پایه | AGT-DB-01 | انجام شد | 2026-05-13 | — | Drizzle schema (9 tables) + RLS policies + triggers + seed |
 | P1.2 | REST مکالمه/پیام حداقلی | AGT-API-01 | انجام شد | 2026-05-13 | — | Workspaces, Contacts, Conversations, Messages CRUD + error format |
-| P1.3 | WebSocket + Redis adapter | AGT-RT-01 | شروع نشده | — | — | — |
+| P1.3 | WebSocket + Redis adapter | AGT-RT-01 | انجام شد | 2026-05-13 | — | Socket.io 4 + Redis adapter + events + REST broadcast |
 | P1.4 | ویجت vanilla | AGT-WGT-01 | شروع نشده | — | — | — |
 | P1.5 | داشبورد inbox ساده | AGT-FE-01 | شروع نشده | — | — | — |
 | P1.6 | تست یک happy path | AGT-QA-01 | شروع نشده | — | — | — |

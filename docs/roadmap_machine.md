@@ -303,8 +303,8 @@ Acceptance: manual test steps in PR; unit test for room name formatting if easy.
 
 ### خروجی مورد انتظار
 
-- [ ] WS + Redis adapter  
-- [ ] لیست eventها در PR
+- [x] WS + Redis adapter  
+- [x] لیست eventها در PR
 
 ---
 

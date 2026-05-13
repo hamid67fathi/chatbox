@@ -4,6 +4,7 @@ import { db } from "../db/index.js";
 import { conversations, messages } from "../db/schema/index.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import { getIO } from "../ws/broadcast.js";
 
 export async function messageRoutes(app: FastifyInstance) {
 	app.get<{
@@ -96,6 +97,15 @@ export async function messageRoutes(app: FastifyInstance) {
 				replyToId: reply_to_id,
 			})
 			.returning();
+
+		try {
+			const io = getIO();
+			const payload = { message: msg, conversation: { id: convId } };
+			io.to(`conversation:${convId}`).emit("message:new", payload);
+			io.to(`workspace:${wsId}`).emit("message:new", payload);
+		} catch {
+			/* socket.io not yet initialized during tests */
+		}
 
 		return reply.status(201).send(msg);
 	});

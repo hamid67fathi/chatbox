@@ -8,6 +8,7 @@ import {
 } from "../db/schema/index.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import { getIO } from "../ws/broadcast.js";
 
 export async function conversationRoutes(app: FastifyInstance) {
 	app.get<{
@@ -123,6 +124,19 @@ export async function conversationRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Conversation not found.");
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`)
+					.to(`conversation:${request.params.id}`)
+					.emit("conv:status_changed", {
+						conv_id: request.params.id,
+						status,
+					});
+			} catch {
+				/* socket.io not yet initialized */
+			}
+
 			return updated;
 		},
 	);
@@ -146,6 +160,19 @@ export async function conversationRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Conversation not found.");
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`)
+					.to(`conversation:${request.params.id}`)
+					.emit("conv:assigned", {
+						conv_id: request.params.id,
+						agent_id,
+					});
+			} catch {
+				/* socket.io not yet initialized */
+			}
+
 			return updated;
 		},
 	);
