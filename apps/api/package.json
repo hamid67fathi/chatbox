@@ -18,6 +18,7 @@
 	"dependencies": {
 		"@chatbox/config": "workspace:*",
 		"@fastify/cors": "9",
+		"@fastify/static": "7",
 		"@socket.io/redis-adapter": "^8.3.0",
 		"drizzle-orm": "^0.45.2",
 		"fastify": "^4.29.0",

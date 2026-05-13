@@ -1,4 +1,7 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
 import { sql } from "drizzle-orm";
 import Fastify from "fastify";
 import { db } from "./db/index.js";
@@ -15,6 +18,20 @@ const app = Fastify({ logger: true });
 const port = Number(process.env.PORT ?? 3001);
 
 app.register(cors, { origin: true });
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const widgetRoot = resolve(__dirname, "../../widget");
+app.register(fastifyStatic, {
+	root: widgetRoot,
+	prefix: "/widget-demo/",
+	decorateReply: false,
+});
+app.register(fastifyStatic, {
+	root: resolve(widgetRoot, "dist"),
+	prefix: "/widget-demo/dist/",
+	decorateReply: false,
+});
+
 app.setErrorHandler(errorHandler);
 
 app.get("/health", async () => {
