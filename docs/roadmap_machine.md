@@ -352,7 +352,7 @@ Acceptance: screenshots in PR; keyboard focus sane for RTL.
 
 ### خروجی مورد انتظار
 
-- [ ] inbox مینیمال RTL
+- [x] inbox مینیمال RTL
 
 ---
 

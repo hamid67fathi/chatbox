@@ -1,0 +1,100 @@
+.thread {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.messages {
+	flex: 1;
+	overflow-y: auto;
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.bubble {
+	max-width: 65%;
+	padding: 10px 16px;
+	border-radius: 14px;
+	line-height: 1.6;
+	word-wrap: break-word;
+}
+
+.agent {
+	align-self: flex-end;
+	background: var(--msg-agent);
+	color: var(--text-on-primary);
+	border-bottom-right-radius: 4px;
+}
+
+.contact {
+	align-self: flex-start;
+	background: var(--msg-contact);
+	color: var(--text);
+	border-bottom-left-radius: 4px;
+}
+
+.system {
+	align-self: center;
+	background: var(--bg-active);
+	color: var(--text-secondary);
+	font-size: 12px;
+	padding: 6px 12px;
+	border-radius: 8px;
+}
+
+.body {
+	font-size: 14px;
+}
+
+.time {
+	font-size: 11px;
+	opacity: 0.7;
+	margin-top: 4px;
+	text-align: left;
+}
+
+.inputArea {
+	display: flex;
+	padding: 14px 20px;
+	border-top: 1px solid var(--border);
+	gap: 10px;
+	background: var(--bg-card);
+}
+
+.input {
+	flex: 1;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	padding: 12px 14px;
+	font-size: 14px;
+	outline: none;
+	direction: rtl;
+	background: var(--bg);
+}
+
+.input:focus {
+	border-color: var(--bg-primary);
+}
+
+.send {
+	background: var(--bg-primary);
+	color: var(--text-on-primary);
+	border: none;
+	border-radius: 10px;
+	padding: 12px 20px;
+	font-weight: 600;
+	font-size: 14px;
+	transition: background 0.15s;
+}
+
+.send:hover:not(:disabled) {
+	background: var(--bg-primary-hover);
+}
+
+.send:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

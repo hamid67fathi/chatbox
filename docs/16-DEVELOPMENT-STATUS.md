@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** P1.4 (ویجت) انجام شد؛ P1.5 (داشبورد inbox) آماده شروع.
+> **الان:** P1.5 (داشبورد inbox) انجام شد؛ P1.6 (تست happy path) آماده شروع.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -51,7 +51,7 @@ rule: >
 | P1.2 | REST مکالمه/پیام حداقلی | AGT-API-01 | انجام شد | 2026-05-13 | — | Workspaces, Contacts, Conversations, Messages CRUD + error format |
 | P1.3 | WebSocket + Redis adapter | AGT-RT-01 | انجام شد | 2026-05-13 | — | Socket.io 4 + Redis adapter + events + REST broadcast |
 | P1.4 | ویجت vanilla | AGT-WGT-01 | انجام شد | 2026-05-13 | — | apps/widget (tsup IIFE 7.97 KB) + widget API route + demo.html + CORS |
-| P1.5 | داشبورد inbox ساده | AGT-FE-01 | شروع نشده | — | — | — |
+| P1.5 | داشبورد inbox ساده | AGT-FE-01 | انجام شد | 2026-05-13 | — | Next.js 14 App Router, RTL, conversation list + message thread + Socket.io real-time |
 | P1.6 | تست یک happy path | AGT-QA-01 | شروع نشده | — | — | — |
 | P2.1 | جداول KB در DB | AGT-DB-01 | شروع نشده | — | — | — |
 | P2.2 | سرویس AI + RAG حداقلی | AGT-AI-01 | شروع نشده | — | — | — |
