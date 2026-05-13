@@ -90,13 +90,21 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 					<div
 						key={msg.id}
 						className={`${styles.bubble} ${
-							msg.senderType === "agent"
-								? styles.agent
-								: msg.senderType === "contact"
-									? styles.contact
-									: styles.system
+							msg.senderType === "ai"
+								? styles.ai
+								: msg.senderType === "agent"
+									? styles.agent
+									: msg.senderType === "contact"
+										? styles.contact
+										: styles.system
 						}`}
 					>
+						{msg.senderType === "ai" && (
+							<span className={styles.badge}>🤖 AI</span>
+						)}
+						{msg.senderType === "agent" && (
+							<span className={styles.badge}>👤 اپراتور</span>
+						)}
 						<div className={styles.body}>{msg.body}</div>
 						<div className={styles.time}>
 							{new Date(msg.createdAt).toLocaleTimeString("fa-IR", {

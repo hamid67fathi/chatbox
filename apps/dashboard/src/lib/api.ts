@@ -9,6 +9,8 @@ export interface Conversation {
 	assignedUserId: string | null;
 	lastMessageAt: string | null;
 	createdAt: string;
+	aiHandled?: boolean;
+	needsHuman?: boolean;
 	contact?: {
 		id: string;
 		fullName: string;

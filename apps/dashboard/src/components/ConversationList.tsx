@@ -55,6 +55,12 @@ export function ConversationList({ conversations, activeId, onSelect }: Props) {
 						</div>
 						<div className={styles.sub}>
 							{conv.contact?.fullName ?? conv.contactId?.slice(0, 8)}
+							{conv.needsHuman && (
+								<span className={styles.needsHuman}>🔴 نیاز به اپراتور</span>
+							)}
+							{conv.aiHandled && !conv.needsHuman && (
+								<span className={styles.aiHandled}>🤖 AI</span>
+							)}
 						</div>
 					</button>
 				</li>

@@ -36,8 +36,17 @@ export function Inbox({ workspaceId }: Props) {
 			);
 		});
 
+		socket.on("conv:needs_human", (data: { conversation_id: string }) => {
+			setConversations((prev) =>
+				prev.map((c) =>
+					c.id === data.conversation_id ? { ...c, needsHuman: true } : c,
+				),
+			);
+		});
+
 		return () => {
 			socket.off("message:new");
+			socket.off("conv:needs_human");
 		};
 	}, [workspaceId]);
 
