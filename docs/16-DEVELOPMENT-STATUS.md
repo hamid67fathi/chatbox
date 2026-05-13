@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** فاز 2 کامل شد. فاز 3 آماده شروع.
+> **الان:** فاز 0 تا 3 کامل شد. پروژه آماده MVP است.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -59,11 +59,11 @@ rule: >
 | P2.4 | UI وضعیت AI / escalation | AGT-FE-01 | انجام شد | 2026-05-13 | — | AI vs human badges on messages, needs_human badge on conv list, real-time conv:needs_human |
 | P2.5 | مرور امنیتی PR | AGT-SEC-01 | انجام شد | 2026-05-13 | — | helmet + rate-limit on widget, security review doc PASS |
 | P2.6 | fixture / eval سبک | AGT-QA-01 | انجام شد | 2026-05-13 | — | 10 Persian FAQ fixtures + smoke eval script |
-| P3.1 | Billing webhook حداقلی | AGT-API-01 | شروع نشده | — | — | — |
-| P3.2 | Runbook + بکاپ spec | AGT-INF-01 | شروع نشده | — | — | — |
-| P3.3 | پروفایل observability dev | AGT-DEVX-01 | شروع نشده | — | — | — |
-| P3.4 | متن لندینگ قیمت | AGT-GTM-01 | شروع نشده | — | — | — |
-| P3.5 | چک‌لیست pre-prod | AGT-SEC-01 | شروع نشده | — | — | — |
+| P3.1 | Billing webhook حداقلی | AGT-API-01 | انجام شد | 2026-05-13 | — | subscriptions + payments schema, Zarinpal sandbox webhook, checkout + verify routes |
+| P3.2 | Runbook + بکاپ spec | AGT-INF-01 | انجام شد | 2026-05-13 | — | docs/ops/RUNBOOK.md — backup schedule, restore drill, env var table |
+| P3.3 | پروفایل observability dev | AGT-DEVX-01 | انجام شد | 2026-05-13 | — | docker-compose.observability.yml — Prometheus + Grafana + Loki |
+| P3.4 | متن لندینگ قیمت | AGT-GTM-01 | انجام شد | 2026-05-13 | — | docs/marketing/ — hero, features, pricing (Persian) |
+| P3.5 | چک‌لیست pre-prod | AGT-SEC-01 | انجام شد | 2026-05-13 | — | docs/security/preprod-checklist.md — 16 PASS, 7 P4, 3 OPS, 3 WARN |
 
 ---
 

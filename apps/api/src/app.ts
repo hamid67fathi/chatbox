@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import Fastify from "fastify";
 import { db } from "./db/index.js";
 import { errorHandler } from "./lib/errors.js";
+import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { messageRoutes } from "./routes/messages.js";
@@ -48,6 +49,7 @@ export function buildApp() {
 	app.register(conversationRoutes);
 	app.register(messageRoutes);
 	app.register(widgetRoutes);
+	app.register(billingRoutes);
 
 	return app;
 }

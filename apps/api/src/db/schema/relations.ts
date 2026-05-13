@@ -11,6 +11,7 @@ import { kbChunks } from "./kb-chunks.js";
 import { kbDocuments } from "./kb-documents.js";
 import { knowledgeBases } from "./knowledge-bases.js";
 import { messages } from "./messages.js";
+import { payments, subscriptions } from "./subscriptions.js";
 import { users } from "./users.js";
 import { workspaceMembers } from "./workspace-members.js";
 import { workspaces } from "./workspaces.js";
@@ -22,6 +23,8 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 	cannedResponses: many(cannedResponses),
 	knowledgeBases: many(knowledgeBases),
 	aiInteractions: many(aiInteractions),
+	subscriptions: many(subscriptions),
+	payments: many(payments),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -170,5 +173,27 @@ export const aiInteractionsRelations = relations(aiInteractions, ({ one }) => ({
 	message: one(messages, {
 		fields: [aiInteractions.messageId],
 		references: [messages.id],
+	}),
+}));
+
+export const subscriptionsRelations = relations(
+	subscriptions,
+	({ one, many }) => ({
+		workspace: one(workspaces, {
+			fields: [subscriptions.workspaceId],
+			references: [workspaces.id],
+		}),
+		payments: many(payments),
+	}),
+);
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [payments.workspaceId],
+		references: [workspaces.id],
+	}),
+	subscription: one(subscriptions, {
+		fields: [payments.subscriptionId],
+		references: [subscriptions.id],
 	}),
 }));

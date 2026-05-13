@@ -1,0 +1,50 @@
+# Observability stack for LOCAL DEV only.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#
+# Ports:
+#   Prometheus  → http://localhost:9090
+#   Grafana     → http://localhost:3333  (admin/admin)
+#   Loki        → http://localhost:3100  (internal, Grafana datasource)
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: chatbox-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: chatbox-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - lokidata:/loki
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: chatbox-grafana
+    ports:
+      - "3333:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  promdata:
+  lokidata:
+  grafanadata:
