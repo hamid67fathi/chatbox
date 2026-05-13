@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatBox Widget Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: #f8fafc;
+      direction: rtl;
+    }
+    h1 { color: #1e293b; }
+    p { color: #64748b; max-width: 600px; line-height: 1.8; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>دمو ویجت Chat-Box</h1>
+  <p>
+    این صفحه شبیه‌ساز سایت مشتری است. ویجت چت در گوشهٔ پایین-راست نمایش داده می‌شود.
+    روی دکمهٔ آبی کلیک کنید تا پنجرهٔ چت باز شود.
+  </p>
+  <p>
+    <strong>پیش‌نیاز:</strong> API باید روی <code>http://localhost:3001</code> بالا باشد
+    و workspace با slug <code>demo</code> از seed موجود باشد.
+  </p>
+
+  <!-- Socket.io client for real-time (optional, loaded from API server) -->
+  <script src="http://localhost:3001/socket.io/socket.io.js"></script>
+
+  <!-- ChatBox Widget -->
+  <script src="./dist/index.global.js"
+    data-api-url="http://localhost:3001"
+    data-workspace-slug="demo">
+  </script>
+</body>
+</html>

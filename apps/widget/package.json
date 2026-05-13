@@ -1,0 +1,17 @@
+{
+	"name": "widget",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsup --watch",
+		"build": "tsup",
+		"lint": "biome check .",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"tsup": "^8.4.0",
+		"typescript": "^5.7.3"
+	}
+}

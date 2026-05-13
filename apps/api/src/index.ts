@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import { sql } from "drizzle-orm";
 import Fastify from "fastify";
 import { db } from "./db/index.js";
@@ -5,6 +6,7 @@ import { errorHandler } from "./lib/errors.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { messageRoutes } from "./routes/messages.js";
+import { widgetRoutes } from "./routes/widget.js";
 import { workspaceRoutes } from "./routes/workspaces.js";
 import { setIO } from "./ws/broadcast.js";
 import { createSocketServer } from "./ws/index.js";
@@ -12,6 +14,7 @@ import { createSocketServer } from "./ws/index.js";
 const app = Fastify({ logger: true });
 const port = Number(process.env.PORT ?? 3001);
 
+app.register(cors, { origin: true });
 app.setErrorHandler(errorHandler);
 
 app.get("/health", async () => {
@@ -23,6 +26,7 @@ app.register(workspaceRoutes);
 app.register(contactRoutes);
 app.register(conversationRoutes);
 app.register(messageRoutes);
+app.register(widgetRoutes);
 
 const start = async () => {
 	try {

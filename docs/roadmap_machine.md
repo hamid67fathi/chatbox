@@ -328,7 +328,7 @@ Acceptance: demo HTML in apps/widget/demo.html works against local API; bundle s
 
 ### خروجی مورد انتظار
 
-- [ ] ویجت build + دمو محلی
+- [x] ویجت build + دمو محلی
 
 ---
 
