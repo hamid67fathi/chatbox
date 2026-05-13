@@ -1,7 +1,7 @@
 # Local dev: Postgres + Redis (Ubuntu / Docker CE). See docs/14-INFRASTRUCTURE.md §5.
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: chatbox-postgres
     environment:
       POSTGRES_USER: chatbox
