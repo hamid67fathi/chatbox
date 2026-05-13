@@ -35,7 +35,29 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 			if (data.message.conversationId !== conversationId) return;
 			if (seenRef.current.has(data.message.id)) return;
 			seenRef.current.add(data.message.id);
-			setMessages((prev) => [...prev, data.message]);
+			setMessages((prev) => {
+				if (prev.some((m) => m.id === data.message.id)) return prev;
+				if (
+					prev.some(
+						(m) =>
+							m.body === data.message.body &&
+							m.senderType === data.message.senderType &&
+							Math.abs(
+								new Date(m.createdAt).getTime() -
+									new Date(data.message.createdAt).getTime(),
+							) < 5000,
+					)
+				) {
+					return prev.map((m) =>
+						m.body === data.message.body &&
+						m.senderType === data.message.senderType &&
+						!seenRef.current.has(m.id)
+							? data.message
+							: m,
+					);
+				}
+				return [...prev, data.message];
+			});
 		};
 
 		socket.on("message:new", handler);
