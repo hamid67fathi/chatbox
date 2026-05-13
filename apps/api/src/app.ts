@@ -1,5 +1,6 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -7,7 +8,9 @@ import fastifyStatic from "@fastify/static";
 import { sql } from "drizzle-orm";
 import Fastify from "fastify";
 import { db } from "./db/index.js";
+import { requireAuth } from "./lib/auth.js";
 import { errorHandler } from "./lib/errors.js";
+import { authRoutes } from "./routes/auth.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { conversationRoutes } from "./routes/conversations.js";
@@ -18,7 +21,8 @@ import { workspaceRoutes } from "./routes/workspaces.js";
 export function buildApp() {
 	const app = Fastify({ logger: false });
 
-	app.register(cors, { origin: true });
+	app.register(cors, { origin: true, credentials: true });
+	app.register(cookie);
 	app.register(helmet, { contentSecurityPolicy: false });
 	app.register(rateLimit, {
 		global: false,
@@ -52,12 +56,18 @@ export function buildApp() {
 		return { ok: true, db: result.length > 0 };
 	});
 
-	app.register(workspaceRoutes);
-	app.register(contactRoutes);
-	app.register(conversationRoutes);
-	app.register(messageRoutes);
+	app.register(authRoutes);
 	app.register(widgetRoutes);
-	app.register(billingRoutes);
+
+	app.register(async function protectedRoutes(instance) {
+		instance.addHook("onRequest", requireAuth);
+
+		instance.register(workspaceRoutes);
+		instance.register(contactRoutes);
+		instance.register(conversationRoutes);
+		instance.register(messageRoutes);
+		instance.register(billingRoutes);
+	});
 
 	return app;
 }

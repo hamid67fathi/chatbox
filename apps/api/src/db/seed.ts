@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema/index.js";
@@ -9,8 +11,12 @@ const databaseUrl =
 const client = postgres(databaseUrl);
 const db = drizzle(client, { schema });
 
+const SEED_PASSWORD = "chatbox123";
+
 async function seed() {
 	console.log("Seeding database …");
+
+	const passwordHash = await bcrypt.hash(SEED_PASSWORD, 12);
 
 	let [user] = await db
 		.insert(schema.users)
@@ -18,7 +24,7 @@ async function seed() {
 			email: "admin@chatbox.local",
 			fullName: "Admin User",
 			emailVerified: true,
-			passwordHash: "-- placeholder, no real auth yet --",
+			passwordHash,
 		})
 		.onConflictDoNothing({ target: schema.users.email })
 		.returning();
@@ -29,7 +35,11 @@ async function seed() {
 		});
 		if (!existing) throw new Error("Cannot find or create seed user");
 		user = existing;
-		console.log("Seed user already exists, reusing.");
+		await db
+			.update(schema.users)
+			.set({ passwordHash })
+			.where(eq(schema.users.id, user.id));
+		console.log("Seed user already exists, reusing (password updated).");
 	}
 
 	let [workspace] = await db
@@ -148,6 +158,7 @@ async function seed() {
 
 	console.log(`Seed complete:
   - User:         ${user.id} (${user.email})
+  - Password:     ${SEED_PASSWORD}
   - Workspace:    ${workspace.id} (${workspace.slug})
   - Contact:      ${contact.id}
   - Conversation: ${conv.id}

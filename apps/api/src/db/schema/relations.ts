@@ -11,6 +11,7 @@ import { kbChunks } from "./kb-chunks.js";
 import { kbDocuments } from "./kb-documents.js";
 import { knowledgeBases } from "./knowledge-bases.js";
 import { messages } from "./messages.js";
+import { sessions } from "./sessions.js";
 import { payments, subscriptions } from "./subscriptions.js";
 import { users } from "./users.js";
 import { workspaceMembers } from "./workspace-members.js";
@@ -29,6 +30,14 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
 	memberships: many(workspaceMembers),
+	sessions: many(sessions),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id],
+	}),
 }));
 
 export const workspaceMembersRelations = relations(

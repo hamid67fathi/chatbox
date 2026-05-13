@@ -11,4 +11,6 @@ export * from "./kb-documents.js";
 export * from "./kb-chunks.js";
 export * from "./ai-interactions.js";
 export * from "./subscriptions.js";
+export * from "./sessions.js";
+export * from "./otp-codes.js";
 export * from "./relations.js";

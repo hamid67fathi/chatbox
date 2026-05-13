@@ -131,24 +131,50 @@ curl -s http://192.168.1.8:3001/health | jq .
 # سلامت AI
 curl -s http://192.168.1.8:8000/health | jq .
 
-# لیست پلن‌ها
+# --- احراز هویت (P4) ---
+
+# ثبت‌نام کاربر جدید
+curl -s -X POST http://192.168.1.8:3001/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test1234","fullName":"کاربر تست"}' | jq .
+
+# ورود با حساب seed
+curl -s -X POST http://192.168.1.8:3001/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@chatbox.local","password":"chatbox123"}' | jq .
+# ← access_token و refresh_token را ذخیره کنید
+
+# دریافت اطلاعات کاربر
+curl -s http://192.168.1.8:3001/v1/auth/me \
+  -H "Authorization: Bearer {ACCESS_TOKEN}" | jq .
+
+# رفرش توکن
+curl -s -X POST http://192.168.1.8:3001/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"{REFRESH_TOKEN}"}' | jq .
+
+# --- API‌های محافظت‌شده (نیاز به Bearer token) ---
+
+# لیست پلن‌ها (بدون auth — عمومی)
 curl -s http://192.168.1.8:3001/v1/billing/plans | jq .
 
-# ساخت session ویجت
+# ساخت session ویجت (بدون auth — عمومی)
 curl -s -X POST http://192.168.1.8:3001/widget/v1/sessions \
   -H "Content-Type: application/json" \
   -d '{"workspace_slug":"demo"}' | jq .
+# ← visitor token را ذخیره کنید
 
-# ارسال پیام (مقادیر را از خروجی session بالا بگیرید)
+# لیست مکالمات (نیاز به auth)
+curl -s http://192.168.1.8:3001/v1/conversations?limit=50 \
+  -H "Authorization: Bearer {ACCESS_TOKEN}" \
+  -H "X-Workspace-Id: {WORKSPACE_ID}" | jq .
+
+# ارسال پیام (نیاز به auth)
 curl -s -X POST http://192.168.1.8:3001/v1/conversations/{CONV_ID}/messages \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {ACCESS_TOKEN}" \
   -H "X-Workspace-Id: {WORKSPACE_ID}" \
-  -d '{"body":"سلام","sender_type":"contact","sender_contact_id":"{CONTACT_ID}"}' | jq .
-
-# شروع پرداخت (sandbox)
-curl -s -X POST http://192.168.1.8:3001/v1/billing/c084d4e7-7770-4bfa-bdbd-806b963e9e77/checkout \
-  -H "Content-Type: application/json" \
-  -d '{"plan":"starter"}' | jq .
+  -d '{"body":"سلام","sender_type":"agent"}' | jq .
 ```
 
 ---
@@ -188,3 +214,5 @@ pnpm --filter api test
 | `type "vector" does not exist` | `docker compose down -v && docker compose up -d` بعد `db:push` |
 | `fastify-plugin expected '5.x'` | `git pull` → نسخه‌های سازگار نصب شده |
 | داشبورد مکالمه نشان نمی‌دهد | `NEXT_PUBLIC_API_URL` باید IP سرور باشد نه `localhost` |
+| `401 Authentication required` | باید اول login کنید — در داشبورد به `/login` بروید |
+| اطلاعات ورود seed | ایمیل: `admin@chatbox.local` — رمز: `chatbox123` |

@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** فاز 0 تا 3 کامل شد (MVP). فاز 4 (احراز هویت) آماده شروع — مسیر تولید P4→P10.
+> **الان:** فاز 0 تا 4 کامل شد (MVP + Auth). فاز 5 (داشبورد محصول) آماده شروع — مسیر تولید P5→P10.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -75,11 +75,11 @@ rule: >
 
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
-| P4.1 | سیستم Auth سمت API | JWT (jose) + bcrypt + sessions/otp tables + register/login/refresh/logout + auth middleware | شروع نشده | — | — |
-| P4.2 | RBAC و Workspace Isolation | استخراج workspace از JWT، role check، جلوگیری cross-workspace | شروع نشده | — | — |
-| P4.3 | Widget Visitor Token | visitor_token (JWT 24h)، ذخیره در ویجت، اعتبارسنجی Socket.IO | شروع نشده | — | — |
-| P4.4 | Login/Signup داشبورد | صفحات login + signup، auth context، httpOnly cookie، redirect guard | شروع نشده | — | — |
-| P4.5 | امنیت تکمیلی | unauthorized/forbidden errors، فیلتر PII لاگ، CSRF، محدود CORS | شروع نشده | — | — |
+| P4.1 | سیستم Auth سمت API | JWT (jose) + bcrypt + sessions/otp tables + register/login/refresh/logout + auth middleware | انجام شد | 2026-05-13 | auth lib, routes, migration |
+| P4.2 | RBAC و Workspace Isolation | استخراج workspace از JWT، role check، جلوگیری cross-workspace | انجام شد | 2026-05-13 | rbac.ts + requireWorkspace middleware |
+| P4.3 | Widget Visitor Token | visitor_token (JWT 24h)، ذخیره در ویجت، اعتبارسنجی Socket.IO | انجام شد | 2026-05-13 | signVisitorToken + requireVisitorToken |
+| P4.4 | Login/Signup داشبورد | صفحات login + signup، auth context، httpOnly cookie، redirect guard | انجام شد | 2026-05-13 | /login, /register, AuthGuard, auth-store |
+| P4.5 | امنیت تکمیلی | unauthorized/forbidden errors، فیلتر PII لاگ، CSRF، محدود CORS | انجام شد | 2026-05-13 | CORS credentials, cookie plugin, seed bcrypt password |
 
 ### فاز ۵ — داشبورد محصول
 

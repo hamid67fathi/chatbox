@@ -1,3 +1,5 @@
+import { clearAuth, getAccessToken, refreshAccessToken } from "./auth-store";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export interface Conversation {
@@ -29,11 +31,37 @@ export interface Message {
 	createdAt: string;
 }
 
+function authHeaders(workspaceId: string): Record<string, string> {
+	const token = getAccessToken();
+	return {
+		"X-Workspace-Id": workspaceId,
+		...(token ? { Authorization: `Bearer ${token}` } : {}),
+	};
+}
+
+async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+	let res = await fetch(url, init);
+
+	if (res.status === 401) {
+		const newToken = await refreshAccessToken();
+		if (newToken) {
+			const headers = new Headers(init.headers);
+			headers.set("Authorization", `Bearer ${newToken}`);
+			res = await fetch(url, { ...init, headers });
+		} else {
+			clearAuth();
+			if (typeof window !== "undefined") window.location.href = "/login";
+		}
+	}
+
+	return res;
+}
+
 export async function fetchConversations(
 	workspaceId: string,
 ): Promise<Conversation[]> {
-	const res = await fetch(`${API_URL}/v1/conversations?limit=50`, {
-		headers: { "X-Workspace-Id": workspaceId },
+	const res = await authFetch(`${API_URL}/v1/conversations?limit=50`, {
+		headers: authHeaders(workspaceId),
 		cache: "no-store",
 	});
 	if (!res.ok) return [];
@@ -45,10 +73,10 @@ export async function fetchMessages(
 	workspaceId: string,
 	conversationId: string,
 ): Promise<Message[]> {
-	const res = await fetch(
+	const res = await authFetch(
 		`${API_URL}/v1/conversations/${conversationId}/messages?limit=100`,
 		{
-			headers: { "X-Workspace-Id": workspaceId },
+			headers: authHeaders(workspaceId),
 			cache: "no-store",
 		},
 	);
@@ -62,13 +90,13 @@ export async function sendMessage(
 	conversationId: string,
 	body: string,
 ): Promise<Message | null> {
-	const res = await fetch(
+	const res = await authFetch(
 		`${API_URL}/v1/conversations/${conversationId}/messages`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"X-Workspace-Id": workspaceId,
+				...authHeaders(workspaceId),
 			},
 			body: JSON.stringify({ body, sender_type: "agent" }),
 		},
@@ -76,3 +104,5 @@ export async function sendMessage(
 	if (!res.ok) return null;
 	return res.json();
 }
+
+export { API_URL };

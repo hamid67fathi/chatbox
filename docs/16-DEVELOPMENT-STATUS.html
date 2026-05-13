@@ -360,41 +360,41 @@ rule: &gt;
 <td>P4.1</td>
 <td>سیستم Auth سمت API</td>
 <td>JWT (jose) + bcrypt + جداول sessions/otp + endpointهای register/login/refresh/logout + auth middleware</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td class="done">انجام شد ✅</td>
+<td>2026-05-13</td>
+<td>auth lib, routes, migration 0003</td>
 </tr>
 <tr>
 <td>P4.2</td>
 <td>RBAC و Workspace Isolation</td>
 <td>استخراج workspace از JWT، role check (owner/admin/agent/viewer)، جلوگیری cross-workspace</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td class="done">انجام شد ✅</td>
+<td>2026-05-13</td>
+<td>rbac.ts + requireWorkspace middleware</td>
 </tr>
 <tr>
 <td>P4.3</td>
 <td>Widget Visitor Token</td>
 <td>visitor_token (JWT 24h) از session endpoint، ذخیره در ویجت، اعتبارسنجی Socket.IO</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td class="done">انجام شد ✅</td>
+<td>2026-05-13</td>
+<td>signVisitorToken + requireVisitorToken</td>
 </tr>
 <tr>
 <td>P4.4</td>
 <td>Login/Signup داشبورد</td>
 <td>صفحات login + signup، auth context/provider، httpOnly cookie، redirect guard</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td class="done">انجام شد ✅</td>
+<td>2026-05-13</td>
+<td>/login, /register, AuthGuard, auth-store</td>
 </tr>
 <tr>
 <td>P4.5</td>
 <td>امنیت تکمیلی</td>
 <td>unauthorized/forbidden errors، فیلتر PII از لاگ، CSRF، محدود کردن CORS origin</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td class="done">انجام شد ✅</td>
+<td>2026-05-13</td>
+<td>CORS credentials, cookie plugin, seed bcrypt</td>
 </tr>
 
 <tr><td colspan="6"><strong>فاز ۵ — داشبورد محصول</strong></td></tr>
