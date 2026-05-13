@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** P2.2 (سرویس AI) انجام شد؛ P2.3 (اتصال API به AI) آماده شروع.
+> **الان:** P2.3 (اتصال API به AI) انجام شد؛ P2.4 (UI وضعیت AI) آماده شروع.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -55,7 +55,7 @@ rule: >
 | P1.6 | تست یک happy path | AGT-QA-01 | انجام شد | 2026-05-13 | — | vitest + supertest, 8 tests (health→widget session), CI with Postgres+Redis services |
 | P2.1 | جداول KB در DB | AGT-DB-01 | انجام شد | 2026-05-13 | — | knowledge_bases, kb_documents, kb_chunks (pgvector), ai_interactions + RLS + HNSW index |
 | P2.2 | سرویس AI + RAG حداقلی | AGT-AI-01 | انجام شد | 2026-05-13 | — | FastAPI: ingest+chunk+embed, retrieve top-k, LLM reply+confidence, PII redaction, stub mode |
-| P2.3 | اتصال API به AI | AGT-API-01 | شروع نشده | — | — | — |
+| P2.3 | اتصال API به AI | AGT-API-01 | انجام شد | 2026-05-13 | — | AI client with timeout+circuit breaker, auto-reply on contact message, ai_interactions log |
 | P2.4 | UI وضعیت AI / escalation | AGT-FE-01 | شروع نشده | — | — | — |
 | P2.5 | مرور امنیتی PR | AGT-SEC-01 | شروع نشده | — | — | — |
 | P2.6 | fixture / eval سبک | AGT-QA-01 | شروع نشده | — | — | — |
