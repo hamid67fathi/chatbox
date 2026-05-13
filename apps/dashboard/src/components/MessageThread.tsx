@@ -58,7 +58,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		setText("");
 
 		const optimistic: Message = {
-			id: crypto.randomUUID(),
+			id: Math.random().toString(36).slice(2) + Date.now().toString(36),
 			conversationId,
 			senderType: "agent",
 			senderUserId: null,
