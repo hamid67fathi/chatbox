@@ -1,0 +1,31 @@
+{
+	"name": "api",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"build": "tsc -p tsconfig.json",
+		"start": "node dist/index.js",
+		"lint": "biome check .",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"db:seed": "tsx src/db/seed.ts"
+	},
+	"dependencies": {
+		"@chatbox/config": "workspace:*",
+		"drizzle-orm": "^0.45.2",
+		"fastify": "^4.29.0",
+		"postgres": "^3.4.9"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^20.17.10",
+		"drizzle-kit": "^0.31.10",
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.3"
+	}
+}

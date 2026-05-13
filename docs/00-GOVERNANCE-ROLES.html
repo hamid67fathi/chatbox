@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۰ · حکمرانی و نقش‌ها — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — حکمرانی و نقش‌ها">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html" class="active"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">خلاصه (فارسی)</a></li>
+      <li><a href="#sec-2">Machine-readable contract (English — for AI agents)</a></li>
+      <li><a href="#sec-3">نقش‌ها و تعریف خروجی (جدول مرجع)</a></li>
+      <li><a href="#sec-4">قواعد همکاری انسان + AI</a></li>
+      <li><a href="#sec-5">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۰ — حکمرانی و نقش‌ها</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">⚖️</span> Governance &amp; Role Charter — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="00-GOVERNANCE-ROLES.md">00-GOVERNANCE-ROLES.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>هدف:</strong> توسعهٔ کامل محصول با AI، بدون قاطی شدن نقش‌ها در یک PR یا یک چت.</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">خلاصه (فارسی)</h2>
+<p>در این پروژه <strong>یک انسان</strong> ممکن است مالک چند نقش باشد، اما <strong>هر قطعه کار</strong> باید دقیقاً مشخص کند نقش اصلی آن چیست. نقش‌ها <strong>حقوق و خروجی</strong> دارند، نه فقط عنوان. AI Agent باید قبل از تغییر کد، نقش فعال را از کاربر بگیرد یا از برچسب PR/Issue استنبط کند و <strong>از مخلوط کردن تصمیم محصول با پیاده‌سازی</strong> در یک مرحله پرهیز کند. <strong>میزبان استاندارد</strong> مستندات و اسکریپت‌های عملیاتی: <strong>Ubuntu 22.04 یا 24.04 LTS</strong>.</p>
+<hr />
+<h2 id="sec-2">Machine-readable contract (English — for AI agents)</h2>
+<pre><code class="language-yaml">doc_id: 00-GOVERNANCE-ROLES
+version: 1.0.0
+audience: [human-founder, ai-coding-agent, ai-review-agent]
+host_docs_baseline_os: ubuntu-22.04-or-24.04-lts
+rules:
+  - id: single-primary-role
+    statement: &gt;
+      Every PR, branch, or task MUST declare exactly one PRIMARY_ROLE
+      from the enum below. Secondary roles may be listed but must not
+      expand scope beyond the primary role's deliverable.
+  - id: no-mixed-signoff
+    statement: &gt;
+      A PR that changes product scope (Product) AND database schema (Backend)
+      without an explicit ADR or PR split is INVALID unless labeled EXCEPTION
+      with human approval in the PR body.
+  - id: doc-ownership
+    statement: &gt;
+      Each numbered markdown doc has a DOCUMENT_OWNER_ROLE. Changes to that
+      doc should be reviewed with that role's lens (can be the same human).
+primary_role_enum:
+  - PRODUCT        # scope, PRD, acceptance criteria, prioritization
+  - UX_CONTENT     # copy, RTL UX notes, empty states, tone
+  - ENGINEERING    # implementation, refactors, tests, APIs
+  - AI_ML          # prompts, RAG, eval, model routing, Langfuse
+  - SECURITY       # threat model, secrets, RLS review, widget CSP
+  - DEVOPS         # CI/CD, runbooks, infra, SLO, backups
+  - GTM_MARKETING  # pricing page copy, ICP, campaigns (not app logic)
+  - LEGAL_COMPLIANCE # privacy text, DPA checklist, retention policy text
+  - SUPPORT_CS     # help macros, SLA to customers, refund process
+document_owner_role_map:
+  &quot;01-PRD.md&quot;: PRODUCT
+  &quot;02-ARCHITECTURE.md&quot;: ENGINEERING
+  &quot;03-TECH-STACK.md&quot;: ENGINEERING
+  &quot;04-DATABASE-SCHEMA.md&quot;: ENGINEERING
+  &quot;05-API-SPEC.md&quot;: ENGINEERING
+  &quot;06-AI-ARCHITECTURE.md&quot;: AI_ML
+  &quot;07-PROJECT-STRUCTURE.md&quot;: ENGINEERING
+  &quot;08-ROADMAP.md&quot;: PRODUCT
+  &quot;09-AI-AGENT-GUIDE.md&quot;: ENGINEERING
+  &quot;10-GTM-PRICING-MARKETING.md&quot;: GTM_MARKETING
+  &quot;11-SECURITY-PRIVACY.md&quot;: SECURITY
+  &quot;12-OPERATIONS-SUPPORT.md&quot;: DEVOPS
+  &quot;13-ARCHITECTURE-DECISION-RECORDS.md&quot;: ENGINEERING
+  &quot;14-INFRASTRUCTURE.md&quot;: DEVOPS
+  &quot;15-DEVELOPMENT-GUIDE-FA.md&quot;: ENGINEERING
+  &quot;16-DEVELOPMENT-STATUS.md&quot;: ENGINEERING
+  &quot;00-GOVERNANCE-ROLES.md&quot;: PRODUCT
+role_deliverables:
+  PRODUCT:
+    outputs: [PRD updates, user stories, prioritization, MVP scope labels]
+    must_not: [change production secrets, deploy infra]
+  ENGINEERING:
+    outputs: [code, tests, migrations, API implementation]
+    must_not: [unilateral pricing changes, legal commitments in UI]
+  AI_ML:
+    outputs: [pipelines, prompts, eval sets, cost dashboards spec]
+    must_not: [bypass safety filters without SECURITY review]
+  GTM_MARKETING:
+    outputs: [landing copy, plan matrix, SEO list]
+    must_not: [alter auth flows for tracking without SECURITY review]
+</code></pre>
+<hr />
+<h2 id="sec-3">نقش‌ها و تعریف خروجی (جدول مرجع)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نقش</th>
+<th>سوال اصلی که جواب می‌دهد</th>
+<th>خروجی قابل تحویل در ریپو</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Product</strong></td>
+<td><em>چه چیزی بسازیم و چه چیزی نه؟</em></td>
+<td>PRD، Roadmap، برچسب MVP/Phase2، AC</td>
+</tr>
+<tr>
+<td><strong>UX / Content</strong></td>
+<td><em>کاربر چه می‌بیند و چه می‌خواند؟</em></td>
+<td>متن UI، الگوهای RTL، onboarding کپی</td>
+</tr>
+<tr>
+<td><strong>Engineering</strong></td>
+<td><em>چطور درست و تست‌شده پیاده کنیم؟</em></td>
+<td>کد، تست، OpenAPI هم‌تراز، migration</td>
+</tr>
+<tr>
+<td><strong>AI / ML</strong></td>
+<td><em>مدل و داده چطور جواب امن بدهند؟</em></td>
+<td>pipeline، eval، prompt نسخه‌دار</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td><em>چه چیزی نباید لو برود؟</em></td>
+<td>threat model، RLS review، ویجت CSP</td>
+</tr>
+<tr>
+<td><strong>DevOps</strong></td>
+<td><em>چطور پایدار استقرار و بازیابی کنیم؟</em></td>
+<td>CI، runbook، backup، SLO</td>
+</tr>
+<tr>
+<td><strong>GTM / Marketing</strong></td>
+<td><em>چطور دیده شویم و بفروشیم؟</em></td>
+<td>pricing، ICP، کانال اکتساب</td>
+</tr>
+<tr>
+<td><strong>Legal / Compliance</strong></td>
+<td><em>حدود قانونی چیست؟</em></td>
+<td>چک‌لیست قرارداد، retention متن</td>
+</tr>
+<tr>
+<td><strong>Support / CS</strong></td>
+<td><em>بعد از فروش چه تجربه‌ای است؟</em></td>
+<td>FAQ، macro، SLA پاسخ به مشتری</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-4">قواعد همکاری انسان + AI</h2>
+<ol>
+<li><strong>یک PR = یک نقش اصلی.</strong> اگر دو نقش لازم است، PR را بشکنید یا ADR بزنید.</li>
+<li><strong>برچسب در بدنه PR:</strong> <code>PRIMARY_ROLE: ENGINEERING</code> (یا مقدار معتبر دیگر از enum).</li>
+<li><strong>سند زنده:</strong> تغییر معماری مهم → ابتدا یا همزمان با <code>docs/adr/ADR-*.md</code>.</li>
+<li><strong>زبان سند:</strong> فایل‌های <code>.md</code> مرجع کاننیکال برای AI و مهندس؛ <code>.html</code> نمای انسانی فارسی — اگر تناقض باشد، <strong>md برنده است</strong> مگر اینکه PR صریح خلاف آن بنویسد.</li>
+</ol>
+<hr />
+<h2 id="sec-5">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE.md</code></a> — اجرای عملیاتی قواعد برای Agent</li>
+<li><a href="13-ARCHITECTURE-DECISION-RECORDS.html"><code>13-ARCHITECTURE-DECISION-RECORDS.md</code></a> — ثبت تصمیم‌های مرزی</li>
+<li><a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a> — اولویت‌بندی با برچسب نقش/فاز</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="index.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">خانه</div>
+      </a>
+      <a class="next" href="01-PRD.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۱ — PRD</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

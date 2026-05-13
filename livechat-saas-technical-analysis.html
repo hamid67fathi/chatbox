@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحلیل فنی جامع — پلتفرم لایو چت SaaS</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --accent5: #38bdf8;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --heading: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, #0a0a0f 0%, #0f0a1a 50%, #0a0f1a 100%);
+    padding: 80px 40px 60px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+    top: -250px; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(67,233,123,0.06) 0%, transparent 70%);
+    bottom: -150px; right: 10%;
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.4);
+    color: #9d96ff;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--heading);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { background: linear-gradient(135deg, #6c63ff, #43e97b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 650px; margin: 0 auto; }
+  .hero-meta { display: flex; gap: 24px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+  .hero-stat { text-align: center; }
+  .hero-stat-val { font-size: 28px; font-weight: 900; color: var(--heading); display: block; }
+  .hero-stat-lbl { font-size: 12px; color: var(--muted); }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 40px auto;
+    max-width: 1100px;
+  }
+  .toc-title { font-size: 18px; font-weight: 700; color: var(--heading); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .toc-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .toc-item:hover { color: var(--accent); border-color: var(--accent); }
+  .toc-num { color: var(--accent); font-weight: 700; min-width: 20px; }
+
+  /* Sections */
+  .section { padding: 60px 0; border-bottom: 1px solid var(--border); }
+  .section-header { margin-bottom: 40px; }
+  .section-tag {
+    display: inline-block; padding: 4px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .tag-purple { background: rgba(108,99,255,0.15); color: #9d96ff; }
+  .tag-pink   { background: rgba(255,101,132,0.15); color: #ff8fa3; }
+  .tag-green  { background: rgba(67,233,123,0.15); color: #43e97b; }
+  .tag-orange { background: rgba(247,151,30,0.15); color: #f7a635; }
+  .tag-blue   { background: rgba(56,189,248,0.15); color: #38bdf8; }
+  .tag-red    { background: rgba(239,68,68,0.15); color: #f87171; }
+  .tag-teal   { background: rgba(20,184,166,0.15); color: #2dd4bf; }
+  .section h2 { font-size: clamp(22px, 3vw, 34px); font-weight: 800; color: var(--heading); margin-bottom: 8px; line-height: 1.3; }
+  .section-desc { color: var(--muted); font-size: 15px; max-width: 700px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(108,99,255,0.4); }
+  .card-icon { font-size: 28px; margin-bottom: 14px; display: block; }
+  .card h3 { font-size: 16px; font-weight: 700; color: var(--heading); margin-bottom: 10px; }
+  .card h4 { font-size: 14px; font-weight: 600; color: var(--heading); margin-bottom: 8px; }
+  .card p, .card ul { color: var(--muted); font-size: 13.5px; }
+  .card ul { list-style: none; }
+  .card ul li { padding: 4px 0; }
+  .card ul li::before { content: '↗ '; color: var(--accent); font-size: 11px; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+
+  /* Tech Badge */
+  .tech-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 13px;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    margin: 3px; transition: all 0.2s; cursor: default;
+  }
+  .tech-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Architecture */
+  .arch-layer {
+    background: rgba(108,99,255,0.04);
+    border: 1px dashed rgba(108,99,255,0.25);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+  }
+  .arch-layer-title {
+    font-size: 11px; font-weight: 700; color: rgba(108,99,255,0.7);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .arch-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .arch-row .arch-box { flex: 1; min-width: 80px; }
+  .arch-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; text-align: center;
+    font-size: 12px; font-weight: 600; color: var(--text);
+  }
+  .arch-box small { display: block; font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px; }
+  .arch-arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; padding: 6px 0; gap: 8px; }
+  .arch-arrow::before, .arch-arrow::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Code Block */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 12.5px;
+    color: #a8a8d0;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.7;
+    margin: 16px 0;
+  }
+  .code-block .cm { color: #4a4a6a; }
+  .code-block .ck { color: #9d96ff; }
+  .code-block .cs { color: #43e97b; }
+  .code-block .cn { color: #f7971e; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-right: 30px; }
+  .timeline::before {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, var(--accent), var(--accent2), var(--accent3));
+  }
+  .timeline-item { position: relative; margin-bottom: 36px; padding-right: 28px; }
+  .timeline-dot {
+    position: absolute; right: -8px; top: 6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--accent); background: var(--bg);
+  }
+  .timeline-phase {
+    display: inline-block;
+    background: rgba(108,99,255,0.15); color: var(--accent);
+    padding: 2px 10px; border-radius: 4px;
+    font-size: 11px; font-weight: 700;
+    margin-bottom: 8px; letter-spacing: 1px;
+  }
+  .timeline-item h3 { font-size: 17px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
+  .timeline-item p, .timeline-item ul { color: var(--muted); font-size: 13.5px; }
+  .timeline-item ul { list-style: none; margin-top: 8px; }
+  .timeline-item ul li { padding: 3px 0; }
+  .timeline-item ul li::before { content: '▸ '; color: var(--accent3); }
+
+  /* Alert */
+  .alert {
+    border-radius: 10px; padding: 14px 20px;
+    margin: 14px 0; font-size: 13.5px; border-right: 3px solid;
+  }
+  .alert-purple { background: rgba(108,99,255,0.08); border-color: var(--accent); color: #b8b3ff; }
+  .alert-green  { background: rgba(67,233,123,0.08); border-color: var(--accent3); color: #7eeaa3; }
+  .alert-orange { background: rgba(247,151,30,0.08); border-color: var(--accent4); color: #f9bf6a; }
+  .alert-red    { background: rgba(239,68,68,0.08); border-color: #f87171; color: #fca5a5; }
+  .alert-blue   { background: rgba(56,189,248,0.08); border-color: var(--accent5); color: #7dd3fc; }
+
+  /* Highlight Box */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(67,233,123,0.04));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 16px; padding: 28px; margin: 24px 0;
+  }
+  .highlight-box h3 { font-size: 17px; font-weight: 700; color: var(--heading); margin-bottom: 12px; }
+
+  /* Table */
+  .pricing-table { width: 100%; border-collapse: collapse; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+  .pricing-table th { background: var(--surface2); padding: 14px 18px; text-align: right; font-size: 13px; font-weight: 700; color: var(--heading); border-bottom: 1px solid var(--border); }
+  .pricing-table td { padding: 12px 18px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--muted); }
+  .pricing-table tr:last-child td { border-bottom: none; }
+  .pricing-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .pricing-table tr:hover td { background: rgba(108,99,255,0.04); }
+  .t-head { color: var(--heading) !important; font-weight: 700 !important; }
+  .t-green { color: var(--accent3) !important; font-weight: 700 !important; }
+  .t-blue  { color: var(--accent5) !important; font-weight: 700 !important; }
+  .t-red   { color: #f87171 !important; font-weight: 700 !important; }
+  .t-orange { color: var(--accent4) !important; font-weight: 700 !important; }
+
+  /* Metric */
+  .metric-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; text-align: center; flex: 1; min-width: 130px;
+  }
+  .metric-val { font-size: 30px; font-weight: 900; color: var(--heading); line-height: 1; margin-bottom: 6px; }
+  .metric-lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  /* Agent Card */
+  .agent-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; transition: border-color 0.2s;
+  }
+  .agent-card:hover { border-color: rgba(108,99,255,0.5); }
+  .agent-num {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 14px;
+  }
+  .agent-card h3 { font-size: 16px; font-weight: 700; color: var(--heading); margin-bottom: 6px; }
+  .agent-card .role { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+  .agent-card p { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .pill {
+    display: inline-block; font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--surface2);
+  }
+
+  /* Divider */
+  hr.divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Check/Cross */
+  .check  { color: var(--accent3); font-weight: 700; }
+  .cross  { color: var(--accent2); font-weight: 700; }
+  .warn-c { color: var(--accent4); font-weight: 700; }
+
+  /* Warning badge */
+  .wbadge {
+    display: inline-block; font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; font-weight: 600; margin: 2px;
+  }
+  .wb-purple { background: rgba(108,99,255,0.15); color: #9d96ff; }
+  .wb-green  { background: rgba(67,233,123,0.15); color: #43e97b; }
+  .wb-orange { background: rgba(247,151,30,0.15); color: #f7a635; }
+  .wb-red    { background: rgba(239,68,68,0.15); color: #f87171; }
+  .wb-blue   { background: rgba(56,189,248,0.15); color: #38bdf8; }
+  .wb-teal   { background: rgba(20,184,166,0.15); color: #2dd4bf; }
+
+  /* Feature list */
+  .feature-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .feature-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .feature-list li .fi { font-size: 16px; flex-shrink: 0; }
+
+  @media(max-width: 768px) {
+    .hero { padding: 50px 20px 40px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .toc { margin: 20px 16px; }
+    .container { padding: 0 16px; }
+    .metric-row { flex-direction: column; }
+    .code-block { font-size: 11px; }
+    .arch-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">🔬 TECHNICAL DEEP-DIVE · 2025–2026</div>
+  <h1>تحلیل فنی جامع<br><span>LiveChat SaaS</span><br>از معماری تا استقرار</h1>
+  <p style="margin-top:16px">بررسی کامل معماری میکروسرویس، Tech Stack، AI Agentهای توسعه، امنیت، DevOps و نقشه راه فنی ۱۸ماهه</p>
+  <div class="hero-meta">
+    <div class="hero-stat"><span class="hero-stat-val">۸</span><span class="hero-stat-lbl">AI Agent توسعه</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">۵۰K+</span><span class="hero-stat-lbl">WebSocket Concurrent</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">&lt;۵۰ms</span><span class="hero-stat-lbl">Message Latency</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">۹۹.۹٪</span><span class="hero-stat-lbl">SLA Uptime</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">۱۸</span><span class="hero-stat-lbl">ماه تا Ecosystem</span></div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc container">
+  <div class="toc-title">📌 فهرست مطالب</div>
+  <div class="toc-grid">
+    <a href="#arch"     class="toc-item"><span class="toc-num">۱</span> معماری میکروسرویس</a>
+    <a href="#stack"    class="toc-item"><span class="toc-num">۲</span> Tech Stack کامل</a>
+    <a href="#realtime" class="toc-item"><span class="toc-num">۳</span> Real-time Engine</a>
+    <a href="#database" class="toc-item"><span class="toc-num">۴</span> طراحی دیتابیس</a>
+    <a href="#agents"   class="toc-item"><span class="toc-num">۵</span> AI Agentهای توسعه</a>
+    <a href="#security" class="toc-item"><span class="toc-num">۶</span> امنیت لایه‌به‌لایه</a>
+    <a href="#devops"   class="toc-item"><span class="toc-num">۷</span> DevOps &amp; Infrastructure</a>
+    <a href="#iran"     class="toc-item"><span class="toc-num">۸</span> چالش‌های فنی ایران</a>
+    <a href="#roadmap"  class="toc-item"><span class="toc-num">۹</span> نقشه راه فنی</a>
+    <a href="#kpi"      class="toc-item"><span class="toc-num">۱۰</span> KPI فنی و متریک‌ها</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===================== 1. ARCHITECTURE ===================== -->
+<div class="section" id="arch">
+  <div class="section-header">
+    <div class="section-tag tag-purple">۱ · معماری</div>
+    <h2>معماری میکروسرویس Event-Driven</h2>
+    <p class="section-desc">معماری پنج‌لایه‌ای stateless بر پایه WebSocket، Redis Pub/Sub و Kubernetes — طراحی‌شده برای مقیاس ۵۰K+ اتصال همزمان.</p>
+  </div>
+
+  <div class="alert alert-purple">
+    ⚠️ <strong>اصل اساسی:</strong> معماری باید از روز اول <strong>Multi-Tenant</strong> و <strong>Stateless</strong> طراحی شود. هر WebSocket server هیچ state محلی نگه ندارد — همه state در Redis است. تغییر دادن این بعداً هزینه بسیار بالایی دارد.
+  </div>
+
+  <!-- Layer 1 -->
+  <div class="arch-layer">
+    <div class="arch-layer-title">🌐 لایه ۱ · Client Layer</div>
+    <div class="arch-row">
+      <div class="arch-box">Chat Widget<small>Vanilla JS · زیر ۳۰KB · بدون dependency</small></div>
+      <div class="arch-box">Agent Dashboard<small>React 18 SPA · Zustand · Real-time</small></div>
+      <div class="arch-box">Mobile App<small>React Native 0.73 · iOS &amp; Android</small></div>
+      <div class="arch-box">Admin Panel<small>Next.js 14 · SSR · Multi-tenant</small></div>
+    </div>
+  </div>
+  <div class="arch-arrow">↕ HTTPS / WSS — TLS 1.3 اجباری</div>
+  <!-- Layer 2 -->
+  <div class="arch-layer">
+    <div class="arch-layer-title">🚪 لایه ۲ · Edge &amp; Gateway</div>
+    <div class="arch-row">
+      <div class="arch-box">ArvanCloud CDN<small>Widget static files · فایل‌های ایستا</small></div>
+      <div class="arch-box">Nginx / Traefik<small>Reverse Proxy · SSL Termination</small></div>
+      <div class="arch-box">API Gateway<small>Rate Limit · Auth · Routing · CORS</small></div>
+      <div class="arch-box">WS Gateway (Go)<small>۵۰K+ concurrent · goroutine lightweight</small></div>
+    </div>
+  </div>
+  <div class="arch-arrow">↕ Internal gRPC / HTTP/2 — شبکه خصوصی</div>
+  <!-- Layer 3 -->
+  <div class="arch-layer">
+    <div class="arch-layer-title">⚙️ لایه ۳ · Core Microservices (Node.js + Go + Python)</div>
+    <div class="arch-row">
+      <div class="arch-box">Auth Service<small>JWT · OAuth2 · SSO · 2FA</small></div>
+      <div class="arch-box">Chat Service<small>پردازش پیام · تاریخچه · Read receipt</small></div>
+      <div class="arch-box">Bot Engine<small>AI · RAG · Chatbot · LangGraph</small></div>
+      <div class="arch-box">Notification<small>Push FCM/APNs · Email · SMS</small></div>
+      <div class="arch-box">Analytics<small>ClickHouse · گزارش · CSAT</small></div>
+      <div class="arch-box">File Service<small>MinIO S3-compatible · Presigned URL</small></div>
+      <div class="arch-box">Billing<small>ZarinPal · Subscription · Invoice</small></div>
+      <div class="arch-box">Workflow Engine<small>Trigger · Condition · Action · بدون کد</small></div>
+    </div>
+  </div>
+  <div class="arch-arrow">↕ Redis Pub/Sub + BullMQ Queue — پیام‌رسانی داخلی</div>
+  <!-- Layer 4 -->
+  <div class="arch-layer">
+    <div class="arch-layer-title">🗄️ لایه ۴ · Data Layer</div>
+    <div class="arch-row">
+      <div class="arch-box">PostgreSQL 16<small>داده اصلی · Multi-tenant Schema</small></div>
+      <div class="arch-box">Redis 7 Cluster<small>Cache · Pub/Sub · Session · Queue</small></div>
+      <div class="arch-box">Elasticsearch 8<small>جستجوی پیام فارسی · Full-text</small></div>
+      <div class="arch-box">ClickHouse<small>Analytics OLAP · Time-series</small></div>
+      <div class="arch-box">MinIO<small>Object Storage · فایل و رسانه</small></div>
+      <div class="arch-box">Qdrant<small>Vector DB · AI Embedding · Knowledge Base</small></div>
+    </div>
+  </div>
+  <div class="arch-arrow">↕ Observability — مانیتور همه لایه‌ها</div>
+  <!-- Layer 5 -->
+  <div class="arch-layer">
+    <div class="arch-layer-title">📊 لایه ۵ · Observability Stack</div>
+    <div class="arch-row">
+      <div class="arch-box">Prometheus + Grafana<small>Metrics · Dashboard · Alert</small></div>
+      <div class="arch-box">Loki<small>Log Aggregation · جستجوی لاگ</small></div>
+      <div class="arch-box">Jaeger<small>Distributed Tracing · Span</small></div>
+      <div class="arch-box">Sentry<small>Error Tracking · Stack trace · User context</small></div>
+      <div class="arch-box">Uptime Kuma<small>Status Page عمومی · Health Check</small></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🔄 جریان کامل یک پیام — از مشتری تا اپراتور</h3>
+
+  <div class="code-block"><span class="cm">مشتری تایپ می‌کند</span>
+  → Widget [Vanilla JS] <span class="ck">WebSocket connect</span> به WS Gateway (Go)
+  → WS Gateway پیام دریافت → Chat Service (Node.js) <span class="ck">gRPC call</span>
+  → Chat Service: <span class="cs">validation</span> → <span class="cs">DB write (PostgreSQL)</span>
+                → <span class="cn">Redis Pub/Sub</span> event publish: <span class="cs">"conversation:{id}:message"</span>
+  → تمام WS Serverها subscribe به Redis
+                → پیام به <span class="ck">اپراتور آنلاین push</span> می‌شود (زیر ۵۰ms)
+
+  <span class="cm">اگر اپراتور آفلاین:</span>
+  → BullMQ job → Notification Service
+                → <span class="cn">Push notification</span> (FCM / APNs) + Email
+
+  <span class="cm">موازی — بدون تأخیر روی پیام اصلی:</span>
+  → Bot Engine: آنالیز پیام → پیشنهاد پاسخ (AI Copilot)
+  → Analytics Service: <span class="cs">event log</span> → ClickHouse (async، non-blocking)</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">🏢</span>
+      <h3>Multi-Tenancy Strategy</h3>
+      <ul>
+        <li>Schema-per-tenant در PostgreSQL تا ۱۰۰۰ workspace</li>
+        <li>Row-level Security (RLS) با tenant_id برای مقیاس بزرگ‌تر</li>
+        <li>جداسازی Redis با prefix: <code style="color:#43e97b;font-size:11px">ws:{tenant_id}:*</code></li>
+        <li>S3/MinIO: جداسازی bucket یا prefix per tenant</li>
+        <li>Rate limiting per tenant در API Gateway</li>
+        <li>هر workspace سقف مشخص CPU، RAM، Storage دارد</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📈</span>
+      <h3>مقیاس‌پذیری افقی</h3>
+      <ul>
+        <li>WS Gateway (Go): کاملاً stateless، horizontal scale</li>
+        <li>HorizontalPodAutoscaler در K8s بر اساس WS connection count</li>
+        <li>PgBouncer: Connection pooling جلوی PostgreSQL</li>
+        <li>Redis Cluster: sharding خودکار برای مقیاس بالا</li>
+        <li>CDN ArvanCloud: ویجت JS از edge، بدون origin hit</li>
+        <li>Kafka در فاز ۴: جایگزین Redis Pub/Sub برای ۱M+ msg/s</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 2. TECH STACK ===================== -->
+<div class="section" id="stack">
+  <div class="section-header">
+    <div class="section-tag tag-blue">۲ · استک</div>
+    <h2>Tech Stack کامل و انتخاب‌های فنی</h2>
+    <p class="section-desc">هر انتخاب دلیل فنی مشخص دارد — نه فقط محبوبیت.</p>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <h3>🎨 Frontend</h3>
+      <div style="margin:10px 0">
+        <span class="tech-badge">⚛️ React 18</span>
+        <span class="tech-badge">⏭️ Next.js 14</span>
+        <span class="tech-badge">📘 TypeScript 5</span>
+        <span class="tech-badge">🐻 Zustand</span>
+        <span class="tech-badge">🔌 Socket.io Client</span>
+        <span class="tech-badge">🌐 i18next RTL</span>
+        <span class="tech-badge">🎨 Tailwind CSS</span>
+        <span class="tech-badge">📊 Recharts</span>
+        <span class="tech-badge">📱 React Native 0.73</span>
+        <span class="tech-badge">🧩 Radix UI</span>
+        <span class="tech-badge">🔍 TanStack Query</span>
+      </div>
+      <div class="alert alert-orange" style="margin-top:12px">
+        ⚡ ویجت حتماً <strong>Vanilla JS</strong> — بدون هیچ framework. باید روی هر سایتی (حتی IE11 کامپایل‌شده) لود شود. حجم زیر ۳۰KB gzipped. هر کتابخانه‌ای که اضافه کنی ممکن است با سایت مشتری conflict کند.
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚙️ Backend</h3>
+      <div style="margin:10px 0">
+        <span class="tech-badge">🟢 Node.js 20 LTS</span>
+        <span class="tech-badge">🏗️ NestJS Framework</span>
+        <span class="tech-badge">⚡ Fastify</span>
+        <span class="tech-badge">🔌 Socket.io 4</span>
+        <span class="tech-badge">🐹 Go 1.22 (WS Gateway)</span>
+        <span class="tech-badge">🐍 Python 3.12 (AI)</span>
+        <span class="tech-badge">📨 BullMQ</span>
+        <span class="tech-badge">🔗 gRPC (بین سرویس‌ها)</span>
+        <span class="tech-badge">📐 GraphQL (داشبورد)</span>
+        <span class="tech-badge">✅ Zod (validation)</span>
+      </div>
+      <div class="alert alert-blue" style="margin-top:12px">
+        🐹 <strong>چرا Go برای WS Gateway؟</strong> Node.js در ۵۰K+ concurrent connection به مشکل می‌خورد. goroutineهای Go بسیار سبک‌تر از thread هستند — یک سرور ۱۶ core می‌تواند ۵۰K connection را راحت handle کند.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <h3>🗄️ Database Stack</h3>
+      <table class="pricing-table" style="margin-top:12px">
+        <thead><tr><th>سرویس</th><th>کاربرد اصلی</th><th>چرا انتخاب شد</th></tr></thead>
+        <tbody>
+          <tr><td class="t-head">PostgreSQL 16</td><td>داده اصلی، مکالمات، کاربران</td><td>ACID، RLS، JSONB، Full-text</td></tr>
+          <tr><td class="t-head">Redis 7 Cluster</td><td>Cache، Pub/Sub، Session</td><td>کم‌تأخیر، Pub/Sub native</td></tr>
+          <tr><td class="t-head">Elasticsearch 8</td><td>جستجو در پیام‌های فارسی</td><td>Analyzer فارسی، Full-text</td></tr>
+          <tr><td class="t-head">ClickHouse</td><td>Analytics، گزارش‌های تیم</td><td>OLAP، ۱M row/s insert</td></tr>
+          <tr><td class="t-head">MinIO</td><td>فایل، تصویر، صوت</td><td>S3-compatible، self-hosted</td></tr>
+          <tr><td class="t-head">Qdrant</td><td>Vector embedding، AI search</td><td>جستجوی semantic Knowledge Base</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🤖 AI/ML Stack</h3>
+      <table class="pricing-table" style="margin-top:12px">
+        <thead><tr><th>کامپوننت</th><th>ابزار پیشنهادی</th></tr></thead>
+        <tbody>
+          <tr><td>LLM اصلی</td><td><span class="wbadge wb-purple">GPT-4o API</span><span class="wbadge wb-purple">Claude API</span></td></tr>
+          <tr><td>مدل فارسی</td><td><span class="wbadge wb-blue">Aya-23 Cohere</span><span class="wbadge wb-blue">Llama 3 fine-tuned</span></td></tr>
+          <tr><td>Embedding</td><td><span class="wbadge wb-green">text-embedding-3-small</span></td></tr>
+          <tr><td>RAG Pipeline</td><td><span class="wbadge wb-orange">LangChain + Qdrant</span></td></tr>
+          <tr><td>Agent Orchestration</td><td><span class="wbadge wb-purple">LangGraph</span></td></tr>
+          <tr><td>AI Gateway</td><td><span class="wbadge wb-teal">LiteLLM (fallback)</span></td></tr>
+          <tr><td>Sentiment فارسی</td><td><span class="wbadge wb-green">ParsBERT</span></td></tr>
+        </tbody>
+      </table>
+      <div class="alert alert-green" style="margin-top:12px">
+        💡 <strong>LiteLLM</strong> را به عنوان AI Gateway قرار بده تا بتوانی بین OpenAI، Anthropic و مدل‌های محلی سوئیچ کنی — بدون تغییر کد.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>☁️ Infrastructure Stack</h3>
+      <div>
+        <span class="tech-badge">🐳 Docker + Compose (dev)</span>
+        <span class="tech-badge">☸️ Kubernetes 1.29 (prod)</span>
+        <span class="tech-badge">⛵ Helm Charts</span>
+        <span class="tech-badge">🏗️ Terraform (IaC)</span>
+        <span class="tech-badge">🌩️ ArvanCloud (ایران)</span>
+        <span class="tech-badge">🇩🇪 Hetzner (خارج backup)</span>
+        <span class="tech-badge">🔀 Nginx Ingress</span>
+        <span class="tech-badge">🔐 cert-manager</span>
+        <span class="tech-badge">🐙 GitHub Actions</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔧 Dev Toolchain</h3>
+      <div>
+        <span class="tech-badge">📦 pnpm Monorepo</span>
+        <span class="tech-badge">⚡ Turborepo</span>
+        <span class="tech-badge">🧪 Jest + Vitest</span>
+        <span class="tech-badge">🎭 Playwright E2E</span>
+        <span class="tech-badge">📊 k6 Load Test</span>
+        <span class="tech-badge">📚 Storybook</span>
+        <span class="tech-badge">🔷 Prisma ORM</span>
+        <span class="tech-badge">🛡️ Semgrep Security</span>
+        <span class="tech-badge">🎯 tRPC</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 3. REAL-TIME ===================== -->
+<div class="section" id="realtime">
+  <div class="section-header">
+    <div class="section-tag tag-green">۳ · ریل‌تایم</div>
+    <h2>Real-time Engine — قلب سیستم</h2>
+    <p class="section-desc">بحرانی‌ترین بخش فنی کل پروژه. هر باگ اینجا مستقیم مشتری می‌بیند.</p>
+  </div>
+
+  <div class="alert alert-red">
+    🚨 <strong>هشدار:</strong> این بخش را از ابتدا درست طراحی کنید. Migration از polling به WebSocket بعد از launch هزینه بسیار بالایی دارد و همه مشتریان را تحت‌تأثیر می‌گذارد.
+  </div>
+
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card">
+      <span class="card-icon">🔌</span>
+      <h3>WebSocket Architecture</h3>
+      <ul>
+        <li>WS Gateway با Go — هدف: ۵۰K concurrent روی یک سرور ۱۶ core</li>
+        <li>هر connection یک goroutine سبک — نه thread سنگین OS</li>
+        <li>Heartbeat هر ۳۰ ثانیه — تشخیص connection مرده</li>
+        <li>Reconnection با exponential backoff در Client</li>
+        <li>Socket.io Redis Adapter — همه serverها sync هستند</li>
+        <li>Sticky sessions در Load Balancer (IP hash)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📬</span>
+      <h3>Message Delivery Guarantee</h3>
+      <ul>
+        <li>هر پیام یک UUID دارد — idempotency key</li>
+        <li>Client ACK — سرور منتظر تأیید است</li>
+        <li>Retry logic: ۳ بار، سپس fallback به HTTP polling</li>
+        <li>Offline queue: پیام‌های فرستاده‌نشده در IndexedDB</li>
+        <li>Read receipt دو مرحله‌ای: Delivered + Seen</li>
+        <li>At-least-once delivery با deduplication در Chat Service</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="color:var(--heading);margin:24px 0 12px;font-size:17px">🏠 Room/Channel Strategy</h3>
+  <div class="code-block"><span class="cm">// هر مکالمه یک Room مجزاست</span>
+socket.<span class="ck">join</span>(<span class="cs">`conversation:${conversationId}`</span>)
+
+<span class="cm">// هر workspace channel خودش را دارد</span>
+socket.<span class="ck">join</span>(<span class="cs">`workspace:${workspaceId}`</span>)
+
+<span class="cm">// اپراتورها channel اختصاصی دارند</span>
+socket.<span class="ck">join</span>(<span class="cs">`agent:${agentId}`</span>)
+
+<span class="cm">// رویدادهای اصلی — server → client:</span>
+<span class="cn">'message:new'</span>        <span class="cm">// پیام جدید از مشتری</span>
+<span class="cn">'message:seen'</span>       <span class="cm">// مشتری پیام را دید</span>
+<span class="cn">'typing:start'</span>       <span class="cm">// تایپینگ indicator</span>
+<span class="cn">'typing:stop'</span>        <span class="cm">// توقف تایپ</span>
+<span class="cn">'agent:assigned'</span>     <span class="cm">// اپراتور به مکالمه اضافه شد</span>
+<span class="cn">'conversation:close'</span> <span class="cm">// مکالمه بسته شد</span>
+<span class="cn">'visitor:online'</span>     <span class="cm">// بازدیدکننده آنلاین شد</span></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">⌨️</span>
+      <h3>Typing Indicator — جزئیات پیاده‌سازی</h3>
+      <ul>
+        <li>Debounce 300ms قبل از ارسال typing:start</li>
+        <li>Timeout خودکار ۳ ثانیه برای typing:stop</li>
+        <li>فقط به اپراتور مربوطه آن مکالمه ارسال می‌شود</li>
+        <li>در Redis با TTL 3s — هیچ‌وقت به DB نمی‌نشیند</li>
+        <li>در فرم آفلاین نمایش داده نمی‌شود</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🚧</span>
+      <h3>Scaling Bottlenecks — باید بدانید</h3>
+      <ul>
+        <li>Redis Pub/Sub در ۱۰۰K+ msg/s به bottleneck می‌رسد — فاز ۴: Kafka</li>
+        <li>Elasticsearch write lag در spike — async indexing با buffer</li>
+        <li>Presence (آنلاین/آفلاین) — TTL-based در Redis، نه event</li>
+        <li>File upload به WS نرود — مستقیم presigned URL به MinIO</li>
+        <li>AI response زمان‌بر است — streaming SSE برای Copilot</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="color:var(--heading);margin:24px 0 12px;font-size:17px">👁️ Visitor Tracking — بدون کوکی Third-party</h3>
+  <div class="code-block"><span class="cm">// Fingerprint ترکیبی — Privacy-first</span>
+<span class="ck">const</span> visitorId = <span class="cs">hash</span>(
+  userAgent + screenResolution + timezone +
+  language + canvasFingerprint + webglHash
+)
+
+<span class="cm">// ذخیره در localStorage خود ویجت</span>
+<span class="cm">// Track رویدادها:</span>
+<span class="cn">'pageview'</span>     <span class="cm">// کاربر صفحه جدیدی باز کرد</span>
+<span class="cn">'time_on_page'</span> <span class="cm">// مدت حضور روی صفحه</span>
+<span class="cn">'scroll_depth'</span> <span class="cm">// چقدر اسکرول کرده</span>
+<span class="cn">'exit_intent'</span>  <span class="cm">// ماوس به سمت بالای صفحه رفت</span>
+
+<span class="cm">// Proactive trigger rule:</span>
+<span class="ck">if</span> (time_on_page > <span class="cn">60s</span> && currentPage === <span class="cs">'pricing'</span>) {
+  widget.<span class="cs">openWithMessage</span>(<span class="cn">'سوالی در مورد قیمت‌ها دارید؟'</span>)
+}</div>
+</div>
+
+<!-- ===================== 4. DATABASE ===================== -->
+<div class="section" id="database">
+  <div class="section-header">
+    <div class="section-tag tag-orange">۴ · دیتابیس</div>
+    <h2>طراحی دیتابیس و داده‌ها</h2>
+    <p class="section-desc">Schema چندلایه با جداسازی کامل tenant و optimization برای query‌های ریل‌تایم.</p>
+  </div>
+
+  <div class="alert alert-orange">
+    ⚠️ استراتژی <strong>Multi-tenancy</strong>: Schema-per-tenant برای isolation کامل تا ۱۰۰۰ workspace. بعد از آن به Row-level Security (RLS) با tenant_id migrate کنید. این تصمیم از اول باید گرفته شود.
+  </div>
+
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card">
+      <h3>📋 Core Tables — PostgreSQL</h3>
+      <div class="code-block"><span class="cm">-- هر کسب‌وکار یک Workspace است</span>
+<span class="ck">workspaces</span>: id, slug, name, plan, settings, created_at
+
+<span class="cm">-- اپراتورهای داشبورد</span>
+<span class="ck">agents</span>: id, workspace_id, email, role,
+         status, last_seen, settings
+
+<span class="cm">-- بازدیدکنندگان سایت‌های مشتریان</span>
+<span class="ck">contacts</span>: id, workspace_id, visitor_id,
+          name, email, phone, meta, created_at
+
+<span class="cm">-- مکالمات</span>
+<span class="ck">conversations</span>: id, workspace_id, contact_id,
+               agent_id, channel, status,
+               priority, tags[], first_reply_at
+
+<span class="cm">-- پیام‌ها — بزرگ‌ترین جدول</span>
+<span class="ck">messages</span>: id, conversation_id, sender_type,
+          sender_id, content, type,
+          attachments[], status, created_at
+
+<span class="cm">-- Knowledge Base برای AI</span>
+<span class="ck">kb_articles</span>: id, workspace_id, title,
+             content, embedding_id, published
+
+<span class="cm">-- لاگ همه اکشن‌های admin</span>
+<span class="ck">audit_logs</span>: id, workspace_id, actor_id,
+           action, resource_type, meta, ip</div>
+    </div>
+    <div class="card">
+      <h3>⚡ Critical Indexes</h3>
+      <div class="code-block"><span class="cm">-- مکالمه‌های یک workspace — متداول‌ترین query</span>
+<span class="ck">CREATE INDEX</span> idx_conv_workspace_status
+  <span class="ck">ON</span> conversations(workspace_id, status, created_at <span class="cs">DESC</span>);
+
+<span class="cm">-- پیام‌های یک مکالمه (pagination)</span>
+<span class="ck">CREATE INDEX</span> idx_msg_conversation_time
+  <span class="ck">ON</span> messages(conversation_id, created_at <span class="cs">DESC</span>);
+
+<span class="cm">-- جستجوی contact با ایمیل</span>
+<span class="ck">CREATE INDEX</span> idx_contact_workspace_email
+  <span class="ck">ON</span> contacts(workspace_id, email);
+
+<span class="cm">-- Visitor lookup (بدون کوکی)</span>
+<span class="ck">CREATE INDEX</span> idx_contact_visitor_id
+  <span class="ck">ON</span> contacts(visitor_id)
+  <span class="cs">WHERE</span> visitor_id <span class="ck">IS NOT NULL</span>;
+
+<span class="cm">-- Full-text search فارسی (backup برای ES)</span>
+<span class="ck">CREATE INDEX</span> idx_msg_fts <span class="ck">ON</span> messages
+  <span class="ck">USING GIN</span>(to_tsvector(<span class="cs">'simple'</span>, content));</div>
+
+      <div class="alert alert-green" style="margin-top:12px">
+        💡 همیشه <strong>EXPLAIN ANALYZE</strong> را روی query‌های production اجرا کنید. N+1 query در لود بالا سیستم را از پا در می‌آورد.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>📊 ClickHouse — Analytics Schema</h3>
+      <div class="code-block"><span class="cm">-- رویدادهای time-series (فقط insert — نه update)</span>
+<span class="ck">CREATE TABLE</span> events (
+  workspace_id  UUID,
+  event_type    String,    <span class="cm">-- 'message'، 'conversation_open'</span>
+  conversation_id UUID,
+  agent_id      UUID,
+  visitor_id    String,
+  value         Float64,   <span class="cm">-- زمان پاسخ، CSAT score</span>
+  meta          String,    <span class="cm">-- JSON metadata</span>
+  created_at    DateTime
+) <span class="ck">ENGINE = MergeTree()</span>
+<span class="cs">PARTITION BY</span> toYYYYMM(created_at)
+<span class="cs">ORDER BY</span> (workspace_id, created_at)
+<span class="cs">TTL</span> created_at + <span class="cn">INTERVAL 2 YEAR</span>;</div>
+    </div>
+    <div class="card">
+      <h3>🔴 Redis Key Schema</h3>
+      <div class="code-block"><span class="cm">-- Online presence اپراتور (TTL 60s — heartbeat)</span>
+ws:presence:{workspace_id}:{agent_id} = <span class="cs">"online"</span>
+
+<span class="cm">-- مکالمه‌های فعال هر اپراتور</span>
+ws:agent_convs:{agent_id} = <span class="cn">Set</span>{conv_id,...}
+
+<span class="cm">-- Typing indicator (TTL 3s)</span>
+ws:typing:{conversation_id}:{sender_id} = <span class="cs">"1"</span>
+
+<span class="cm">-- Session cache (نه DB hit هر request)</span>
+session:{token_hash} = {user_json} <span class="cn">TTL 24h</span>
+
+<span class="cm">-- Rate limiting</span>
+ratelimit:{ip}:{endpoint} = count <span class="cn">TTL 60s</span>
+
+<span class="cm">-- Notification queue jobs</span>
+bull:{workspace}:notifications = <span class="cs">queue</span></div>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h3>📦 Migration Strategy — Zero Downtime</h3>
+    <p style="color:var(--muted)">
+      <strong style="color:var(--text)">۱. Prisma Migrate:</strong> schema version control — هر تغییر یک migration file مجزا.<br>
+      <strong style="color:var(--text)">۲. Backward Compatible:</strong> هیچ column را مستقیم حذف یا rename نکنید. ابتدا column جدید اضافه کنید، در release بعد قدیمی را حذف کنید.<br>
+      <strong style="color:var(--text)">۳. Read Replica:</strong> یک replica جداگانه فقط برای dashboard queries و analytics — بار از primary کم می‌شود.<br>
+      <strong style="color:var(--text)">۴. WAL Archiving:</strong> Point-in-time recovery با حداقل ۷ روز undo. اشتباهات را می‌توانید برگردانید.
+    </p>
+  </div>
+</div>
+
+<!-- ===================== 5. AI AGENTS ===================== -->
+<div class="section" id="agents">
+  <div class="section-header">
+    <div class="section-tag tag-purple">۵ · AI Agents</div>
+    <h2>AI Agentهای مورد نیاز برای توسعه</h2>
+    <p class="section-desc">این agentها ابزارهای AI هستند که تیم توسعه در ساخت پلتفرم از آن‌ها استفاده می‌کند — نه featureهای محصول.</p>
+  </div>
+
+  <div class="alert alert-purple">
+    💡 <strong>اولویت‌بندی:</strong> از <strong>Claude Code + Cursor + Security Agent</strong> شروع کنید. این سه بیشترین ROI را دارند. بقیه agentها مرحله به مرحله در workflow ادغام شوند.
+  </div>
+
+  <div class="grid-3" style="margin-top:20px">
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(56,189,248,0.15)">🏗️</div>
+      <h3>Architecture Agent</h3>
+      <div class="role">Claude API / GPT-4o</div>
+      <p>طراحی معماری میکروسرویس، تصمیم‌گیری فنی، بررسی trade-off، پیشنهاد design pattern، نوشتن RFC</p>
+      <div class="pill-row">
+        <span class="pill">API design review</span>
+        <span class="pill">DB schema</span>
+        <span class="pill">RFC نوشتن</span>
+        <span class="pill">Tech debt</span>
+      </div>
+      <div class="alert alert-blue" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> Claude API + cursor با کل codebase در context window
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(67,233,123,0.15)">⚙️</div>
+      <h3>Backend Code Agent</h3>
+      <div class="role">Claude Code CLI</div>
+      <p>نوشتن سرویس‌های Node.js و Go، migration فایل‌ها، unit test، endpoint‌های API</p>
+      <div class="pill-row">
+        <span class="pill">NestJS module</span>
+        <span class="pill">Prisma migration</span>
+        <span class="pill">Go WS handler</span>
+        <span class="pill">gRPC proto</span>
+      </div>
+      <div class="alert alert-green" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> Claude Code CLI — اجرا در terminal با دسترسی مستقیم به فایل‌ها
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(108,99,255,0.15)">⚛️</div>
+      <h3>Frontend Code Agent</h3>
+      <div class="role">Cursor / v0.dev</div>
+      <p>کامپوننت‌های React، داشبورد اپراتور، ویجت Vanilla JS، پشتیبانی RTL و فارسی</p>
+      <div class="pill-row">
+        <span class="pill">RTL component</span>
+        <span class="pill">Widget JS</span>
+        <span class="pill">Storybook</span>
+        <span class="pill">Accessibility</span>
+      </div>
+      <div class="alert alert-purple" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> v0.dev برای کامپوننت اولیه + Cursor برای refine
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(247,151,30,0.15)">🧪</div>
+      <h3>QA / Test Agent</h3>
+      <div class="role">Claude + Playwright</div>
+      <p>نوشتن test case، E2E test، load test با k6، fuzzing، پیدا کردن edge case</p>
+      <div class="pill-row">
+        <span class="pill">Playwright E2E</span>
+        <span class="pill">k6 load test</span>
+        <span class="pill">Jest unit</span>
+        <span class="pill">Bug report</span>
+      </div>
+      <div class="alert alert-orange" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> Claude API + اجرای خودکار در CI/CD pipeline
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(20,184,166,0.15)">🚀</div>
+      <h3>DevOps / Infra Agent</h3>
+      <div class="role">Claude + Terraform</div>
+      <p>نوشتن Helm chart، Terraform module، Dockerfile بهینه، CI/CD pipeline، alert rule</p>
+      <div class="pill-row">
+        <span class="pill">Helm chart</span>
+        <span class="pill">Terraform</span>
+        <span class="pill">Dockerfile</span>
+        <span class="pill">K8s manifest</span>
+      </div>
+      <div class="alert alert-green" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> Claude Code با دسترسی به infra repo
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(239,68,68,0.15)">🔒</div>
+      <h3>Security Audit Agent</h3>
+      <div class="role">Claude + Semgrep</div>
+      <p>بررسی کد برای آسیب‌پذیری، SQL injection، XSS، OWASP Top 10، بررسی dependency</p>
+      <div class="pill-row">
+        <span class="pill">OWASP scan</span>
+        <span class="pill">Dep audit</span>
+        <span class="pill">Secret detect</span>
+        <span class="pill">Pentest</span>
+      </div>
+      <div class="alert alert-red" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> Semgrep + Claude API در CI — هر PR اسکن می‌شود
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(255,101,132,0.15)">📚</div>
+      <h3>Documentation Agent</h3>
+      <div class="role">Claude API</div>
+      <p>نوشتن API doc، README، راهنمای نصب ویجت، changelog، مستندات فارسی</p>
+      <div class="pill-row">
+        <span class="pill">OpenAPI doc</span>
+        <span class="pill">JSDoc</span>
+        <span class="pill">README فارسی</span>
+        <span class="pill">Changelog</span>
+      </div>
+      <div class="alert alert-blue" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> GitHub Actions — doc auto-update بعد از PR merge
+      </div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-num" style="background:rgba(108,99,255,0.15)">🤖</div>
+      <h3>AI Feature Agent (داخل محصول)</h3>
+      <div class="role">LangGraph + LiteLLM</div>
+      <p>این خود محصول است: chatbot، AI Copilot اپراتور، خلاصه مکالمه، sentiment analysis فارسی</p>
+      <div class="pill-row">
+        <span class="pill">RAG pipeline</span>
+        <span class="pill">KB training</span>
+        <span class="pill">Auto-reply</span>
+        <span class="pill">Sentiment</span>
+      </div>
+      <div class="alert alert-orange" style="margin-top:12px;font-size:12px">
+        <strong>ابزار:</strong> LangGraph + LiteLLM برای multi-model orchestration
+      </div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box" style="margin-top:20px">
+    <h3>🔄 ادغام Agentها در Workflow توسعه</h3>
+    <div class="code-block"><span class="cm">Pull Request باز می‌شود:</span>
+  ۱. Security Agent → Semgrep scan + Claude code review
+  ۲. QA Agent    → unit test auto-generate (اگر coverage کم است)
+  ۳. Doc Agent   → JSDoc update برای تابع‌های public جدید
+
+<span class="cm">شبانه (cron job ۲ بامداد):</span>
+  ۴. Architecture Agent → بررسی circular dependency + tech debt
+  ۵. Performance Agent  → آنالیز query plan + N+1 query detector
+
+<span class="cm">بعد از deploy به staging:</span>
+  ۶. QA Agent       → E2E test کامل با Playwright headless
+  ۷. Load Test Agent → k6 برای WebSocket + API endpoints
+  ۸. Security Agent  → penetration test سبک</div>
+  </div>
+</div>
+
+<!-- ===================== 6. SECURITY ===================== -->
+<div class="section" id="security">
+  <div class="section-header">
+    <div class="section-tag tag-red">۶ · امنیت</div>
+    <h2>امنیت لایه‌به‌لایه</h2>
+    <p class="section-desc">امنیت باید از روز اول در architecture باشد — نه بعداً اضافه شود.</p>
+  </div>
+
+  <div class="alert alert-red">
+    🛡️ <strong>اصل اساسی:</strong> هر tenant باید کاملاً ایزوله باشد. یک tenant نباید بتواند داده tenant دیگر را ببیند — حتی در صورت باگ در کد. این با RLS در PostgreSQL و prefix جداگانه در Redis تضمین می‌شود.
+  </div>
+
+  <div class="grid-2" style="margin-top:20px">
+    <div class="card">
+      <span class="card-icon">🔑</span>
+      <h3>Authentication &amp; Authorization</h3>
+      <ul>
+        <li>JWT با access token کوتاه (۱۵ دقیقه) + refresh token (۷ روز)</li>
+        <li>Refresh token rotation — هر refresh یک token کاملاً جدید</li>
+        <li>Token revocation list در Redis (برای logout فوری)</li>
+        <li>OAuth2 / Social login برای agents</li>
+        <li>SAML/SSO برای Enterprise clients</li>
+        <li>RBAC: owner > admin > agent > viewer</li>
+        <li>2FA اجباری برای role admin و owner</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🛡️</span>
+      <h3>API Security</h3>
+      <ul>
+        <li>Rate limiting: ۱۰۰ req/min per IP (widget)، ۱۰۰۰ برای authenticated</li>
+        <li>CORS: فقط domain‌های ثبت‌شده workspace مجاز هستند</li>
+        <li>Webhook signature verification با HMAC-SHA256</li>
+        <li>Input validation با Zod در هر endpoint — بدون exception</li>
+        <li>SQL injection: Prisma ORM — هیچ raw query بدون parameterize</li>
+        <li>Content Security Policy header در داشبورد</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">🔐</span>
+      <h3>Data Encryption</h3>
+      <ul>
+        <li>TLS 1.3 برای همه traffic: HTTPS + WSS</li>
+        <li>داده حساس (ایمیل، شماره، پیام‌های حساس) با AES-256</li>
+        <li>Encryption at rest در PostgreSQL</li>
+        <li>MinIO: server-side encryption برای فایل‌ها</li>
+        <li>Environment secrets در K8s Secrets (HashiCorp Vault برای بلندمدت)</li>
+        <li>Backup‌ها رمزنگاری‌شده قبل از ذخیره در object storage</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🧱</span>
+      <h3>Widget Isolation — بحرانی</h3>
+      <ul>
+        <li>ویجت در iframe sandbox — دسترسی به DOM سایت اصلی ندارد</li>
+        <li>postMessage API برای ارتباط ایمن بین ویجت و سایت</li>
+        <li>هیچ API key در client-side نیست — فقط workspace_token عمومی</li>
+        <li>SRI (Subresource Integrity) برای script tag ویجت</li>
+        <li>CSP header از سمت ویجت JS</li>
+        <li>DDoS protection از طریق ArvanCloud WAF</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 7. DEVOPS ===================== -->
+<div class="section" id="devops">
+  <div class="section-header">
+    <div class="section-tag tag-blue">۷ · DevOps</div>
+    <h2>DevOps &amp; Infrastructure</h2>
+    <p class="section-desc">CI/CD کامل، مانیتورینگ جامع، و برنامه Disaster Recovery.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>☸️ Kubernetes Setup</h3>
+      <div class="code-block"><span class="cm">Namespaces:</span>
+  <span class="cs">production</span>/   <span class="cn">staging</span>/   <span class="ck">monitoring</span>/
+
+<span class="cm">هر سرویس یک Deployment مجزا:</span>
+  - Min <span class="cs">2 replicas</span> (High Availability)
+  - <span class="cn">HorizontalPodAutoscaler</span>
+  - <span class="ck">PodDisruptionBudget</span>
+  - Resource limits + requests مشخص
+
+<span class="cm">Ingress:</span>
+  - nginx-ingress-controller
+  - cert-manager (Let's Encrypt)
+  - WebSocket <span class="cs">sticky sessions</span> (ip_hash)
+
+<span class="cm">Storage:</span>
+  - PersistentVolume برای PostgreSQL
+  - StorageClass: local-path یا Ceph</div>
+    </div>
+    <div class="card">
+      <h3>🚀 CI/CD Pipeline</h3>
+      <div class="code-block"><span class="cm">Push به main branch:</span>
+۱. Lint + TypeScript type check
+۲. Unit tests (Jest + Vitest)
+۳. Security scan (Semgrep + npm audit)
+۴. Docker build + push (<span class="cs">multi-stage</span>)
+۵. Deploy به <span class="cn">staging</span> (Helm upgrade)
+۶. E2E tests (Playwright <span class="ck">headless</span>)
+۷. k6 smoke test (۱۰۰ concurrent)
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+۸. Manual <span class="cs">approve</span> → production deploy
+۹. <span class="cn">Canary</span>: 10% → 50% → 100%
+۱۰. Rollback خودکار: error rate > <span class="cn">1%</span></div>
+    </div>
+  </div>
+
+  <h3 style="color:var(--heading);margin:24px 0 16px;font-size:17px">📊 Monitoring Stack و Alert Rules</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>ابزارهای مانیتورینگ</h4>
+      <ul>
+        <li><strong style="color:var(--text)">Prometheus + Grafana</strong> — Metrics: CPU، RAM، WS connections، latency</li>
+        <li><strong style="color:var(--text)">Loki</strong> — Log aggregation از همه سرویس‌ها</li>
+        <li><strong style="color:var(--text)">Jaeger</strong> — Distributed tracing بین microserviceها</li>
+        <li><strong style="color:var(--text)">Sentry</strong> — Error tracking با stack trace و user context</li>
+        <li><strong style="color:var(--text)">Uptime Kuma</strong> — Status page عمومی برای مشتریان</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Alert Rules — آستانه‌ها</h4>
+      <table class="pricing-table">
+        <thead><tr><th>متریک</th><th>هشدار</th><th>بحران</th></tr></thead>
+        <tbody>
+          <tr><td>WS connections</td><td class="warn-c">&gt;40K</td><td class="t-red">&gt;48K</td></tr>
+          <tr><td>API latency P95</td><td class="warn-c">&gt;200ms</td><td class="t-red">&gt;500ms</td></tr>
+          <tr><td>Message fail rate</td><td class="warn-c">&gt;0.05%</td><td class="t-red">&gt;0.1%</td></tr>
+          <tr><td>DB connection pool</td><td class="warn-c">&gt;70%</td><td class="t-red">&gt;85%</td></tr>
+          <tr><td>Redis memory</td><td class="warn-c">&gt;70%</td><td class="t-red">&gt;85%</td></tr>
+          <tr><td>Error rate 5xx</td><td class="warn-c">&gt;0.1%</td><td class="t-red">&gt;0.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:20px">
+    <h3>💾 Backup &amp; Disaster Recovery</h3>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:var(--heading);margin-bottom:10px">استراتژی Backup</h4>
+        <ul class="card" style="background:transparent;border:none;padding:0">
+          <li>PostgreSQL: WAL streaming + pg_dump روزانه رمزنگاری‌شده</li>
+          <li>Retention: ۷ روز روزانه، ۴ هفته هفتگی، ۱۲ ماه ماهانه</li>
+          <li>ذخیره در ArvanCloud Object Storage + کپی Hetzner</li>
+          <li>MinIO: replication خودکار بین ایران و سرور خارج</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:var(--heading);margin-bottom:10px">اهداف بازیابی</h4>
+        <ul class="card" style="background:transparent;border:none;padding:0">
+          <li>RTO (بازیابی): زیر ۴ ساعت برای هر سناریو</li>
+          <li>RPO (از دست‌دادن داده): زیر ۱ ساعت</li>
+          <li>Failover test: ماهانه در staging محیط</li>
+          <li>Runbook مکتوب: مستند برای هر سناریوی بحران</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 8. IRAN CHALLENGES ===================== -->
+<div class="section" id="iran">
+  <div class="section-header">
+    <div class="section-tag tag-red">۸ · چالش‌های ایران</div>
+    <h2>چالش‌های فنی خاص بازار ایران</h2>
+    <p class="section-desc">مسائلی که باید از روز اول در architecture پیش‌بینی شوند.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">🌐</span>
+      <h3>WebSocket و فیلترینگ</h3>
+      <ul>
+        <li>فقط از پورت <strong style="color:var(--accent3)">۴۴۳ (WSS)</strong> استفاده کنید — پورت‌های دیگر ممکن است فیلتر شوند</li>
+        <li>Socket.io Fallback: اگر WS قطع شد → SSE → Long Polling خودکار</li>
+        <li>CDN ArvanCloud: ترافیک WebSocket را pass می‌کند</li>
+        <li>مانیتور: اگر &gt;۵٪ کاربران به polling رفتند → فوری alert</li>
+        <li>DNS over HTTPS برای widget load script</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">💱</span>
+      <h3>AI API — ریسک ارزی</h3>
+      <ul>
+        <li>OpenAI/Anthropic با دلار — ریسک بالای نوسان نرخ ارز</li>
+        <li>LiteLLM: سوئیچ بین مدل‌ها بر اساس هزینه و دسترسی</li>
+        <li>Cache پاسخ‌های مشابه در Redis — کاهش ۴۰-۶۰٪ هزینه API</li>
+        <li>Ollama + Llama محلی: fallback ارزان برای query‌های ساده</li>
+        <li>سقف ماهانه AI credit per workspace — کنترل هزینه</li>
+        <li>Cost tracking روزانه per workspace در ClickHouse</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">💳</span>
+      <h3>درگاه پرداخت ایرانی</h3>
+      <div class="code-block"><span class="cm">// Multi-gateway fallback chain</span>
+<span class="ck">const</span> gateways = [ZarinPal, IDPay, PayIr]
+
+<span class="cm">// مشکل بزرگ: recurring billing</span>
+<span class="cm">// بانک‌های ایران auto-charge ندارند</span>
+<span class="cm">// راه‌حل:</span>
+<span class="cs">۱.</span> Grace period ۷ روزه + reminder ایمیل
+<span class="cs">۲.</span> Invoice با لینک پرداخت دستی
+<span class="cs">۳.</span> Wallet داخلی (شارژ و کسر)
+<span class="cs">۴.</span> اتوپی اگر درگاه اجازه دهد</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔤</span>
+      <h3>جستجوی فارسی — Elasticsearch</h3>
+      <div class="code-block"><span class="cm">// تنظیم analyzer فارسی</span>
+<span class="ck">PUT</span> /messages {
+  <span class="cs">"analysis"</span>: {
+    <span class="cs">"analyzer"</span>: {
+      <span class="cn">"persian"</span>: {
+        <span class="cs">"tokenizer"</span>: <span class="cn">"standard"</span>,
+        <span class="cs">"filter"</span>: [
+          <span class="cn">"arabic_normalization"</span>,
+          <span class="cn">"persian_normalization"</span>
+        ]
+      }
+    }
+  }
+}
+<span class="cm">// Hazm library برای NLP فارسی</span></div>
+    </div>
+    <div class="card">
+      <span class="card-icon">↕️</span>
+      <h3>RTL در Widget و داشبورد</h3>
+      <div class="code-block"><span class="cm">// تشخیص خودکار جهت هر پیام</span>
+<span class="ck">function</span> <span class="cs">detectDir</span>(text) {
+  <span class="ck">const</span> rtl = /[\u0600-\u06ff]/
+  <span class="ck">return</span> rtl.test(text) ? <span class="cn">'rtl'</span> : <span class="cn">'ltr'</span>
+}
+<span class="cm">// هر bubble جهت مستقل دارد</span>
+<span class="cm">// Font stack فارسی:</span>
+font-family: <span class="cs">'Vazirmatn'</span>, <span class="cn">'Tahoma'</span>, sans-serif;</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">☁️</span>
+      <h3>زیرساخت Hybrid — دو منطقه‌ای</h3>
+      <ul>
+        <li><strong style="color:var(--accent3)">Primary:</strong> ArvanCloud ایران — همه سرویس‌ها، داده مشتریان</li>
+        <li><strong style="color:var(--accent5)">Secondary:</strong> Hetzner آلمان — Backup، DR، AI API proxy</li>
+        <li>DNS Failover: قطعی ArvanCloud → redirect به Hetzner</li>
+        <li>Replication یک‌طرفه: ایران → خارج (داده فقط در ایران اصلی است)</li>
+        <li>خدمات خارجی از طریق سرور Hetzner: Stripe، AWS SES</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 9. ROADMAP ===================== -->
+<div class="section" id="roadmap">
+  <div class="section-header">
+    <div class="section-tag tag-green">۹ · نقشه راه فنی</div>
+    <h2>نقشه راه فنی دقیق — ۱۸ ماه</h2>
+    <p class="section-desc">هر phase با deliverable فنی مشخص و معیار موفقیت قابل اندازه‌گیری.</p>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric"><div class="metric-val" style="color:#6c63ff">۳</div><div class="metric-lbl">ماه تا MVP</div></div>
+    <div class="metric"><div class="metric-val" style="color:#f7971e">۶</div><div class="metric-lbl">ماه تا AI Features</div></div>
+    <div class="metric"><div class="metric-val" style="color:#ff6584">۹</div><div class="metric-lbl">ماه تا Omnichannel</div></div>
+    <div class="metric"><div class="metric-val" style="color:#43e97b">۱۲</div><div class="metric-lbl">ماه تا Enterprise</div></div>
+    <div class="metric"><div class="metric-val" style="color:#38bdf8">۱۸</div><div class="metric-lbl">ماه تا Ecosystem</div></div>
+  </div>
+
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-phase">هفته ۱–۲</div>
+      <h3>🏗️ Foundation — زیرساخت اولیه</h3>
+      <p>Setup محیط توسعه و CI/CD</p>
+      <ul>
+        <li>pnpm Monorepo + Turborepo — همه packages در یک repo</li>
+        <li>Docker Compose: Postgres، Redis، MinIO برای local dev</li>
+        <li>GitHub Actions: lint، test، build pipeline</li>
+        <li>NestJS boilerplate با Multi-tenant middleware</li>
+        <li>PostgreSQL schema اولیه: workspaces، agents، conversations، messages</li>
+        <li>Auth Service: JWT + refresh token + middleware</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-phase">هفته ۳–۴</div>
+      <h3>🔌 Real-time Core — قلب سیستم</h3>
+      <p>WebSocket و ارسال پیام اول</p>
+      <ul>
+        <li>WS Gateway با Go: accept connection، basic routing</li>
+        <li>Socket.io 4 با Redis Adapter در Node.js</li>
+        <li>Chat Service: send، receive، store، retrieve message</li>
+        <li>Room management: join/leave conversation room</li>
+        <li>Typing indicator با Redis TTL</li>
+        <li>Widget skeleton Vanilla JS: connect به WS، send/receive</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent4)"></div>
+      <div class="timeline-phase" style="background:rgba(247,151,30,0.15);color:var(--accent4)">ماه ۲</div>
+      <h3>📱 Dashboard &amp; Widget — رابط کاربری</h3>
+      <p>ساخت داشبورد کامل اپراتور و ویجت قابل نصب</p>
+      <ul>
+        <li>داشبورد React: inbox، conversation view، agent management، RTL</li>
+        <li>Widget کامل: UI فارسی، attach file، offline form</li>
+        <li>Notification Service: browser push API + email fallback</li>
+        <li>File upload: presigned URL → MinIO مستقیم (بدون عبور از API)</li>
+        <li>پلن رایگان + یک پلن پولی + درگاه ZarinPal</li>
+        <li>Canned responses، فیلتر و جستجوی مکالمه</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent3)"></div>
+      <div class="timeline-phase" style="background:rgba(67,233,123,0.15);color:var(--accent3)">ماه ۳</div>
+      <h3>🚀 MVP Launch — اولین لانچ عمومی</h3>
+      <p>آماده‌سازی برای ۵۰ کسب‌وکار بتا</p>
+      <ul>
+        <li>آمار پایه: تعداد چت، میانگین زمان پاسخ</li>
+        <li>Mobile app اولیه: React Native، دریافت و پاسخ پیام</li>
+        <li>Kubernetes setup در ArvanCloud + Prometheus + Grafana</li>
+        <li>Load test: تست ۲K concurrent WebSocket connection</li>
+        <li>Backup خودکار روزانه + Disaster recovery plan</li>
+        <li>بتا با ۵۰ کسب‌وکار → جمع‌آوری feedback</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent5)"></div>
+      <div class="timeline-phase" style="background:rgba(56,189,248,0.15);color:var(--accent5)">ماه ۴–۶</div>
+      <h3>🤖 Growth Features — رشد و AI اولیه</h3>
+      <p>افزودن کانال‌های جدید و هوش مصنوعی</p>
+      <ul>
+        <li>تلگرام Bot API integration — کانال اصلی ایران</li>
+        <li>AI Copilot اولیه: پیشنهاد پاسخ با OpenAI/Claude API</li>
+        <li>Visitor Tracking: مسیر صفحه، زمان حضور، exit intent</li>
+        <li>Elasticsearch برای جستجوی پیام فارسی</li>
+        <li>Analytics پیشرفته با ClickHouse + CSAT survey</li>
+        <li>Automation ساده: if-then rule بدون کد</li>
+        <li>Widget load time زیر ۱۵۰ms از ArvanCloud CDN</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent2)"></div>
+      <div class="timeline-phase" style="background:rgba(255,101,132,0.15);color:var(--accent2)">ماه ۷–۹</div>
+      <h3>🌐 Omnichannel &amp; Full AI — تمایز رقابتی</h3>
+      <p>Chatbot کامل و کانال‌های چندگانه</p>
+      <ul>
+        <li>Chatbot کامل: Knowledge Base + RAG Pipeline + Qdrant Vector DB</li>
+        <li>واتساپ Business API (از طریق شماره خارجی)</li>
+        <li>Instagram DM + Facebook Messenger</li>
+        <li>Workflow Builder visual با drag-and-drop</li>
+        <li>Sentiment analysis فارسی با ParsBERT</li>
+        <li>خلاصه خودکار مکالمه با LLM</li>
+        <li>LiteLLM: AI Gateway با fallback بین مدل‌ها</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent4)"></div>
+      <div class="timeline-phase" style="background:rgba(247,151,30,0.15);color:var(--accent4)">ماه ۱۰–۱۲</div>
+      <h3>💼 Enterprise — بازار سازمانی</h3>
+      <p>ورود به قراردادهای بزرگ</p>
+      <ul>
+        <li>Ticketing System با SLA، priority، escalation rule</li>
+        <li>Video/Audio Call با WebRTC (peer-to-peer)</li>
+        <li>White-label کامل: custom domain، logo، رنگ، ایمیل</li>
+        <li>Public API + SDK + Webhook documentation</li>
+        <li>SSO/SAML برای Enterprise clients</li>
+        <li>On-Premise deployment با Docker Compose</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent3)"></div>
+      <div class="timeline-phase" style="background:rgba(67,233,123,0.15);color:var(--accent3)">ماه ۱۳–۱۸</div>
+      <h3>🌍 Ecosystem — پلتفرم</h3>
+      <p>تبدیل به پلتفرم با Marketplace</p>
+      <ul>
+        <li>Marketplace افزونه‌های شخص ثالث + SDK توسعه‌دهنده</li>
+        <li>Co-browsing با WebRTC data channel</li>
+        <li>مقیاس: تست ۵۰K concurrent WebSocket در production</li>
+        <li>Migration به Kafka برای event streaming در مقیاس بالا</li>
+        <li>توسعه به بازار افغانستان، عراق، فارسی‌زبانان ترکیه</li>
+        <li>HIPAA compliance برای sector پزشکی</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== 10. KPI ===================== -->
+<div class="section" id="kpi">
+  <div class="section-header">
+    <div class="section-tag tag-green">۱۰ · KPI فنی</div>
+    <h2>KPI فنی و اهداف اندازه‌گیری</h2>
+    <p class="section-desc">متریک‌هایی که باید هر روز در Grafana رصد شوند.</p>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric"><div class="metric-val" style="color:#43e97b">۹۹.۹٪</div><div class="metric-lbl">SLA Uptime</div></div>
+    <div class="metric"><div class="metric-val" style="color:#43e97b">&lt;۵۰ms</div><div class="metric-lbl">Message latency</div></div>
+    <div class="metric"><div class="metric-val" style="color:#43e97b">&lt;۱۵۰ms</div><div class="metric-lbl">Widget load time</div></div>
+    <div class="metric"><div class="metric-val" style="color:#38bdf8">۵۰K+</div><div class="metric-lbl">WS Concurrent</div></div>
+    <div class="metric"><div class="metric-val" style="color:#38bdf8">&lt;۲۰۰ms</div><div class="metric-lbl">API P95</div></div>
+    <div class="metric"><div class="metric-val" style="color:#f87171">&lt;۰.۱٪</div><div class="metric-lbl">Error Rate</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">اهداف فنی به تفکیک phase</h3>
+      <table class="pricing-table">
+        <thead><tr><th>متریک</th><th>MVP (ماه ۳)</th><th>Growth (ماه ۶)</th><th>Scale (ماه ۱۲)</th></tr></thead>
+        <tbody>
+          <tr><td>Workspace فعال</td><td>۲۰۰</td><td>۱,۰۰۰</td><td>۵,۰۰۰</td></tr>
+          <tr><td>WS Concurrent</td><td>۲K</td><td>۱۰K</td><td>۵۰K</td></tr>
+          <tr><td>Messages/day</td><td>۵۰K</td><td>۵۰۰K</td><td>۵M</td></tr>
+          <tr><td>API req/sec</td><td>۵۰</td><td>۵۰۰</td><td>۵,۰۰۰</td></tr>
+          <tr><td>DB size</td><td>۱۰GB</td><td>۱۰۰GB</td><td>۱TB</td></tr>
+          <tr><td class="t-orange">هزینه infra/ماه</td><td class="t-orange">۱۵M تومان</td><td class="t-orange">۵۰M تومان</td><td class="t-orange">۲۰۰M تومان</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">آستانه‌های Grafana Alert</h3>
+      <table class="pricing-table">
+        <thead><tr><th>متریک</th><th class="warn-c">هشدار</th><th class="t-red">بحران</th></tr></thead>
+        <tbody>
+          <tr><td>WS active connections</td><td>&gt;40K</td><td>&gt;48K</td></tr>
+          <tr><td>API latency P95</td><td>&gt;200ms</td><td>&gt;500ms</td></tr>
+          <tr><td>Message fail rate</td><td>&gt;0.05%</td><td>&gt;0.1%</td></tr>
+          <tr><td>DB connection pool</td><td>&gt;70%</td><td>&gt;85%</td></tr>
+          <tr><td>Redis memory</td><td>&gt;70%</td><td>&gt;85%</td></tr>
+          <tr><td>Error rate (5xx)</td><td>&gt;0.1%</td><td>&gt;0.5%</td></tr>
+          <tr><td>Pod restart count/h</td><td>&gt;3</td><td>&gt;10</td></tr>
+          <tr><td>AI API response time</td><td>&gt;2s</td><td>&gt;5s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 style="color:var(--heading);margin:28px 0 16px;font-size:17px">🔬 Load Testing Plan با k6</h3>
+  <div class="code-block"><span class="cm">// Scenario ۱: WebSocket Spike Test</span>
+<span class="ck">۵,۰۰۰</span> کاربر همزمان، هر کدام <span class="cn">۱۰</span> پیام در دقیقه
+معیار موفقیت: p95 latency &lt; <span class="cs">100ms</span>، error rate &lt; <span class="cs">0.1%</span>
+
+<span class="cm">// Scenario ۲: Widget Load Time از ایران</span>
+<span class="ck">۱,۰۰۰</span> page load همزمان از ArvanCloud edge node
+معیار: widget JS زیر <span class="cs">150ms</span> لود شود (از ArvanCloud CDN)
+
+<span class="cm">// Scenario ۳: AI Chatbot Burst</span>
+<span class="ck">۲۰۰</span> مکالمه AI همزمان با query‌های متنوع
+معیار: response time &lt; <span class="cs">5s</span>، cost per conversation track شود
+
+<span class="cm">// Scenario ۴: File Upload Stress</span>
+<span class="ck">۱۰۰</span> فایل ۱۰MB همزمان از کاربران مختلف
+معیار: upload کامل شود، widget freeze نکند، presigned URL کار کند
+
+<span class="cm">// Scenario ۵: Database Failover</span>
+خاموش کردن primary DB در حین load test
+معیار: failover به replica زیر <span class="cs">30s</span>، بدون data loss</div>
+
+  <div class="highlight-box">
+    <h3>📋 چک‌لیست فنی قبل از Launch عمومی</h3>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#43e97b;margin-bottom:10px">✅ باید داشته باشید</h4>
+        <ul class="card" style="background:transparent;border:none;padding:0">
+          <li>Load test: ۱۰K concurrent WebSocket pass شود</li>
+          <li>Widget JS زیر ۳۰KB gzip شده</li>
+          <li>Widget روی WordPress، Shopify، Next.js تست شده</li>
+          <li>Backup و Restore تست شده در staging</li>
+          <li>Failover ArvanCloud → Hetzner تست شده</li>
+          <li>Security scan: هیچ critical vulnerability ندارید</li>
+          <li>Status page عمومی آماده است</li>
+          <li>Runbook برای هر سناریوی بحران مکتوب است</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:#f87171;margin-bottom:10px">⚠️ ریسک‌های فنی اصلی</h4>
+        <ul class="card" style="background:transparent;border:none;padding:0">
+          <li>پیچیدگی Real-time در مقیاس بزرگ — نادیده نگیرید</li>
+          <li>Multi-tenancy اگر از ابتدا درست نباشد، Migration بسیار دردناک است</li>
+          <li>هزینه AI API با دلار — بدون سقف می‌تواند bankruptcy ایجاد کند</li>
+          <li>WebSocket و فیلترینگ — همیشه fallback داشته باشید</li>
+          <li>Widget conflict با سایت مشتری — sandbox اجباری است</li>
+          <li>Elasticsearch در مقیاس — expensive است، بعداً اضافه کنید</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div> <!-- end container -->
+
+<div style="text-align:center;padding:40px 20px;border-top:1px solid var(--border);color:var(--muted);font-size:13px">
+  این تحلیل فنی بر اساس بررسی معماری رقبای جهانی (LiveChat، Crisp، Chatwoot) + بهترین practices فنی ۲۰۲۵ تهیه شده است.
+  <br>
+  <span style="color:rgba(255,255,255,0.15);margin-top:8px;display:block">Claude · Anthropic · May 2026</span>
+</div>
+
+</body>
+</html>

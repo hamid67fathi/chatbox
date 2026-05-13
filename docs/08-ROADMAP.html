@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۸ · Roadmap — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — Roadmap">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html" class="active"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">برچسب‌های فاز (الزامی برای هر آیتم)</a></li>
+      <li><a href="#sec-2">Machine-readable summary (English — for AI)</a></li>
+      <li><a href="#sec-3">فاز ۰ (هفته ۰–۲) — زیرساخت انسانیِ توسعه</a></li>
+      <li><a href="#sec-4">فاز ۱ (هفته ۳–۶) — برش عمودی چت</a></li>
+      <li><a href="#sec-5">فاز ۲ (هفته ۷–۱۰) — AI حداقلی قابل فروش</a></li>
+      <li><a href="#sec-6">فاز ۳ (هفته ۱۱–۱۳) — پول و پایداری</a></li>
+      <li><a href="#sec-7">موارد عمداً به فاز ۲ منتقل شده (کاهش ریسک solo)</a></li>
+      <li><a href="#sec-8">وابستگی بین فازها (خلاصه)</a></li>
+      <li><a href="#sec-9">معیارهای موفقیت MVP (قابل اندازه‌گیری)</a></li>
+      <li><a href="#sec-10">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۸ — Roadmap</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🗺️</span> Roadmap &amp; Execution Plan — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="08-ROADMAP.md">08-ROADMAP.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> Product — همسو با <a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES.md</code></a></p>
+</blockquote>
+<hr />
+<h2 id="sec-1">برچسب‌های فاز (الزامی برای هر آیتم)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>برچسب</th>
+<th>معنی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MVP</strong></td>
+<td>باید در ۹۰ روز اول برسد (ریسک حذف فقط با تصمیم Product صریح)</td>
+</tr>
+<tr>
+<td><strong>Phase 2</strong></td>
+<td>بعد از درآمد / validation؛ در کد optional یا feature flag</td>
+</tr>
+<tr>
+<td><strong>North Star</strong></td>
+<td>چشم‌انداز ۱۲–۲۴ ماه؛ مستند اما بدون تعهد زمانی MVP</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-2">Machine-readable summary (English — for AI)</h2>
+<pre><code class="language-yaml">roadmap_id: 08-ROADMAP
+horizon_days_mvp: 90
+execution_model: solo_founder_plus_ai_agents
+principle: vertical_slice_first
+baseline_os: ubuntu_22.04_or_24.04_lts
+mvp_definition_of_done:
+  - one_workspace_end_to_end
+  - widget_loads_and_sends_message
+  - agent_inbox_receives_and_replies
+  - ai_auto_reply_with_kb_minimal
+  - billing_one_paid_plan_zarinpal
+</code></pre>
+<hr />
+<h2 id="sec-3">فاز ۰ (هفته ۰–۲) — زیرساخت انسانیِ توسعه</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>آیتم</th>
+<th>نقش اصلی</th>
+<th>MVP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>تکمیل مستندات ۰۰–۱۳ + ADR اولیه</td>
+<td>Product / Eng</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>اسکلت monorepo طبق <code>07-PROJECT-STRUCTURE</code></td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>CI پایه (lint, typecheck, unit smoke)</td>
+<td>DevOps</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>محیط dev یکپارچه (docker-compose حداقلی)</td>
+<td>DevOps</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>هم‌راستایی میزکار با <strong>Ubuntu 22.04/24.04 LTS</strong> (طبق سند ۱۵)</td>
+<td>DevOps</td>
+<td>MVP</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-4">فاز ۱ (هفته ۳–۶) — برش عمودی چت</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>آیتم</th>
+<th>نقش اصلی</th>
+<th>MVP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auth + Workspace + invite</td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>WebSocket/Socket.io room per conversation</td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Widget vanilla TS: ارسال/دریافت پیام</td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Inbox dashboard: لیست مکالمه + اتصال realtime</td>
+<td>Engineering / UX</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>پیام متنی + typing indicator</td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>ذخیرهٔ پیام در Postgres + RLS اولیه</td>
+<td>Engineering</td>
+<td>MVP</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-5">فاز ۲ (هفته ۷–۱۰) — AI حداقلی قابل فروش</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>آیتم</th>
+<th>نقش اصلی</th>
+<th>MVP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge Base: آپلود متن + chunk</td>
+<td>AI_ML / Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>RAG + پاسخ خودکار با سقف confidence</td>
+<td>AI_ML</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Escalation به اپراتور + علامت‌گذاری</td>
+<td>Product / AI_ML</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Copilot پیشنهاد پاسخ (نسخه ساده)</td>
+<td>AI_ML</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Langfuse trace حداقلی</td>
+<td>AI_ML / DevOps</td>
+<td>MVP</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-6">فاز ۳ (هفته ۱۱–۱۳) — پول و پایداری</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>آیتم</th>
+<th>نقش اصلی</th>
+<th>MVP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>زرین‌پال + ۲ پلن + فاکتور ساده</td>
+<td>Engineering / GTM</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Rate limit ویجت + abuse پایه</td>
+<td>Security / Engineering</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>بکاپ DB زمان‌بندی‌شده + runbook بازیابی</td>
+<td>DevOps</td>
+<td>MVP</td>
+</tr>
+<tr>
+<td>Sentry + لاگ همبسته (correlation id)</td>
+<td>DevOps / Engineering</td>
+<td>MVP</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-7">موارد عمداً به فاز ۲ منتقل شده (کاهش ریسک solo)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>آیتم</th>
+<th>نقش</th>
+<th>فاز</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>جدا کردن همه microservice‌ها از روز اول</td>
+<td>Engineering</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>اپ موبایل React Native</td>
+<td>Engineering</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>Kafka/Redpanda در مسیر حیاتی MVP</td>
+<td>DevOps</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>Elasticsearch / Qdrant</td>
+<td>Engineering</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>کانال واتساپ رسمی</td>
+<td>Product / Engineering</td>
+<td>North Star</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-8">وابستگی بین فازها (خلاصه)</h2>
+<pre><code class="language-text">[فاز ۰ Repo + CI] → [فاز ۱ Realtime Chat] → [فاز ۲ AI+RAG] → [فاز ۳ Billing+SRE]
+</code></pre>
+<hr />
+<h2 id="sec-9">معیارهای موفقیت MVP (قابل اندازه‌گیری)</h2>
+<ul>
+<li><strong>TTV:</strong> workspace جدید تا اولین پیام زنده &lt; ۶۰ دقیقه (خودسرویس).</li>
+<li><strong>قابلیت اطمینان:</strong> uptime هدف داخلی MVP ≥ ۹۹٪ (بدون SLA عمومی سخت در روز اول).</li>
+<li><strong>AI:</strong> حداقل ۴۰٪ سؤالات سطح FAQ بدون اپراتور (قابل سنجش در dashboard داخلی).</li>
+</ul>
+<hr />
+<h2 id="sec-10">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="01-PRD.html"><code>01-PRD.md</code></a> — محدوده محصول</li>
+<li><a href="07-PROJECT-STRUCTURE.html"><code>07-PROJECT-STRUCTURE.md</code></a> — چیدمان کد</li>
+<li><a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE.md</code></a> — نحوه اجرا با Agent</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="07-PROJECT-STRUCTURE.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۷ — ساختار پروژه</div>
+      </a>
+      <a class="next" href="09-AI-AGENT-GUIDE.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۹ — راهنمای AI Agent</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

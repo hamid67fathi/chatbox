@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۳ · Tech Stack — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — Tech Stack">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html" class="active"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">1. فلسفه انتخاب</a></li>
+      <li><a href="#sec-2">2. خلاصه Stack در یک نگاه</a></li>
+      <li><a href="#sec-3">3. توضیحات تفصیلی هر انتخاب کلیدی</a></li>
+      <li><a href="#sec-4">4. ابزارهای توسعه (Tooling)</a></li>
+      <li><a href="#sec-5">5. سرویس‌های شخص ثالث</a></li>
+      <li><a href="#sec-6">6. تصمیم‌های آینده (Open Questions)</a></li>
+      <li><a href="#sec-7">7. ابزارهایی که آگاهانه **انتخاب نکردیم**</a></li>
+      <li><a href="#sec-8">8. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۳ — Tech Stack</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🧰</span> سند Tech Stack</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="03-TECH-STACK.md">03-TECH-STACK.md</a></span>
+
+    </div>
+
+<blockquote>
+<p>Chat-Box — انتخاب تکنولوژی‌ها با دلایل، trade-offها و جایگزین‌ها<br />
+ورژن 1.1 · مه 2026</p>
+</blockquote>
+<p><strong>میزبان مرجع:</strong> توسعه و استقرار (لانچ) در مخزن و اسناد همراه، روی <strong>Ubuntu Desktop یا Server 22.04/24.04 LTS</strong> فرض شده است؛ دستورات عملیاتی با <strong>bash</strong> روی اوبونتو هم‌راستا هستند (<a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a>، <a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a>).</p>
+<hr />
+<h2 id="sec-1">1. فلسفه انتخاب</h2>
+<p>سه معیار اصلی برای هر تصمیم:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>معیار</th>
+<th>وزن</th>
+<th>چرا</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>سرعت توسعه با Solo + AI Agent</strong></td>
+<td>۴۰٪</td>
+<td>تیم کوچک است؛ هر ابزار باید LLM-friendly باشد</td>
+</tr>
+<tr>
+<td><strong>هزینه عملیاتی پایین در ایران</strong></td>
+<td>۳۰٪</td>
+<td>تحریم، نوسان ارز، زیرساخت محدود</td>
+</tr>
+<tr>
+<td><strong>بلوغ + اکوسیستم</strong></td>
+<td>۳۰٪</td>
+<td>hire-ability، StackOverflow، Vendor support</td>
+</tr>
+</tbody>
+</table></div>
+<p>از انتخاب‌های <strong>bleeding-edge</strong> و <strong>hype-driven</strong> پرهیز می‌کنیم مگر دلیل قوی داشته باشیم.</p>
+<hr />
+<h2 id="sec-2">2. خلاصه Stack در یک نگاه</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>لایه</th>
+<th>انتخاب</th>
+<th>جایگزین رد شده</th>
+<th>چرا انتخاب شد</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime — Backend</td>
+<td><strong>Node.js 20 LTS</strong></td>
+<td>Go, Bun, Deno</td>
+<td>بزرگ‌ترین eco برای real-time، LLM-friendly</td>
+</tr>
+<tr>
+<td>Framework — Backend</td>
+<td><strong>Fastify 4</strong></td>
+<td>NestJS, Express, Hono</td>
+<td>سریع‌ترین، schema-first، Zod-native</td>
+</tr>
+<tr>
+<td>Runtime — AI</td>
+<td><strong>Python 3.12</strong></td>
+<td>Node + LangChain.js</td>
+<td>اکوسیستم AI/ML غنی‌تر، Unstructured/LangChain اصلی پایتون</td>
+</tr>
+<tr>
+<td>Framework — AI</td>
+<td><strong>FastAPI + LangChain</strong></td>
+<td>Flask, Django REST</td>
+<td>async، type-safe، LangChain integration</td>
+</tr>
+<tr>
+<td>Frontend — Dashboard</td>
+<td><strong>Next.js 14 (App Router)</strong></td>
+<td>Remix, SvelteKit, Nuxt</td>
+<td>بهترین SEO/SSR + RSC، اکوسیستم بزرگ</td>
+</tr>
+<tr>
+<td>Frontend — Widget</td>
+<td><strong>Vanilla TS + Web Components</strong></td>
+<td>React widget</td>
+<td>Bundle size &lt; 30KB حیاتی است</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td><strong>React Native 0.74 (Expo)</strong></td>
+<td>Flutter, Native</td>
+<td>تیم single-stack، OTA updates</td>
+</tr>
+<tr>
+<td>Real-time</td>
+<td><strong>Socket.io 4 + Redis adapter</strong></td>
+<td>Native WS, SSE, ws + uWS</td>
+<td>reconnect/rooms/auth out of the box</td>
+</tr>
+<tr>
+<td>Database — OLTP</td>
+<td><strong>PostgreSQL 16</strong></td>
+<td>MySQL, MongoDB</td>
+<td>JSONB + RLS + pgvector + بلوغ</td>
+</tr>
+<tr>
+<td>Database — Analytics</td>
+<td><strong>ClickHouse 24</strong></td>
+<td>TimescaleDB, BigQuery</td>
+<td>self-host، سرعت بی‌نظیر، فشرده‌سازی</td>
+</tr>
+<tr>
+<td>Search</td>
+<td><strong>Postgres FTS</strong> (فاز ۱) → Elasticsearch (فاز ۲)</td>
+<td>Meilisearch, Typesense</td>
+<td>شروع ساده، مهاجرت با حجم</td>
+</tr>
+<tr>
+<td>Cache + Queue</td>
+<td><strong>Redis 7 (cluster)</strong></td>
+<td>Memcached, Hazelcast</td>
+<td>Pub/Sub + Streams + JSON همه باهم</td>
+</tr>
+<tr>
+<td>Message Bus</td>
+<td><strong>Redpanda</strong> (Kafka API)</td>
+<td>Kafka, NATS</td>
+<td>سبک‌تر از Kafka، Kafka-compatible</td>
+</tr>
+<tr>
+<td>Job Queue</td>
+<td><strong>BullMQ</strong></td>
+<td>Temporal, Bree, RabbitMQ</td>
+<td>Redis-based، retry/cron/repeat</td>
+</tr>
+<tr>
+<td>ORM — Node</td>
+<td><strong>Drizzle ORM</strong></td>
+<td>Prisma, TypeORM, Knex</td>
+<td>type-safe، SQL-honest، migration ساده</td>
+</tr>
+<tr>
+<td>ORM — Python</td>
+<td><strong>SQLAlchemy 2.0 (async)</strong></td>
+<td>Tortoise, SQLModel</td>
+<td>بالغ‌ترین، RLS-friendly</td>
+</tr>
+<tr>
+<td>Vector DB</td>
+<td><strong>PostgreSQL + pgvector</strong> (فاز ۱) → Qdrant (فاز ۲)</td>
+<td>Pinecone, Weaviate, Milvus</td>
+<td>شروع با Postgres، migrate وقتی scale</td>
+</tr>
+<tr>
+<td>Object Storage</td>
+<td><strong>MinIO</strong> (self-host)</td>
+<td>S3, R2, B2</td>
+<td>داده در ایران؛ S3 API compatible</td>
+</tr>
+<tr>
+<td>Container Orchestration</td>
+<td><strong>Kubernetes (K3s در ایران)</strong></td>
+<td>Docker Swarm, Nomad, ECS</td>
+<td>استاندارد صنعتی، K3s سبک‌تر برای DC کوچک</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td><strong>GitHub Actions + ArgoCD</strong></td>
+<td>GitLab CI, Jenkins</td>
+<td>GitOps پیشنهادی Kubernetes</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td><strong>Traefik 3</strong></td>
+<td>Kong, Nginx, Envoy</td>
+<td>configuration declarative، Kubernetes-native</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td><strong>Grafana Stack (Loki + Tempo + Prom)</strong></td>
+<td>ELK, Datadog, NewRelic</td>
+<td>self-host ارزان، یکپارچه</td>
+</tr>
+<tr>
+<td>Error Tracking</td>
+<td><strong>Sentry (self-hosted)</strong></td>
+<td>Bugsnag, Rollbar</td>
+<td>open-source، sourcemap support</td>
+</tr>
+<tr>
+<td>AI Observability</td>
+<td><strong>Langfuse (self-hosted)</strong></td>
+<td>Helicone, LangSmith</td>
+<td>LLM-focused، open-source</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><strong>Lucia v3</strong> (built on Oslo)</td>
+<td>Auth.js, Clerk, Supabase Auth</td>
+<td>کنترل کامل، multi-tenant friendly</td>
+</tr>
+<tr>
+<td>Payment</td>
+<td><strong>Zarinpal SDK</strong> + <strong>NextPay</strong> (fallback)</td>
+<td>IDPay, PayPing</td>
+<td>پوشش بازار ایران</td>
+</tr>
+<tr>
+<td>Email</td>
+<td><strong>Postal (self-host)</strong> + Mailgun (fallback)</td>
+<td>SendGrid, AWS SES</td>
+<td>داده در ایران، fallback بین‌المللی</td>
+</tr>
+<tr>
+<td>SMS</td>
+<td><strong>Kavenegar</strong></td>
+<td>Melipayamak, Tinitech</td>
+<td>بهترین delivery rate در ایران</td>
+</tr>
+<tr>
+<td>Push</td>
+<td><strong>FCM + APNs</strong> + custom WebPush</td>
+<td>OneSignal, Pusher</td>
+<td>بدون وندور وابسته</td>
+</tr>
+<tr>
+<td>LLM Provider</td>
+<td><strong>OpenAI GPT-4o-mini</strong> (default) + Claude 3.5 Haiku (fallback) + Local Aya-23 (offline)</td>
+<td>Cohere, Mistral</td>
+<td>کیفیت فارسی + قیمت + redundancy</td>
+</tr>
+<tr>
+<td>Embeddings</td>
+<td><strong>OpenAI text-embedding-3-small</strong> + bge-m3 (local)</td>
+<td>Cohere embed, Voyage</td>
+<td>کیفیت فارسی + multilingual</td>
+</tr>
+<tr>
+<td>Reranker</td>
+<td><strong>Cohere rerank-multilingual-v3</strong></td>
+<td>bge-reranker</td>
+<td>تنها reranker قوی برای فارسی</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-3">3. توضیحات تفصیلی هر انتخاب کلیدی</h2>
+<h3>3.1 چرا Node.js و نه Go / Rust؟</h3>
+<p><strong>استدلال:</strong><br />
+- <strong>AI Agent بهره‌وری:</strong> Claude/GPT با TS/JS کیفیت کد بسیار بالاتری تولید می‌کنند نسبت به Go/Rust<br />
+- <strong>اکوسیستم real-time:</strong> Socket.io، ws، Fastify همه روی Node بالغ‌اند<br />
+- <strong>استخدام:</strong> بازار ایران Node-heavy است، Go developer کمتر<br />
+- <strong>Productivity-to-Performance ratio:</strong> Fastify می‌تواند ۴۰k req/s بدهد — کافی برای phase 1 (10k workspaces)</p>
+<p><strong>Trade-off پذیرفته‌شده:</strong> ۲–۳ برابر memory نسبت به Go. در ازای آن، سرعت توسعه ۳ برابر.</p>
+<p><strong>کِی reconsider کنیم؟</strong><br />
+- وقتی concurrent WebSocket &gt; 200k در یک node — آن وقت GC pause مشکل می‌شود → پروسه‌ی hotpath را به Go منتقل کنیم</p>
+<h3>3.2 چرا Fastify و نه NestJS / Express؟</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>فاکتور</th>
+<th>Fastify</th>
+<th>NestJS</th>
+<th>Express</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>سرعت</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td>Schema-first (JSON Schema/Zod)</td>
+<td>✅ بومی</td>
+<td>⚠️ با decorator</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Boilerplate</td>
+<td>کم</td>
+<td>زیاد</td>
+<td>کم</td>
+</tr>
+<tr>
+<td>Plugin ecosystem</td>
+<td>بزرگ</td>
+<td>بزرگ‌تر</td>
+<td>بزرگ‌ترین (ولی قدیمی)</td>
+</tr>
+<tr>
+<td>LLM-friendliness</td>
+<td>بالا</td>
+<td>متوسط (decoratorها confusion ایجاد می‌کنند)</td>
+<td>بالا</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>نتیجه:</strong> Fastify بهترین تعادل سرعت/سادگی/تایپ‌ایمنی برای ما.</p>
+<h3>3.3 چرا Python برای AI و نه Node?</h3>
+<ul>
+<li><strong>LangChain Python</strong> بسیار بالغ‌تر از LangChain.js (آخرین قابلیت‌ها اول پایتون می‌آیند)</li>
+<li><strong>Unstructured.io، LlamaIndex، Haystack</strong> همگی Python-first</li>
+<li><strong>مدل‌های local (Aya, PersianMind)</strong> با Transformers/vLLM در Python اجرا می‌شوند</li>
+<li><strong>DSPy، RAGAS، promptlayer</strong> برای evaluation همگی Python</li>
+</ul>
+<p><strong>هزینه:</strong> سرویس polyglot. ولی isolation خوب است — تیم AI روی Python، تیم core روی Node.</p>
+<h3>3.4 چرا PostgreSQL و نه MongoDB / MySQL؟</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>PostgreSQL</th>
+<th>MongoDB</th>
+<th>MySQL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JSONB</td>
+<td>✅ بومی + indexable</td>
+<td>✅ native</td>
+<td>⚠️ ضعیف‌تر</td>
+</tr>
+<tr>
+<td>Row-Level Security</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>pgvector (Embeddings)</td>
+<td>✅</td>
+<td>❌ نیاز به Atlas</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Full-Text Search</td>
+<td>✅ کافی برای فاز ۱</td>
+<td>⚠️</td>
+<td>⚠️</td>
+</tr>
+<tr>
+<td>Transactions</td>
+<td>✅ ACID قوی</td>
+<td>⚠️ multi-doc محدود</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Hosting در ایران</td>
+<td>✅ همه provider</td>
+<td>محدود</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>یک DB برای همه‌چیز در فاز ۱</strong>: کاربر/پیام/Vector/Search همه در Postgres. وقتی بیش از ۱۰GB embeddings شد، Qdrant.</p>
+<h3>3.5 چرا ClickHouse برای Analytics؟</h3>
+<ul>
+<li><strong>میلیاردها row با چند گیگ RAM</strong> — برای dashboard analytics ایده‌آل</li>
+<li><strong>فشرده‌سازی ۱۰x</strong> — هزینه storage پایین</li>
+<li><strong>MaterializedView برای real-time aggregation</strong></li>
+<li><strong>self-host ساده</strong> (یک باینری، بدون JVM)</li>
+</ul>
+<p><strong>جایگزین رد شده:</strong><br />
+- TimescaleDB: فقط time-series، کمی محدودتر<br />
+- BigQuery: گران، خارج ایران<br />
+- ElasticSearch برای analytics: ضعیف‌تر و گران‌تر</p>
+<h3>3.6 چرا Drizzle و نه Prisma؟</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>فاکتور</th>
+<th>Drizzle</th>
+<th>Prisma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL-honest</td>
+<td>✅ شبیه SQL می‌نویسی</td>
+<td>❌ DSL خودش</td>
+</tr>
+<tr>
+<td>Bundle size</td>
+<td>کوچک</td>
+<td>بزرگ (Rust binary)</td>
+</tr>
+<tr>
+<td>Edge-compatible</td>
+<td>✅</td>
+<td>⚠️ محدود</td>
+</tr>
+<tr>
+<td>Migrations</td>
+<td>drizzle-kit، ساده</td>
+<td>✅ بالغ</td>
+</tr>
+<tr>
+<td>Type-safety</td>
+<td>عالی</td>
+<td>عالی</td>
+</tr>
+<tr>
+<td>RLS support</td>
+<td>راحت</td>
+<td>پیچیده</td>
+</tr>
+<tr>
+<td>AI Agent friendly</td>
+<td>✅ خوانا</td>
+<td>✅ خوانا</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>برنده:</strong> Drizzle بخاطر کنترل بیشتر روی SQL خام (که برای RLS و JSON queries نیاز است).</p>
+<h3>3.7 چرا Redpanda و نه Kafka؟</h3>
+<ul>
+<li><strong>یک باینری</strong>، بدون ZooKeeper، بدون JVM</li>
+<li><strong>Kafka API compatible</strong> — هر Kafka client کار می‌کند</li>
+<li><strong>۱۰x ارزان‌تر</strong> در memory</li>
+<li><strong>سرعت‌های مشابه</strong> برای throughput تا ۱M msg/s</li>
+</ul>
+<p><strong>ریسک:</strong> community کوچک‌تر. ولی production-ready از ۲۰۲۲.</p>
+<h3>3.8 چرا Lucia و نه Auth.js / Clerk؟</h3>
+<ul>
+<li><strong>Auth.js (next-auth):</strong> OAuth-focused، multi-tenant سخت، magic-link حالت default</li>
+<li><strong>Clerk:</strong> SaaS خارجی، گران، در ایران لاگین OAuth Google کار نمی‌کند</li>
+<li><strong>Supabase Auth:</strong> قفل به Supabase</li>
+<li><strong>Lucia:</strong> کتابخانه است، نه service. کنترل کامل بر روی sessions، tokens، 2FA</li>
+</ul>
+<p><strong>کِی Clerk معقول می‌شد؟</strong> اگر بازار خارج بود.</p>
+<h3>3.9 چرا Next.js برای Dashboard ولی Vanilla برای Widget؟</h3>
+<p><strong>Dashboard:</strong> Next.js<br />
+- SEO نیاز نیست ولی RSC + Streaming برای performance خوب است<br />
+- اکوسیستم UI (shadcn، Radix) بزرگ<br />
+- Operator با اینترنت خوب کار می‌کند</p>
+<p><strong>Widget:</strong> Vanilla TS + Web Components<br />
+- روی سایت‌های ضعیف باید لود شود (Bundle size باید &lt; 30KB)<br />
+- نباید با React سایت host مشتری clash داشته باشد<br />
+- Web Components ایزوله می‌کنند (Shadow DOM)</p>
+<hr />
+<h2 id="sec-4">4. ابزارهای توسعه (Tooling)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>دسته</th>
+<th>ابزار</th>
+<th>نسخه</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Package Manager</td>
+<td><strong>pnpm</strong></td>
+<td>9.x</td>
+</tr>
+<tr>
+<td>Monorepo</td>
+<td><strong>Turborepo</strong></td>
+<td>2.x</td>
+</tr>
+<tr>
+<td>Bundler — Apps</td>
+<td><strong>Next.js built-in (Turbopack)</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Bundler — Widget</td>
+<td><strong>tsup</strong></td>
+<td>8.x</td>
+</tr>
+<tr>
+<td>Linter</td>
+<td><strong>Biome</strong> (replace ESLint+Prettier)</td>
+<td>1.x</td>
+</tr>
+<tr>
+<td>Type checker</td>
+<td><strong>TypeScript 5.4 strict</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Test — Unit</td>
+<td><strong>Vitest</strong></td>
+<td>1.x</td>
+</tr>
+<tr>
+<td>Test — E2E</td>
+<td><strong>Playwright</strong></td>
+<td>1.x</td>
+</tr>
+<tr>
+<td>Test — Load</td>
+<td><strong>k6</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>API Mock</td>
+<td><strong>MSW</strong></td>
+<td>2.x</td>
+</tr>
+<tr>
+<td>Schema</td>
+<td><strong>Zod</strong></td>
+<td>3.x</td>
+</tr>
+<tr>
+<td>Date</td>
+<td><strong>date-fns + date-fns-jalali</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Forms</td>
+<td><strong>react-hook-form + Zod</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>UI Library</td>
+<td><strong>shadcn/ui + Radix</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tailwind</td>
+<td><strong>Tailwind 3.4 + tailwindcss-rtl</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Icons</td>
+<td><strong>Lucide React</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>State (Dashboard)</td>
+<td><strong>Zustand + TanStack Query 5</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3>چرا Biome به جای ESLint + Prettier?</h3>
+<ul>
+<li><strong>یک ابزار، نه دو تا</strong></li>
+<li>۲۵x سریع‌تر از ESLint</li>
+<li>پیکربندی ۹۰٪ ساده‌تر</li>
+<li>AI Agent راحت‌تر می‌نویسد (config کم)</li>
+</ul>
+<p><strong>Trade-off:</strong> کمتر از ESLint rule دارد. ولی برای پروژه‌ی ما کافی است.</p>
+<hr />
+<h2 id="sec-5">5. سرویس‌های شخص ثالث</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>سرویس</th>
+<th>استفاده</th>
+<th>پلن اولیه</th>
+<th>هزینه تخمینی ماه ۱</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI API</td>
+<td>LLM</td>
+<td>Pay-as-you-go</td>
+<td>$50–200</td>
+</tr>
+<tr>
+<td>Anthropic API</td>
+<td>Fallback LLM</td>
+<td>Pay-as-you-go</td>
+<td>$20</td>
+</tr>
+<tr>
+<td>Cohere</td>
+<td>Rerank + Embed</td>
+<td>Production tier</td>
+<td>$30</td>
+</tr>
+<tr>
+<td>Zarinpal</td>
+<td>Payment</td>
+<td>—</td>
+<td>کارمزد ۲٪</td>
+</tr>
+<tr>
+<td>Kavenegar</td>
+<td>SMS</td>
+<td>—</td>
+<td>۲۰۰ ت/پیامک</td>
+</tr>
+<tr>
+<td>آروان ابر</td>
+<td>Server + CDN</td>
+<td>Custom</td>
+<td>۱۰M تومان</td>
+</tr>
+<tr>
+<td>Hetzner</td>
+<td>EU DR</td>
+<td>CPX31</td>
+<td>€18</td>
+</tr>
+<tr>
+<td>Sentry self-host</td>
+<td>Errors</td>
+<td>docker</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td>Code + CI</td>
+<td>Team</td>
+<td>$4/user</td>
+</tr>
+<tr>
+<td>Cloudflare</td>
+<td>DNS + WAF</td>
+<td>Free → Pro</td>
+<td>$20</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>کل ماه ۱:</strong> ~ ۱۲–۱۵M تومان infra + $150 ارز</p>
+<hr />
+<h2 id="sec-6">6. تصمیم‌های آینده (Open Questions)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>سؤال</th>
+<th>تصمیم تا کِی</th>
+<th>معیار</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>مهاجرت به Qdrant؟</td>
+<td>ماه ۶</td>
+<td>اگر embeddings &gt; 5M vectors شد</td>
+</tr>
+<tr>
+<td>اضافه‌کردن Elasticsearch؟</td>
+<td>ماه ۹</td>
+<td>اگر FTS Postgres slow شد روی &gt; 10M messages</td>
+</tr>
+<tr>
+<td>مهاجرت بخش hot به Go؟</td>
+<td>ماه ۱۲</td>
+<td>اگر concurrent WS &gt; 200k در یک node</td>
+</tr>
+<tr>
+<td>محصول جدا برای WhatsApp؟</td>
+<td>ماه ۸</td>
+<td>بعد از validation Telegram</td>
+</tr>
+<tr>
+<td>مدل local fine-tune شده؟</td>
+<td>ماه ۹</td>
+<td>اگر هزینه LLM &gt; ۳۰٪ revenue</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-7">7. ابزارهایی که آگاهانه <strong>انتخاب نکردیم</strong></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ابزار</th>
+<th>چرا نه</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Supabase</strong></td>
+<td>قفل platform، در ایران مشکل دسترسی</td>
+</tr>
+<tr>
+<td><strong>Vercel</strong></td>
+<td>hosting در خارج، Edge function نیاز نیست برای ما</td>
+</tr>
+<tr>
+<td><strong>GraphQL</strong></td>
+<td>overkill برای MVP، REST + WebSocket کافی است</td>
+</tr>
+<tr>
+<td><strong>tRPC</strong></td>
+<td>فقط TypeScript، نمی‌تواند widget public API ما باشد</td>
+</tr>
+<tr>
+<td><strong>Prisma</strong></td>
+<td>bundle size + edge limitations</td>
+</tr>
+<tr>
+<td><strong>Hasura</strong></td>
+<td>قفل به engine، schema-first ما با Drizzle راحت‌تر</td>
+</tr>
+<tr>
+<td><strong>NestJS</strong></td>
+<td>boilerplate زیاد، AI Agent confused می‌شود</td>
+</tr>
+<tr>
+<td><strong>MongoDB</strong></td>
+<td>بدون RLS، JSONB Postgres کافی است</td>
+</tr>
+<tr>
+<td><strong>Redis Stack JSON</strong></td>
+<td>احتیاج نیست، Postgres JSONB کفایت می‌کند</td>
+</tr>
+<tr>
+<td><strong>AWS</strong></td>
+<td>قابل دسترسی نیست از ایران، vendor lock-in</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-8">8. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — کجای معماری هر کدام را استفاده می‌کنیم</li>
+<li><a href="04-DATABASE-SCHEMA.html"><code>04-DATABASE-SCHEMA.md</code></a> — جزئیات استفاده Postgres</li>
+<li><a href="07-PROJECT-STRUCTURE.html"><code>07-PROJECT-STRUCTURE.md</code></a> — چگونه monorepo را با این ابزارها سازماندهی می‌کنیم</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="02-ARCHITECTURE.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۲ — معماری سیستم</div>
+      </a>
+      <a class="next" href="04-DATABASE-SCHEMA.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۴ — Schema دیتابیس</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

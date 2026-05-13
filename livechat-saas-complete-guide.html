@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>راهنمای جامع راه‌اندازی پلتفرم لایو چت</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --heading: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1a 50%, #0a0f1a 100%);
+    padding: 80px 40px 60px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.4);
+    color: #9d96ff;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--heading);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, #6c63ff, #ff6584);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 40px auto;
+    max-width: 1100px;
+    margin-left: auto; margin-right: auto;
+  }
+
+  .toc-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .toc-item:hover { color: var(--accent); border-color: var(--accent); }
+  .toc-num { color: var(--accent); font-weight: 700; min-width: 20px; }
+
+  /* Sections */
+  .section {
+    padding: 60px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header {
+    margin-bottom: 40px;
+  }
+
+  .section-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .tag-purple { background: rgba(108,99,255,0.15); color: #9d96ff; }
+  .tag-pink { background: rgba(255,101,132,0.15); color: #ff8fa3; }
+  .tag-green { background: rgba(67,233,123,0.15); color: #43e97b; }
+  .tag-orange { background: rgba(247,151,30,0.15); color: #f7a635; }
+  .tag-blue { background: rgba(56,189,248,0.15); color: #38bdf8; }
+  .tag-red { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  .section h2 {
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 800;
+    color: var(--heading);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 700px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: rgba(108,99,255,0.4); }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 10px;
+  }
+
+  .card p, .card ul {
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .card ul { list-style: none; }
+  .card ul li { padding: 4px 0; }
+  .card ul li::before { content: '↗ '; color: var(--accent); font-size: 11px; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+
+  /* Pricing Table */
+  .pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .pricing-table th {
+    background: var(--surface2);
+    padding: 16px 20px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--heading);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pricing-table td {
+    padding: 14px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .pricing-table tr:last-child td { border-bottom: none; }
+  .pricing-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  .plan-name { font-weight: 700; color: var(--heading); }
+  .plan-price { color: var(--accent3); font-weight: 700; font-size: 15px; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-right: 30px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent2));
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 36px;
+    padding-right: 28px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    right: -8px;
+    top: 6px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+  }
+
+  .timeline-phase {
+    display: inline-block;
+    background: rgba(108,99,255,0.15);
+    color: var(--accent);
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .timeline-item h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 8px;
+  }
+
+  .timeline-item p, .timeline-item ul {
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .timeline-item ul { list-style: none; margin-top: 8px; }
+  .timeline-item ul li { padding: 3px 0; }
+  .timeline-item ul li::before { content: '▸ '; color: var(--accent3); }
+
+  /* Tech Stack */
+  .tech-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 4px;
+    transition: all 0.2s;
+  }
+
+  .tech-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Comparison */
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comparison-row > div {
+    padding: 14px 18px;
+    font-size: 13px;
+    border-left: 1px solid var(--border);
+  }
+
+  .comparison-row > div:first-child { border-left: none; color: var(--muted); font-weight: 500; }
+  .comparison-header > div { background: var(--surface2); font-weight: 700; color: var(--heading); }
+
+  .check { color: var(--accent3); }
+  .cross { color: var(--accent2); }
+  .partial { color: var(--accent4); }
+
+  /* Metric boxes */
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .metric-val {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--heading);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Alert boxes */
+  .alert {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    border-right: 3px solid;
+  }
+
+  .alert-purple { background: rgba(108,99,255,0.08); border-color: var(--accent); color: #b8b3ff; }
+  .alert-green { background: rgba(67,233,123,0.08); border-color: var(--accent3); color: #7eeaa3; }
+  .alert-orange { background: rgba(247,151,30,0.08); border-color: var(--accent4); color: #f9bf6a; }
+  .alert-red { background: rgba(239,68,68,0.08); border-color: #f87171; color: #fca5a5; }
+
+  /* Feature list */
+  .feature-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .feature-list li .fi {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Arch diagram */
+  .arch-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .arch-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 20px;
+    padding: 4px;
+  }
+
+  .arch-layer {
+    background: rgba(108,99,255,0.05);
+    border: 1px dashed rgba(108,99,255,0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .arch-layer-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(108,99,255,0.7);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .arch-row .arch-box { flex: 1; min-width: 80px; }
+
+  /* Highlight box */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(255,101,132,0.05));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 24px 0;
+  }
+
+  .highlight-box h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 12px;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+
+  @media(max-width: 768px) {
+    .hero { padding: 50px 20px 40px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .comparison-row { grid-template-columns: 1fr; }
+    .toc { margin: 20px 16px; }
+    .container { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">📋 COMPLETE PRODUCT GUIDE · 2025–2026</div>
+  <h1>راه‌اندازی پلتفرم<br><span>لایو چت SaaS</span><br>از صفر تا لانچ</h1>
+  <p style="margin-top:16px">بیزینس مدل، فیچرها، معماری فنی، مسیر توسعه و رقبا — همه چیز در یک سند</p>
+</div>
+
+<!-- TOC -->
+<div class="toc container" style="margin-top:40px">
+  <div class="toc-title">📌 فهرست مطالب</div>
+  <div class="toc-grid">
+    <a href="#market" class="toc-item"><span class="toc-num">۱</span> آنالیز بازار و رقبا</a>
+    <a href="#features" class="toc-item"><span class="toc-num">۲</span> فیچرهای کامل محصول</a>
+    <a href="#bizmodel" class="toc-item"><span class="toc-num">۳</span> بیزینس مدل و درآمد</a>
+    <a href="#pricing" class="toc-item"><span class="toc-num">۴</span> ساختار قیمت‌گذاری</a>
+    <a href="#tech" class="toc-item"><span class="toc-num">۵</span> معماری فنی</a>
+    <a href="#stack" class="toc-item"><span class="toc-num">۶</span> تکنولوژی استک</a>
+    <a href="#mvp" class="toc-item"><span class="toc-num">۷</span> MVP و اولویت‌بندی</a>
+    <a href="#roadmap" class="toc-item"><span class="toc-num">۸</span> رودمپ توسعه</a>
+    <a href="#team" class="toc-item"><span class="toc-num">۹</span> تیم و منابع</a>
+    <a href="#gtm" class="toc-item"><span class="toc-num">۱۰</span> GTM و بازاریابی</a>
+    <a href="#iran" class="toc-item"><span class="toc-num">۱۱</span> چالش‌های ایران</a>
+    <a href="#kpi" class="toc-item"><span class="toc-num">۱۲</span> KPIها و متریک</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===================== 1. MARKET ===================== -->
+<div class="section" id="market">
+  <div class="section-header">
+    <div class="section-tag tag-purple">۱ · آنالیز بازار</div>
+    <h2>وضعیت بازار و رقبا</h2>
+    <p class="section-desc">بازار جهانی لایو چت در ۲۰۲۵ به ۱.۱۴ میلیارد دلار رسیده و تا ۲۰۳۳ دو برابر خواهد شد.</p>
+  </div>
+
+  <!-- Global metrics -->
+  <div class="grid-4" style="margin-bottom:32px">
+    <div class="metric">
+      <div class="metric-val" style="color:#6c63ff">$1.14B</div>
+      <div class="metric-label">ارزش بازار جهانی ۲۰۲۵</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:#43e97b">40K+</div>
+      <div class="metric-label">کاربر فعال رایچت در ایران</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:#f7971e">300K+</div>
+      <div class="metric-label">کسب‌وکار استفاده‌کننده از Crisp</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:#ff6584">37K+</div>
+      <div class="metric-label">کسب‌وکار استفاده‌کننده از LiveChat</div>
+    </div>
+  </div>
+
+  <h3 style="color:var(--heading);margin-bottom:20px;font-size:18px">تحلیل رقبای اصلی</h3>
+
+  <!-- Comparison table -->
+  <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px">
+    <div class="comparison-row comparison-header">
+      <div>ویژگی</div>
+      <div>🌍 LiveChat</div>
+      <div>🇫🇷 Crisp</div>
+      <div>🇮🇷 رایچت / گفتینو</div>
+    </div>
+    <div class="comparison-row">
+      <div>مدل قیمت</div>
+      <div>$20–$59 / agent / month</div>
+      <div>$45–$295 / workspace</div>
+      <div>تومانی — پنجره‌ای</div>
+    </div>
+    <div class="comparison-row">
+      <div>پلن رایگان</div>
+      <div class="cross">✗ ندارد</div>
+      <div class="check">✓ دارد (2 agent)</div>
+      <div class="check">✓ دارد (محدود)</div>
+    </div>
+    <div class="comparison-row">
+      <div>ربات هوشمند</div>
+      <div class="partial">جداگانه $52/mo</div>
+      <div class="check">Hugo AI (بومی)</div>
+      <div class="partial">ابتدایی</div>
+    </div>
+    <div class="comparison-row">
+      <div>Omnichannel</div>
+      <div class="check">✓ با add-on</div>
+      <div class="check">✓ کامل</div>
+      <div class="partial">جزئی</div>
+    </div>
+    <div class="comparison-row">
+      <div>Shared Inbox</div>
+      <div class="check">✓</div>
+      <div class="check">✓ کامل</div>
+      <div class="partial">محدود</div>
+    </div>
+    <div class="comparison-row">
+      <div>Knowledge Base</div>
+      <div class="partial">Essentials+</div>
+      <div class="check">✓</div>
+      <div class="cross">✗</div>
+    </div>
+    <div class="comparison-row">
+      <div>سرورهای ایران</div>
+      <div class="cross">✗</div>
+      <div class="cross">✗</div>
+      <div class="check">✓</div>
+    </div>
+    <div class="comparison-row">
+      <div>پشتیبانی فارسی RTL</div>
+      <div class="cross">✗</div>
+      <div class="cross">✗</div>
+      <div class="check">✓</div>
+    </div>
+  </div>
+
+  <div class="alert alert-purple">
+    💡 <strong>فرصت کلیدی:</strong> هیچ‌کدام از رقبای جهانی RTL بومی ندارند. رایچت و گفتینو هم فاقد AI پیشرفته، Omnichannel کامل و مدل SaaS مدرن هستند. جای شما خالی است.
+  </div>
+</div>
+
+<!-- ===================== 2. FEATURES ===================== -->
+<div class="section" id="features">
+  <div class="section-header">
+    <div class="section-tag tag-green">۲ · محصول</div>
+    <h2>فیچرهای کامل پلتفرم</h2>
+    <p class="section-desc">مجموعه فیچرهایی که باید ساخته شوند — از هسته تا امکانات پیشرفته.</p>
+  </div>
+
+  <!-- Core -->
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🟢 هسته اصلی (Core)</h3>
+  <ul class="feature-list" style="margin-bottom:32px">
+    <li><span class="fi">💬</span><div><strong>لایو چت ریل‌تایم</strong> — WebSocket، تایپینگ اینیکیتور، دیده‌شدن پیام، سابقه مکالمه</div></li>
+    <li><span class="fi">🖥️</span><div><strong>چت ویجت قابل تنظیم</strong> — رنگ، آواتار، پوزیشن، متن خوش‌آمدگویی، RTL/LTR</div></li>
+    <li><span class="fi">📥</span><div><strong>Shared Inbox</strong> — صندوق ورودی مشترک تیم، سطح دسترسی، assign به اپراتور</div></li>
+    <li><span class="fi">📁</span><div><strong>مدیریت مکالمات</strong> — برچسب، اولویت، وضعیت، جستجو، فیلتر</div></li>
+    <li><span class="fi">👥</span><div><strong>مدیریت اپراتور</strong> — دپارتمان‌بندی، آنلاین/آفلاین، ظرفیت چت</div></li>
+    <li><span class="fi">📱</span><div><strong>موبایل اپ</strong> — iOS و Android برای اپراتورها</div></li>
+    <li><span class="fi">⌨️</span><div><strong>Canned Responses</strong> — پاسخ‌های آماده، پیشنهاد هوشمند</div></li>
+    <li><span class="fi">🌙</span><div><strong>آفلاین فرم</strong> — ثبت پیام در غیاب اپراتور، ایمیل خودکار</div></li>
+    <li><span class="fi">🔔</span><div><strong>اعلانات</strong> — مرورگر، اپ، ایمیل، صدا</div></li>
+    <li><span class="fi">🌐</span><div><strong>پشتیبانی RTL</strong> — فارسی، عربی، عبری native</div></li>
+  </ul>
+
+  <!-- Advanced -->
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🟡 امکانات پیشرفته</h3>
+  <ul class="feature-list" style="margin-bottom:32px">
+    <li><span class="fi">🤖</span><div><strong>Chatbot / AI Agent</strong> — آموزش از Knowledge Base، پاسخ خودکار، fallback به انسان</div></li>
+    <li><span class="fi">🔄</span><div><strong>Automation / Workflow</strong> — تریگرها، شرط‌ها، اکشن‌های خودکار بدون کد</div></li>
+    <li><span class="fi">📊</span><div><strong>Analytics پیشرفته</strong> — CSAT، زمان پاسخ، عملکرد تیم، قیف فروش</div></li>
+    <li><span class="fi">👁️</span><div><strong>Visitor Tracking</strong> — مسیر کاربر، صفحه فعلی، زمان حضور، تعداد بازدید</div></li>
+    <li><span class="fi">📣</span><div><strong>Proactive Chat</strong> — شروع مکالمه توسط سیستم بر اساس رفتار بازدیدکننده</div></li>
+    <li><span class="fi">📰</span><div><strong>Knowledge Base</strong> — مقالات، دسته‌بندی، جستجو، پیشنهاد هوشمند</div></li>
+    <li><span class="fi">🎫</span><div><strong>Ticketing</strong> — تبدیل چت به تیکت، SLA، اولویت‌بندی</div></li>
+    <li><span class="fi">🏷️</span><div><strong>CRM سبک</strong> — پروفایل مشتری، تاریخچه خرید، تگ‌گذاری</div></li>
+    <li><span class="fi">📧</span><div><strong>Email Integration</strong> — صندوق مشترک ایمیل، ارسال از داخل پنل</div></li>
+    <li><span class="fi">📹</span><div><strong>Video/Audio Call</strong> — تماس تصویری درون ویجت (WebRTC)</div></li>
+    <li><span class="fi">🖱️</span><div><strong>Co-browsing</strong> — مشاهده صفحه کاربر به صورت زنده</div></li>
+    <li><span class="fi">🌍</span><div><strong>Auto Translation</strong> — ترجمه خودکار پیام‌ها</div></li>
+    <li><span class="fi">✨</span><div><strong>AI Copilot اپراتور</strong> — پیشنهاد پاسخ، خلاصه مکالمه، آنالیز احساسات</div></li>
+  </ul>
+
+  <!-- Omnichannel -->
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🔵 Omnichannel (کانال‌های ارتباطی)</h3>
+  <div class="grid-4" style="margin-bottom:32px">
+    <div class="card"><span class="card-icon">💬</span><h3>وب‌چت</h3><p>ویجت روی سایت</p></div>
+    <div class="card"><span class="card-icon">📱</span><h3>واتساپ Business</h3><p>API رسمی</p></div>
+    <div class="card"><span class="card-icon">✈️</span><h3>تلگرام</h3><p>Bot API</p></div>
+    <div class="card"><span class="card-icon">📸</span><h3>اینستاگرام DM</h3><p>Meta API</p></div>
+    <div class="card"><span class="card-icon">📘</span><h3>فیسبوک</h3><p>Messenger API</p></div>
+    <div class="card"><span class="card-icon">📧</span><h3>ایمیل</h3><p>SMTP/IMAP</p></div>
+    <div class="card"><span class="card-icon">💬</span><h3>SMS</h3><p>ارسال/دریافت</p></div>
+    <div class="card"><span class="card-icon">📲</span><h3>In-App Chat</h3><p>SDK موبایل</p></div>
+  </div>
+
+  <!-- Integrations -->
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🔴 یکپارچه‌سازی‌ها (Integrations)</h3>
+  <ul class="feature-list">
+    <li><span class="fi">🛒</span><div>وووکامرس، شاپیفای، مجنتو</div></li>
+    <li><span class="fi">⚙️</span><div>WordPress، جوملا، دروپال</div></li>
+    <li><span class="fi">📊</span><div>Google Analytics، Mixpanel، Amplitude</div></li>
+    <li><span class="fi">🔗</span><div>Slack، Microsoft Teams، Discord</div></li>
+    <li><span class="fi">💼</span><div>HubSpot، Salesforce، Zoho CRM</div></li>
+    <li><span class="fi">💳</span><div>درگاه پرداخت ایرانی (زرین‌پال، آیدی‌پی)</div></li>
+    <li><span class="fi">🔌</span><div>Webhook، REST API، SDK</div></li>
+    <li><span class="fi">🤖</span><div>Zapier، Make.com</div></li>
+  </ul>
+</div>
+
+<!-- ===================== 3. BUSINESS MODEL ===================== -->
+<div class="section" id="bizmodel">
+  <div class="section-header">
+    <div class="section-tag tag-orange">۳ · کسب‌وکار</div>
+    <h2>بیزینس مدل</h2>
+    <p class="section-desc">چگونه پول در می‌آورید — جریان‌های درآمدی متنوع.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">🏆</span>
+      <h3>درآمد اصلی: اشتراک SaaS</h3>
+      <p>مدل اشتراک ماهانه/سالانه بر اساس تعداد اپراتور یا Workspace. این ۷۰-۸۰٪ درآمد را تشکیل می‌دهد.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤖</span>
+      <h3>AI Credits / Usage</h3>
+      <p>هزینه جداگانه برای مکالمات AI، تعداد پاسخ‌های خودکار، و ماژول‌های هوش مصنوعی پیشرفته.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔌</span>
+      <h3>Add-ons و ماژول‌ها</h3>
+      <p>ویدیوکال، کانال‌های اضافه (WhatsApp)، گزارش‌های پیشرفته، white-label، و افزونه‌های تخصصی.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🏢</span>
+      <h3>Enterprise / Agency</h3>
+      <p>قرارداد سفارشی برای شرکت‌های بزرگ، استقرار On-Premise، SLA اختصاصی، آموزش و پشتیبانی VIP.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤝</span>
+      <h3>Marketplace / Ecosystem</h3>
+      <p>کمیسیون از فروش افزونه‌های شخص ثالث در marketplace محصول. در مراحل بعد.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎓</span>
+      <h3>خدمات حرفه‌ای</h3>
+      <p>راه‌اندازی اختصاصی، مشاوره، ادغام با سیستم‌های موجود، آموزش تیم.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:28px">
+    <h3>🎯 استراتژی بلندمدت: Product-Led Growth</h3>
+    <p style="color:var(--muted)">ارائه پلن رایگان قوی برای جذب کاربر → رشد ارگانیک از طریق وایرال شدن ویجت → تبدیل رایگان به پولی با نمایش محدودیت‌های ارزش‌محور → افزایش LTV با upsell به پلن‌های بالاتر. این مدل هزینه CAC را به شدت کاهش می‌دهد.</p>
+  </div>
+</div>
+
+<!-- ===================== 4. PRICING ===================== -->
+<div class="section" id="pricing">
+  <div class="section-header">
+    <div class="section-tag tag-pink">۴ · درآمد</div>
+    <h2>ساختار قیمت‌گذاری پیشنهادی</h2>
+    <p class="section-desc">ترکیبی از مدل Workspace-based (مثل Crisp) و Agent-based (مثل LiveChat) متناسب با بازار ایران.</p>
+  </div>
+
+  <div class="alert alert-orange" style="margin-bottom:24px">
+    ⚠️ قیمت‌ها به <strong>تومان</strong> تعیین می‌شوند. باید با توجه به نرخ ارز و قدرت خرید بازار ایران تنظیم شوند. اعداد زیر نمونه هستند.
+  </div>
+
+  <table class="pricing-table" style="margin-bottom:32px">
+    <thead>
+      <tr>
+        <th>پلن</th>
+        <th>قیمت (ماهانه)</th>
+        <th>اپراتور</th>
+        <th>ویژگی‌های اصلی</th>
+        <th>هدف</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="plan-name">🆓 رایگان</span></td>
+        <td><span class="plan-price">۰ تومان</span></td>
+        <td>۱</td>
+        <td>چت وب، ۱۴ روز تاریخچه، برندینگ ما</td>
+        <td>جذب کاربر، آزمون محصول</td>
+      </tr>
+      <tr>
+        <td><span class="plan-name">🚀 استارتر</span></td>
+        <td><span class="plan-price">۲۹۰,۰۰۰ تومان</span></td>
+        <td>۳</td>
+        <td>ایمیل، Canned Responses، ۶ ماه تاریخچه، آنالیتیکس پایه</td>
+        <td>کسب‌وکارهای کوچک</td>
+      </tr>
+      <tr>
+        <td><span class="plan-name">⚡ حرفه‌ای</span></td>
+        <td><span class="plan-price">۷۵۰,۰۰۰ تومان</span></td>
+        <td>۱۰</td>
+        <td>تلگرام، واتساپ، AI Chatbot، Automation، Knowledge Base، CSAT</td>
+        <td>SMB در حال رشد</td>
+      </tr>
+      <tr>
+        <td><span class="plan-name">💼 تجاری</span></td>
+        <td><span class="plan-price">۲,۲۰۰,۰۰۰ تومان</span></td>
+        <td>نامحدود</td>
+        <td>همه کانال‌ها، Video Call، White-label، API کامل، SLA، حذف برند ما</td>
+        <td>سازمان‌های متوسط</td>
+      </tr>
+      <tr>
+        <td><span class="plan-name">🏢 Enterprise</span></td>
+        <td><span class="plan-price">سفارشی</span></td>
+        <td>سفارشی</td>
+        <td>On-Premise، SSO، HIPAA، دیکیتید ساپورت، یکپارچگی سفارشی</td>
+        <td>شرکت‌های بزرگ</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>📅 تخفیف سالانه</h3>
+      <p style="color:var(--muted)">۱۵–۲۰٪ تخفیف برای اشتراک سالانه. این cash flow بهتر و churn کمتر ایجاد می‌کند.</p>
+    </div>
+    <div class="card">
+      <h3>🎓 پلن استارتاپ</h3>
+      <p style="color:var(--muted)">۳۰٪ تخفیف مادام‌العمر برای استارتاپ‌های کمتر از ۳ سال. ایجاد وفاداری بلندمدت.</p>
+    </div>
+    <div class="card">
+      <h3>💝 سازمان‌های غیرانتفاعی</h3>
+      <p style="color:var(--muted)">۵۰٪ تخفیف برای NGOها و آموزشگاه‌ها. برندسازی اجتماعی و گسترش دهان‌به‌دهان.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 5. TECH ARCH ===================== -->
+<div class="section" id="tech">
+  <div class="section-header">
+    <div class="section-tag tag-blue">۵ · فنی</div>
+    <h2>معماری فنی</h2>
+    <p class="section-desc">معماری میکروسرویس event-driven بر پایه WebSocket برای ریل‌تایم بودن کامل.</p>
+  </div>
+
+  <!-- Architecture Layers -->
+  <div style="margin-bottom:32px">
+
+    <div class="arch-layer">
+      <div class="arch-layer-title">🌐 لایه Client</div>
+      <div class="arch-row">
+        <div class="arch-box">Chat Widget<br><small style="color:var(--muted)">JS Vanilla/React</small></div>
+        <div class="arch-box">Agent Dashboard<br><small style="color:var(--muted)">React SPA</small></div>
+        <div class="arch-box">Mobile App<br><small style="color:var(--muted)">React Native</small></div>
+        <div class="arch-box">Admin Panel<br><small style="color:var(--muted)">Next.js</small></div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">↕ HTTPS / WebSocket</div>
+
+    <div class="arch-layer">
+      <div class="arch-layer-title">🚪 لایه API Gateway / Load Balancer</div>
+      <div class="arch-row">
+        <div class="arch-box">Nginx / Traefik<br><small style="color:var(--muted)">Reverse Proxy</small></div>
+        <div class="arch-box">API Gateway<br><small style="color:var(--muted)">Rate Limiting, Auth</small></div>
+        <div class="arch-box">WebSocket Gateway<br><small style="color:var(--muted)">Socket.io Cluster</small></div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">↕</div>
+
+    <div class="arch-layer">
+      <div class="arch-layer-title">⚙️ لایه سرویس‌های اصلی (Microservices)</div>
+      <div class="arch-row">
+        <div class="arch-box">Auth Service<br><small style="color:var(--muted)">JWT/OAuth</small></div>
+        <div class="arch-box">Chat Service<br><small style="color:var(--muted)">پردازش پیام</small></div>
+        <div class="arch-box">Notification<br><small style="color:var(--muted)">Push/Email/SMS</small></div>
+        <div class="arch-box">Bot Engine<br><small style="color:var(--muted)">AI/Chatbot</small></div>
+        <div class="arch-box">Analytics<br><small style="color:var(--muted)">گزارش‌گیری</small></div>
+        <div class="arch-box">File Service<br><small style="color:var(--muted)">S3/MinIO</small></div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">↕ Redis Pub/Sub + Message Queue</div>
+
+    <div class="arch-layer">
+      <div class="arch-layer-title">🗄️ لایه داده</div>
+      <div class="arch-row">
+        <div class="arch-box">PostgreSQL<br><small style="color:var(--muted)">داده اصلی</small></div>
+        <div class="arch-box">Redis<br><small style="color:var(--muted)">Cache + Pub/Sub</small></div>
+        <div class="arch-box">Elasticsearch<br><small style="color:var(--muted)">جستجوی پیام</small></div>
+        <div class="arch-box">ClickHouse<br><small style="color:var(--muted)">آنالیتیکس</small></div>
+        <div class="arch-box">MinIO/S3<br><small style="color:var(--muted)">فایل و رسانه</small></div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">🔄 جریان پیام ریل‌تایم</h3>
+  <div class="alert alert-purple">
+    <strong>چطور یک پیام از مشتری به اپراتور می‌رسد:</strong><br>
+    ۱. کاربر پیام می‌فرستد → Widget از طریق WebSocket به Gateway وصل است<br>
+    ۲. Gateway پیام را دریافت → Chat Service صدا می‌زند<br>
+    ۳. Chat Service پیام را در PostgreSQL ذخیره → رویداد را در Redis Pub/Sub منتشر می‌کند<br>
+    ۴. تمام WebSocket serverها به Redis subscribe هستند → پیام به اپراتور آنلاین push می‌شود<br>
+    ۵. اگر اپراتور آفلاین → Notification Service پوش نوتیف / ایمیل می‌فرستد
+  </div>
+
+  <div class="grid-2" style="margin-top:24px">
+    <div class="card">
+      <h3>📈 مقیاس‌پذیری</h3>
+      <ul>
+        <li>WebSocket serverها Stateless (با Redis Adapter)</li>
+        <li>Horizontal scaling با Docker + Kubernetes</li>
+        <li>Connection Pooling در دیتابیس</li>
+        <li>CDN برای ویجت (کمترین تأخیر لود)</li>
+        <li>Queue برای ارسال نوتیفیکیشن‌های انبوه</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔒 امنیت</h3>
+      <ul>
+        <li>End-to-End Encryption انتخابی</li>
+        <li>JWT با refresh token rotation</li>
+        <li>Rate limiting در API Gateway</li>
+        <li>DDoS protection (Cloudflare)</li>
+        <li>رمزنگاری داده حساس در دیتابیس</li>
+        <li>Audit Log برای همه اکشن‌های مدیران</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 6. TECH STACK ===================== -->
+<div class="section" id="stack">
+  <div class="section-header">
+    <div class="section-tag tag-blue">۶ · استک</div>
+    <h2>تکنولوژی استک</h2>
+    <p class="section-desc">انتخاب‌های فنی متناسب با تیم ایرانی و نیازهای مقیاس‌پذیری.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>🎨 Frontend</h3>
+      <div>
+        <span class="tech-badge">⚛️ React 18</span>
+        <span class="tech-badge">⏭️ Next.js 14</span>
+        <span class="tech-badge">📱 React Native</span>
+        <span class="tech-badge">🎨 Tailwind CSS</span>
+        <span class="tech-badge">🔌 Socket.io Client</span>
+        <span class="tech-badge">📊 Recharts</span>
+        <span class="tech-badge">🌐 i18next (RTL)</span>
+      </div>
+      <p style="margin-top:14px;font-size:12px">ویجت باید Vanilla JS باشد تا روی همه سایت‌ها لود شود — بدون React dependency</p>
+    </div>
+    <div class="card">
+      <h3>⚙️ Backend</h3>
+      <div>
+        <span class="tech-badge">🟢 Node.js</span>
+        <span class="tech-badge">🔌 Socket.io</span>
+        <span class="tech-badge">⚡ Fastify / NestJS</span>
+        <span class="tech-badge">🐹 Go (سرویس‌های حساس)</span>
+        <span class="tech-badge">🐍 Python (AI)</span>
+        <span class="tech-badge">📨 BullMQ</span>
+      </div>
+      <p style="margin-top:14px;font-size:12px">Node.js برای ریل‌تایم عالی است. Go برای سرویس‌های پر traffic مثل WebSocket Gateway.</p>
+    </div>
+    <div class="card">
+      <h3>🗄️ دیتابیس</h3>
+      <div>
+        <span class="tech-badge">🐘 PostgreSQL</span>
+        <span class="tech-badge">🔴 Redis</span>
+        <span class="tech-badge">🔍 Elasticsearch</span>
+        <span class="tech-badge">📊 ClickHouse</span>
+        <span class="tech-badge">🗃️ MinIO</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>☁️ زیرساخت</h3>
+      <div>
+        <span class="tech-badge">🐳 Docker</span>
+        <span class="tech-badge">☸️ Kubernetes</span>
+        <span class="tech-badge">🌩️ سرور ایران (آروان)</span>
+        <span class="tech-badge">☁️ AWS/Hetzner</span>
+        <span class="tech-badge">🔀 Nginx</span>
+        <span class="tech-badge">📊 Prometheus+Grafana</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🤖 هوش مصنوعی</h3>
+      <div>
+        <span class="tech-badge">🧠 OpenAI GPT-4o</span>
+        <span class="tech-badge">🔍 RAG Pipeline</span>
+        <span class="tech-badge">📄 LangChain</span>
+        <span class="tech-badge">🗂️ Pinecone/Qdrant</span>
+        <span class="tech-badge">🇮🇷 مدل فارسی</span>
+      </div>
+      <p style="margin-top:14px;font-size:12px">یک AI Agent بومی بر اساس Knowledge Base کسب‌وکار — بدون hallucination</p>
+    </div>
+    <div class="card">
+      <h3>🔧 DevOps / ابزار</h3>
+      <div>
+        <span class="tech-badge">🐙 GitHub Actions</span>
+        <span class="tech-badge">🧪 Jest / Playwright</span>
+        <span class="tech-badge">📊 Sentry</span>
+        <span class="tech-badge">🔍 Datadog</span>
+        <span class="tech-badge">📋 Terraform</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 7. MVP ===================== -->
+<div class="section" id="mvp">
+  <div class="section-header">
+    <div class="section-tag tag-green">۷ · MVP</div>
+    <h2>MVP — محصول اولیه قابل عرضه</h2>
+    <p class="section-desc">با چه چیزی شروع کنید؟ فقط همین‌ها — نه بیشتر.</p>
+  </div>
+
+  <div class="alert alert-green" style="margin-bottom:28px">
+    ✅ <strong>قانون MVP:</strong> باید بتوان در کمتر از ۳ ماه به بازار رسید. هر چیزی که این rule را نقض کند، به Phase 2 منتقل می‌شود.
+  </div>
+
+  <div class="grid-2">
+    <div class="card" style="border-color:rgba(67,233,123,0.3)">
+      <h3 style="color:#43e97b">✅ در MVP هست</h3>
+      <ul>
+        <li>چت ریل‌تایم با WebSocket</li>
+        <li>ویجت قابل نصب (کد JS)</li>
+        <li>داشبورد اپراتور (وب)</li>
+        <li>مدیریت چندین اپراتور</li>
+        <li>تاریخچه مکالمه (۳۰ روز)</li>
+        <li>پلن رایگان + ۱ پلن پولی</li>
+        <li>اعلان مرورگر</li>
+        <li>فرم آفلاین + ایمیل</li>
+        <li>پشتیبانی RTL فارسی</li>
+        <li>موبایل پاسخگو (Responsive)</li>
+        <li>اپ موبایل اپراتور (اولیه)</li>
+        <li>آمار پایه (تعداد چت، میانگین پاسخ)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(239,68,68,0.3)">
+      <h3 style="color:#f87171">🚫 در MVP نیست</h3>
+      <ul>
+        <li>AI Chatbot (Phase 2)</li>
+        <li>Automation / Workflow</li>
+        <li>واتساپ/تلگرام</li>
+        <li>Video Call</li>
+        <li>Knowledge Base</li>
+        <li>Ticketing</li>
+        <li>Co-browsing</li>
+        <li>Marketplace</li>
+        <li>Analytics پیشرفته</li>
+        <li>White-label</li>
+        <li>API عمومی</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 8. ROADMAP ===================== -->
+<div class="section" id="roadmap">
+  <div class="section-header">
+    <div class="section-tag tag-purple">۸ · مسیر</div>
+    <h2>رودمپ توسعه</h2>
+    <p class="section-desc">از MVP تا پلتفرم کامل — ۱۸ ماه برنامه.</p>
+  </div>
+
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-phase">ماه ۱–۳</div>
+      <h3>🏗️ Phase 1: MVP و اولین کاربران</h3>
+      <p>ساخت هسته محصول و اولین لانچ عمومی</p>
+      <ul>
+        <li>Setup زیرساخت (Kubernetes، DB، CI/CD)</li>
+        <li>Auth سیستم، multi-tenant architecture</li>
+        <li>ریل‌تایم چت با Socket.io</li>
+        <li>ویجت JS (vanilla، زیر ۳۰KB)</li>
+        <li>داشبورد اپراتور React</li>
+        <li>پلن رایگان + پلن پولی اول</li>
+        <li>درگاه پرداخت ایرانی</li>
+        <li>بتا برای ۵۰ کسب‌وکار اولیه</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent2)"></div>
+      <div class="timeline-phase" style="background:rgba(255,101,132,0.15);color:var(--accent2)">ماه ۴–۶</div>
+      <h3>🚀 Phase 2: ویژگی‌های رشد</h3>
+      <p>تکمیل تجربه کاربری و اضافه کردن کانال‌های جدید</p>
+      <ul>
+        <li>اپ موبایل کامل (iOS + Android)</li>
+        <li>ادغام تلگرام</li>
+        <li>AI Copilot اولیه (پیشنهاد پاسخ)</li>
+        <li>Automation ساده (تریگر + اکشن)</li>
+        <li>Analytics پیشرفته + CSAT</li>
+        <li>Canned Responses هوشمند</li>
+        <li>Visitor Tracking</li>
+        <li>لانچ پلن حرفه‌ای</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent3)"></div>
+      <div class="timeline-phase" style="background:rgba(67,233,123,0.15);color:var(--accent3)">ماه ۷–۹</div>
+      <h3>🤖 Phase 3: هوش مصنوعی و Omnichannel</h3>
+      <p>تمایز رقابتی با AI و کانال‌های متعدد</p>
+      <ul>
+        <li>AI Chatbot کامل با Knowledge Base</li>
+        <li>ادغام واتساپ Business API</li>
+        <li>اینستاگرام DM</li>
+        <li>Workflow Builder بصری</li>
+        <li>Knowledge Base عمومی</li>
+        <li>آنالیز احساسات پیام‌ها</li>
+        <li>Proactive Chat</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:var(--accent4)"></div>
+      <div class="timeline-phase" style="background:rgba(247,151,30,0.15);color:var(--accent4)">ماه ۱۰–۱۲</div>
+      <h3>💼 Phase 4: Enterprise و پایداری</h3>
+      <p>ورود به بازار سازمانی</p>
+      <ul>
+        <li>Ticketing System</li>
+        <li>Video/Audio Call (WebRTC)</li>
+        <li>White-label کامل</li>
+        <li>API عمومی + SDK</li>
+        <li>SSO / SAML</li>
+        <li>Advanced Analytics + گزارش‌های سفارشی</li>
+        <li>On-Premise option</li>
+      </ul>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="border-color:#38bdf8"></div>
+      <div class="timeline-phase" style="background:rgba(56,189,248,0.15);color:#38bdf8">ماه ۱۳–۱۸</div>
+      <h3>🌍 Phase 5: توسعه و Ecosystem</h3>
+      <p>تبدیل به پلتفرم و ورود به بازارهای منطقه‌ای</p>
+      <ul>
+        <li>Marketplace افزونه‌های شخص ثالث</li>
+        <li>Co-browsing</li>
+        <li>توسعه به بازار افغانستان، عراق، ترکیه فارسی‌زبانان</li>
+        <li>پارتنرشیپ با Agency‌ها</li>
+        <li>مدل Reseller</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== 9. TEAM ===================== -->
+<div class="section" id="team">
+  <div class="section-header">
+    <div class="section-tag tag-pink">۹ · تیم</div>
+    <h2>تیم و منابع</h2>
+    <p class="section-desc">تیم حداقلی برای ساخت MVP و رشد اولیه.</p>
+  </div>
+
+  <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">تیم MVP (ماه ۱–۳)</h3>
+  <div class="grid-3" style="margin-bottom:28px">
+    <div class="card">
+      <span class="card-icon">👨‍💻</span>
+      <h3>Full-Stack Lead × ۱</h3>
+      <ul>
+        <li>معماری سیستم</li>
+        <li>Backend اصلی (Node.js)</li>
+        <li>WebSocket و ریل‌تایم</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚛️</span>
+      <h3>Frontend Dev × ۱</h3>
+      <ul>
+        <li>داشبورد React</li>
+        <li>ویجت JS</li>
+        <li>RTL و UI فارسی</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📱</span>
+      <h3>Mobile Dev × ۱</h3>
+      <ul>
+        <li>React Native</li>
+        <li>اپ اپراتور (iOS/Android)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎨</span>
+      <h3>UI/UX Designer × ۱</h3>
+      <ul>
+        <li>طراحی داشبورد</li>
+        <li>ویجت و تجربه مشتری</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">☸️</span>
+      <h3>DevOps / Infra × ۰.۵</h3>
+      <ul>
+        <li>Docker/K8s</li>
+        <li>CI/CD، مانیتورینگ</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>Product Manager × ۱</h3>
+      <ul>
+        <li>اولویت‌بندی فیچر</li>
+        <li>بازخورد کاربران</li>
+        <li>رودمپ</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert alert-orange">
+    💰 <strong>تخمین هزینه ماهانه تیم MVP:</strong> با حقوق متوسط بازار ایران، تیم ۵–۶ نفره حدود ۱۵۰–۲۵۰ میلیون تومان در ماه هزینه دارد. هزینه زیرساخت اولیه ۵–۱۵ میلیون تومان دیگر اضافه می‌شود.
+  </div>
+</div>
+
+<!-- ===================== 10. GTM ===================== -->
+<div class="section" id="gtm">
+  <div class="section-header">
+    <div class="section-tag tag-orange">۱۰ · بازاریابی</div>
+    <h2>استراتژی ورود به بازار (GTM)</h2>
+    <p class="section-desc">چگونه اولین ۱۰۰۰ کاربر را جذب می‌کنید.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">🎯</span>
+      <h3>هدف‌گیری اولیه</h3>
+      <ul>
+        <li>فروشگاه‌های آنلاین (e-commerce)</li>
+        <li>SaaS ایرانی</li>
+        <li>مطب‌ها و کلینیک‌ها</li>
+        <li>آموزشگاه‌های آنلاین</li>
+        <li>دفاتر خدماتی و مشاوره‌ای</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📢</span>
+      <h3>کانال‌های اکتساب</h3>
+      <ul>
+        <li>SEO: مقالات «چت آنلاین» و «پشتیبانی سایت»</li>
+        <li>محتوا: یوتیوب، اینستاگرام فارسی</li>
+        <li>وایرال: برند "Powered by [نام شما]" در ویجت</li>
+        <li>Product Hunt ایرانی + کافه‌بازار محتوا</li>
+        <li>پارتنرشیپ با آژانس‌های طراحی سایت</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔄</span>
+      <h3>مهاجرت از رقبا</h3>
+      <ul>
+        <li>ابزار مهاجرت آسان از رایچت/گفتینو</li>
+        <li>۳ ماه رایگان برای مهاجران</li>
+        <li>مقایسه مستقیم در صفحه Landing</li>
+        <li>Case Study از مشتریان مهاجر</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤝</span>
+      <h3>شبکه فروش</h3>
+      <ul>
+        <li>برنامه پارتنر برای Agency‌ها</li>
+        <li>کمیسیون Reseller برای ارجاع</li>
+        <li>Affiliate Program</li>
+        <li>ادغام با پلتفرم‌های ساخت سایت ایرانی</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:24px">
+    <h3>🏆 مزیت رقابتی برای بازاریابی</h3>
+    <p style="color:var(--muted)">
+      <strong style="color:var(--text)">۱. سرور ایران:</strong> داده مشتریانتان در ایران می‌ماند — ضروری برای مشاغل دولتی و حساس.<br>
+      <strong style="color:var(--text)">۲. RTL بومی:</strong> هیچ رقیب جهانی این را ندارد.<br>
+      <strong style="color:var(--text)">۳. درگاه ریالی:</strong> بدون نیاز به کارت ارزی و VPN.<br>
+      <strong style="color:var(--text)">۴. پشتیبانی فارسی:</strong> چت ۲۴/۷ به زبان فارسی.<br>
+      <strong style="color:var(--text)">۵. قیمت منطقی:</strong> هزینه ریالی بدون نوسان ارزی.
+    </p>
+  </div>
+</div>
+
+<!-- ===================== 11. IRAN CHALLENGES ===================== -->
+<div class="section" id="iran">
+  <div class="section-header">
+    <div class="section-tag tag-red">۱۱ · چالش‌ها</div>
+    <h2>چالش‌های بازار ایران</h2>
+    <p class="section-desc">مسائل خاص ایران که باید از ابتدا برنامه‌ریزی شوند.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">💳</span>
+      <h3>پرداخت و درآمد</h3>
+      <ul>
+        <li>درگاه ریالی (زرین‌پال، آیدی‌پی، پی.آی‌آر)</li>
+        <li>اشتراک خودکار ماهانه (مشکل با بانک‌ها)</li>
+        <li>فاکتور رسمی و مالیات</li>
+        <li>مدیریت عدم پرداخت (grace period)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🌐</span>
+      <h3>زیرساخت</h3>
+      <ul>
+        <li>CDN داخلی (آروان‌کلاد، آبرنگ)</li>
+        <li>Backup سرور خارج برای disaster recovery</li>
+        <li>مدیریت فیلترینگ (WebSocket روی پورت‌های استاندارد)</li>
+        <li>DNS Failover برای پایداری</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚖️</span>
+      <h3>قانونی و مجوز</h3>
+      <ul>
+        <li>ثبت شرکت و مجوز کسب‌وکار اینترنتی</li>
+        <li>نماد اعتماد الکترونیک</li>
+        <li>قوانین حریم خصوصی ایران</li>
+        <li>ذخیره داده در خاک ایران</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤖</span>
+      <h3>هوش مصنوعی</h3>
+      <ul>
+        <li>API فارسی با تأخیر کم (مدل بومی یا پروکسی)</li>
+        <li>Training روی داده‌های فارسی</li>
+        <li>مدل‌های LLM که سانسور نشوند</li>
+        <li>هزینه‌های API با دلار — مدیریت ریسک ارزی</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">📱</span>
+      <h3>واتساپ و کانال‌ها</h3>
+      <ul>
+        <li>واتساپ در ایران فیلتر است اما استفاده می‌شود</li>
+        <li>Business API واتساپ نیاز به شماره خارجی</li>
+        <li>تلگرام جایگزین اصلی — اولویت داشته باشد</li>
+        <li>ایتا، روبیکا — کانال‌های ایرانی جایگزین</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="card-icon">👩‍💻</span>
+      <h3>منابع انسانی</h3>
+      <ul>
+        <li>جذب توسعه‌دهنده باتجربه WebSocket/Node.js</li>
+        <li>رقابت با شرکت‌های خارجی remote</li>
+        <li>نگهداشت تیم با حقوق رقابتی</li>
+        <li>برون‌سپاری طراحی UX</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 12. KPI ===================== -->
+<div class="section" id="kpi">
+  <div class="section-header">
+    <div class="section-tag tag-green">۱۲ · متریک</div>
+    <h2>KPIها و اهداف</h2>
+    <p class="section-desc">معیارهایی که باید هر هفته رصد شوند.</p>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:28px">
+    <div>
+      <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">متریک محصول</h3>
+      <table class="pricing-table">
+        <thead>
+          <tr><th>متریک</th><th>هدف ماه ۳</th><th>هدف ماه ۱۲</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Workspace فعال</td><td>۲۰۰</td><td>۳,۰۰۰</td></tr>
+          <tr><td>Paying customers</td><td>۳۰</td><td>۵۰۰</td></tr>
+          <tr><td>MRR</td><td>۱۰M تومان</td><td>۲۵۰M تومان</td></tr>
+          <tr><td>Churn ماهانه</td><td>&lt;۸٪</td><td>&lt;۳٪</td></tr>
+          <tr><td>Free → Paid conversion</td><td>۵٪</td><td>۱۲٪</td></tr>
+          <tr><td>NPS</td><td>۳۰+</td><td>۵۰+</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3 style="color:var(--heading);margin-bottom:16px;font-size:17px">متریک فنی</h3>
+      <table class="pricing-table">
+        <thead>
+          <tr><th>متریک</th><th>هدف</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Uptime SLA</td><td>۹۹.۹٪</td></tr>
+          <tr><td>Message delivery latency</td><td>&lt;۵۰ms</td></tr>
+          <tr><td>Widget load time</td><td>&lt;۱۵۰ms</td></tr>
+          <tr><td>پشتیبانی همزمان WebSocket</td><td>۵۰K+</td></tr>
+          <tr><td>API Response P95</td><td>&lt;۲۰۰ms</td></tr>
+          <tr><td>Error rate</td><td>&lt;۰.۱٪</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h3>🎯 مهم‌ترین متریک در ۶ ماه اول: Weekly Active Workspaces</h3>
+    <p style="color:var(--muted)">اگر کسب‌وکاری ثبت‌نام کرده اما هفته‌ای استفاده نمی‌کند، Churn قطعی است. Focus اصلی باید روی activation و habit formation باشد — نه صرفاً تعداد ثبت‌نام.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Final summary -->
+  <h3 style="color:var(--heading);margin-bottom:20px;font-size:20px;text-align:center">📋 خلاصه کلی — چک‌لیست قبل از شروع</h3>
+
+  <div class="grid-2">
+    <div class="card" style="border-color:rgba(67,233,123,0.3)">
+      <h3 style="color:#43e97b">✅ باید داشته باشید</h3>
+      <ul>
+        <li>حداقل ۳ ماه باندوی توسعه (بدون فشار مالی)</li>
+        <li>تیم فنی: حداقل ۳ توسعه‌دهنده باتجربه</li>
+        <li>۵۰ کسب‌وکار بتا آماده برای تست</li>
+        <li>درگاه پرداخت فعال</li>
+        <li>برنامه واضح برای ۶ ماه اول</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(247,151,30,0.3)">
+      <h3 style="color:#f7971e">⚠️ ریسک‌های اصلی</h3>
+      <ul>
+        <li>رایچت می‌تواند سریع کپی کند — سرعت مهم است</li>
+        <li>هزینه‌های API هوش مصنوعی با دلار</li>
+        <li>پیچیدگی ریل‌تایم در مقیاس بزرگ</li>
+        <li>Churn بالا اگر UX ضعیف باشد</li>
+        <li>مسئله زیرساخت در صورت اختلال اینترنت</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</div> <!-- end container -->
+
+<div style="text-align:center;padding:40px 20px;border-top:1px solid var(--border);color:var(--muted);font-size:13px">
+  این سند بر اساس آنالیز رقبای جهانی (LiveChat، Crisp) و ایرانی (رایچت، گفتینو) + بهترین‌های فنی ۲۰۲۵ تهیه شده است.
+  <br>
+  <span style="color:rgba(255,255,255,0.2);margin-top:8px;display:block">Claude · Anthropic · May 2026</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۴ · زیرساخت و سرورها — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — زیرساخت و سرورها">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html" class="active"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">Machine-readable index (English — for AI)</a></li>
+      <li><a href="#sec-2">1. اصول و مرز مسئولیت</a></li>
+      <li><a href="#sec-3">2. محیط‌های اجرا (Environments)</a></li>
+      <li><a href="#sec-4">3. توپولوژی لایهٔ سرور (Production — هدف)</a></li>
+      <li><a href="#sec-5">4. نقش ماشین‌ها (Server roles)</a></li>
+      <li><a href="#sec-6">5. شبکه و پورت‌ها (قرارداد)</a></li>
+      <li><a href="#sec-7">6. کانفیگ اپلیکیشن (Application configuration)</a></li>
+      <li><a href="#sec-8">7. Secrets و مدیریت کلید</a></li>
+      <li><a href="#sec-9">8. Kubernetes — نقشهٔ namespace و اجزای حداقلی</a></li>
+      <li><a href="#sec-10">9. ذخیره‌سازی و پشتیبان‌گیری (زیرساخت)</a></li>
+      <li><a href="#sec-11">10. CI/CD و تحویل به سرور</a></li>
+      <li><a href="#sec-12">11. IaC و نسخه‌پذیری زیرساخت</a></li>
+      <li><a href="#sec-13">12. اندازه‌گیری و مقیاس (راهنمای سفارش اولیه)</a></li>
+      <li><a href="#sec-14">13. چک‌لیست قبل از اولین Production</a></li>
+      <li><a href="#sec-15">14. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۴ — زیرساخت و سرورها</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🖥️</span> سند زیرساخت، سرورها و کانفیگ (Infrastructure)</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="14-INFRASTRUCTURE.md">14-INFRASTRUCTURE.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>Chat-Box</strong> — معماری میزبان، شبکه، خوشه، و قرارداد کانفیگ<br />
+<strong>ورژن:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> DevOps (+ Engineering برای هم‌راستایی با اپ‌ها)</p>
+</blockquote>
+<p>این سند <strong>جزئیات لایهٔ زیرساخت و کانفیگ عملیاتی</strong> را جدا از <a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> نگه می‌دارد: سند ۰۲ «سیستم و سرویس‌ها» را توصیف می‌کند؛ سند <strong>۱۴</strong> اینجا پاسخ می‌دهد <em>روی چه سخت‌افزار/خوشه‌ای، با چه شبکه و چه فایل کانفیگی</em> اجرا می‌شود.</p>
+<hr />
+<h2 id="sec-1">Machine-readable index (English — for AI)</h2>
+<pre><code class="language-yaml">doc_id: 14-INFRASTRUCTURE
+version: 1.0.0
+primary_owner_role: DEVOPS
+related_docs:
+  - 02-ARCHITECTURE.md
+  - 03-TECH-STACK.md
+  - 11-SECURITY-PRIVACY.md
+  - 12-OPERATIONS-SUPPORT.md
+os_baseline:
+  family: linux
+  distro_default: ubuntu-server-22.04-or-24.04-lts
+  dev_workstation: ubuntu-desktop-or-server-22.04-or-24.04-lts
+  documentation_assumes: ubuntu_only_for_dev_and_launch
+  container_runtime_prod_k8s: containerd
+  docker_engine: dev_and_ci_and_optional_obs_vm_only_unless_adr
+environments: [development, staging, production]
+primary_region: IR
+dr_region: EU
+</code></pre>
+<hr />
+<h2 id="sec-2">1. اصول و مرز مسئولیت</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>اصل</th>
+<th>پیامد</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>۱</td>
+<td><strong>Infrastructure as Code در مسیر رسمی</strong></td>
+<td>هر تغییر پورت، نام DNS، یا اندازهٔ VM در Git (یا ADR) قابل ردیابی است</td>
+</tr>
+<tr>
+<td>۲</td>
+<td><strong>Secrets خارج ریپو</strong></td>
+<td>فقط الگو در <code>.env.example</code>؛ مقدار واقعی در Vault/Secret Manager میزبان</td>
+</tr>
+<tr>
+<td>۳</td>
+<td><strong>تفکیک محیط</strong></td>
+<td>dev/stage/prod جدا؛ دادهٔ production هرگز به dev کپی خام نشود</td>
+</tr>
+<tr>
+<td>۴</td>
+<td><strong>ایران Primary، EU برای DR و AI egress</strong></td>
+<td>همسو با بخش Deployment در سند ۰۲</td>
+</tr>
+<tr>
+<td>۵</td>
+<td><strong>حداقل امتیاز</strong></td>
+<td>سرویس‌ها فقط network و DB لازم را ببینند</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-3">2. محیط‌های اجرا (Environments)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>محیط</th>
+<th>هدف</th>
+<th>زیرساخت نمونه</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>development</strong></td>
+<td>توسعهٔ محلی + docker-compose</td>
+<td>میزکار <strong>Ubuntu</strong> توسعه‌دهنده؛ بدون SLA</td>
+</tr>
+<tr>
+<td><strong>staging</strong></td>
+<td>تست انتشار، دادهٔ ناشناس‌سازی‌شده</td>
+<td>یک خوشهٔ کوچک یا namespace جدا روی همان DC</td>
+</tr>
+<tr>
+<td><strong>production</strong></td>
+<td>ترافیک واقعی مشتری</td>
+<td>Kubernetes (K3s) در DC ایران + DR در EU</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>قرارداد نام‌گذاری:</strong></p>
+<ul>
+<li>DNS: <code>api.chatbox.ir</code> (prod)، <code>api.staging.chatbox.ir</code> (stage)</li>
+<li>Kubernetes namespace: <code>chatbox-prod</code>، <code>chatbox-staging</code></li>
+<li>Docker Compose پروژه: سرویس‌ها با پیشوند <code>cb-</code> (مثلاً <code>cb-postgres</code>)</li>
+</ul>
+<hr />
+<h2 id="sec-4">3. توپولوژی لایهٔ سرور (Production — هدف)</h2>
+<div class="mermaid">
+flowchart TB
+    subgraph Edge["Edge / CDN"]
+        CF["Cloudflare / آروان CDN + WAF"]
+    end
+    subgraph IR["🇮🇷 DC ایران — Primary"]
+        LB["L4/L7 LB — Nginx یا Traefik Ingress"]
+        K8S["Kubernetes یا K3s"]
+        subgraph Nodes["Worker Nodes"]
+            API["Pods: API / WS Gateway"]
+            CHAT["Pods: Chat / Auth / Billing"]
+            AI["Pods: AI — در صورت مسدود بودن egress، proxy EU"]
+        end
+        PG[("PostgreSQL HA")]
+        RD[("Redis Cluster")]
+        S3[("MinIO S3-compatible")]
+        CH[("ClickHouse — analytics")]
+    end
+    subgraph EU["🇪🇺 EU — DR + AI egress"]
+        K8SEU["K8s کوچک یا VM"]
+        PGEU[("Postgres DR replica")]
+        AIOUT["AI workers + LLM proxy"]
+    end
+    CF --> LB --> K8S
+    K8S --> PG
+    K8S --> RD
+    K8S --> S3
+    K8S --> CH
+    PG -.->|async replication| PGEU
+    K8S -.->|VPN یا TLS site-to-site| K8SEU
+    API --> AIOUT
+</div>
+<p><strong>یادداشت MVP:</strong> در فاز اول ممکن است به‌جای چند نود، <strong>یک خوشهٔ کوچک K3s + Postgres تکی (با بکاپ)</strong> کافی باشد؛ همین سند «شکل نهایی» را نگه می‌دارد تا مهاجرت تدریجی بدون بازنویسی مفهومی انجام شود.</p>
+<hr />
+<h2 id="sec-5">4. نقش ماشین‌ها (Server roles)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نقش</th>
+<th>وظیفه</th>
+<th>نمونه سایز اولیه (قابل تنظیم با ADR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Load Balancer / Ingress</strong></td>
+<td>TLS termination، routing، rate limit لبه</td>
+<td>۲ vCPU، ۴GB — یا managed LB میزبان</td>
+</tr>
+<tr>
+<td><strong>Kubernetes control plane</strong></td>
+<td>etcd، scheduler</td>
+<td>در K3s سبک؛ یا ۳ master در prod کامل</td>
+</tr>
+<tr>
+<td><strong>Worker — stateless</strong></td>
+<td>Pods اپلیکیشن Node/Python</td>
+<td>autoscale بر اساس CPU و تعداد اتصال WS</td>
+</tr>
+<tr>
+<td><strong>Worker — AI</strong></td>
+<td>inference، queue consumer</td>
+<td>CPU قوی؛ GPU اختیاری برای مدل محلی</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td>OLTP + pgvector</td>
+<td>CPU و IOPS بالا؛ دیسک NVMe</td>
+</tr>
+<tr>
+<td><strong>Redis</strong></td>
+<td>cache، pub/sub، Socket.io adapter</td>
+<td>RAM بالا؛ persistence تنظیم‌شده</td>
+</tr>
+<tr>
+<td><strong>MinIO</strong></td>
+<td>فایل و رسانه</td>
+<td>دیسک بزرگ؛ replication ≥ ۳ node در مقیاس</td>
+</tr>
+<tr>
+<td><strong>ClickHouse</strong></td>
+<td>analytics</td>
+<td>CPU + فشرده‌سازی؛ جدا از مسیر تراکنش حیاتی</td>
+</tr>
+<tr>
+<td><strong>Observability</strong></td>
+<td>Prometheus، Loki، Grafana</td>
+<td>دیسک برای retention لاگ</td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.1 سیستم‌عامل پیشنهادی (قاعدهٔ کلی)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>موضوع</th>
+<th>تصمیم پیشنهادی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>خانوادهٔ OS</td>
+<td>فقط <strong>Linux</strong>؛ <strong>توسعه و لانچ</strong> در این مخزن روی <strong>Ubuntu</strong> مستند شده است (سرور production و میزکار dev هر دو LTS اوبونتو)</td>
+</tr>
+<tr>
+<td>توزیع</td>
+<td><strong>Ubuntu Server 22.04 LTS</strong> یا <strong>24.04 LTS</strong> برای میزبان production؛ میزکار dev همان خانواده (<strong>Desktop یا Server</strong> همان نسخه‌ها)</td>
+</tr>
+<tr>
+<td>جایگزین مجاز</td>
+<td><strong>Debian 12</strong> برای ماشین‌های «فقط دیتابیس» در صورت سیاست میزبان</td>
+</tr>
+<tr>
+<td>رابط گرافیکی</td>
+<td><strong>نصب نشود</strong> (سرور headless)</td>
+</tr>
+<tr>
+<td>زمان</td>
+<td><strong>NTP</strong> فعال (<code>systemd-timesyncd</code> یا <code>chrony</code>) — برای لاگ و گواهی TLS و همزمانی WS حیاتی است</td>
+</tr>
+<tr>
+<td>فایروال</td>
+<td><strong>nftables</strong> یا <strong>ufw</strong>؛ پیش‌فرض deny؛ فقط پورت‌های تعریف‌شده در بخش ۵ باز شوند</td>
+</tr>
+<tr>
+<td>به‌روزرسانی امنیتی</td>
+<td><code>unattended-upgrades</code> برای patchهای امنیتی (با پنجرهٔ نگهداری مشخص)</td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.2 پیش‌نیازهای نصب بر اساس نقش سرور</h3>
+<blockquote>
+<p><strong>تفکیک مهم:</strong> در <strong>production روی Kubernetes</strong> معمولاً موتور اجرا <strong><code>containerd</code></strong> است (همراه K3s/kubeadm). نصب <strong>Docker Engine</strong> روی workerهای K8s <strong>توصیه نمی‌شود</strong> مگر با دلیل در ADR. در مقابل، روی <strong>میزکار توسعهٔ Ubuntu</strong> و بسیاری از <strong>CI runner</strong>های اوبونتو، <strong>Docker CE</strong> برای <code>docker build</code> و <code>docker compose</code> طبیعی است.</p>
+</blockquote>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نقش سرور</th>
+<th>OS</th>
+<th>نصب / نرم‌افزارهای ضروری (حداقل)</th>
+<th>اختیاری یا MVP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Load Balancer / Ingress (VM)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><code>nginx</code> یا HAProxy از مخازن رسمی؛ اگر TLS روی VM: certbot یا گواهی میزبان</td>
+<td><code>fail2ban</code>، <code>curl</code>، <code>jq</code></td>
+</tr>
+<tr>
+<td><strong>نود Kubernetes (control + worker)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><strong>K3s</strong> (شامل <strong>containerd</strong> + <code>kubectl</code>) <em>یا</em> kubeadm + <strong>containerd</strong>؛ بدون Docker مگر استثنا</td>
+<td><code>open-iscsi</code> در صورت storage provisioner؛ <code>nfs-common</code> اگر NFS؛ <code>helm</code> روی bastion</td>
+</tr>
+<tr>
+<td><strong>Bastion / Jump host</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><code>openssh-server</code>، <code>git</code>، <code>curl</code>، <code>jq</code>، <code>kubectl</code> (هم‌نسخه با کلاستر)</td>
+<td><code>helm</code>، <code>k9s</code></td>
+</tr>
+<tr>
+<td><strong>CI Runner (self-hosted)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><strong>Docker CE</strong> + <code>docker compose plugin</code> <em>یا</em> <strong>Podman</strong> + compose؛ <code>git</code>؛ دسترسی به registry</td>
+<td>اگر image در GitHub ساخته می‌شود، ممکن است فقط runner بدون Docker کافی باشد</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL (سرور اختصاصی)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td>PostgreSQL از <strong>PGDG</strong>؛ ابزار <code>pg_basebackup</code>، <code>wget</code>/<code>ca-certificates</code></td>
+<td><strong>Patroni</strong> + etcd برای HA؛ بدون Docker برای DB در prod مگر تصمیم صریح DevOps</td>
+</tr>
+<tr>
+<td><strong>Redis (سرور اختصاصی)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><code>redis-server</code> از مخزن توزیع یا بستهٔ رسمی Redis</td>
+<td>تنظیم <code>sysctl</code> برای شبکه در بار بالا طبق مستند Redis</td>
+</tr>
+<tr>
+<td><strong>MinIO (VM یا bare metal)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td>باینری MinIO رسمی یا نصب از طریق <strong>Helm روی K8s</strong> (در آن صورت روی نود فقط containerd کافی است)</td>
+<td><code>mc</code> (MinIO Client) روی bastion</td>
+</tr>
+<tr>
+<td><strong>ClickHouse</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td>پکیج/باینری رسمی یا <strong>Helm</strong> روی K8s</td>
+<td><code>clickhouse-client</code> روی bastion</td>
+</tr>
+<tr>
+<td><strong>ماشین Observability (VM کوچک MVP)</strong></td>
+<td>Ubuntu 22.04/24.04</td>
+<td><strong>Docker CE</strong> + <code>docker compose</code> برای استک سبک (Prometheus/Grafana/Loki) <em>در صورت عدم استقرار داخل K8s</em></td>
+<td>مهاجرت بعدی به Pods داخل کلاستر</td>
+</tr>
+<tr>
+<td><strong>میزکار توسعه (لپ‌تاپ یا VM)</strong></td>
+<td>Ubuntu Desktop یا Server <strong>22.04/24.04 LTS</strong></td>
+<td><strong>Docker CE</strong> + پلاگین compose (طبق <a href="https://docs.docker.com/engine/install/ubuntu/">مستند رسمی Docker برای Ubuntu</a>)، <strong>Git</strong>، <strong>Node.js 20 LTS</strong>، <strong>Python 3.12</strong>، <strong>pnpm</strong>، <strong>OpenSSL</strong></td>
+<td>VS Code / Cursor؛ <code>make</code> اختیاری؛ کلاستر محلی اختیاری با <strong>k3d</strong> یا <strong>minikube</strong> (بدون Docker Desktop)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>نسخه‌های مرجع (هم‌تراز با <a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> — در زمان deploy با ADR به‌روز شوند):</strong></p>
+<ul>
+<li>Docker CE (در صورت استفاده): آخرین stable از مخزن رسمی Docker برای Ubuntu  </li>
+<li>K3s: آخرین stable channel رسمی Rancher  </li>
+<li>containerd: نسخهٔ همراه K3s/kubeadm (عدم نصب دستی جدا مگر نیاز خاص)</li>
+</ul>
+<hr />
+<h2 id="sec-6">5. شبکه و پورت‌ها (قرارداد)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ترافیک</th>
+<th>پورت / پروتکل</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTPS عمومی</td>
+<td>443</td>
+<td>فقط TLS ۱.۲+</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td>443 (upgrade)</td>
+<td>مسیر جدا روی ingress مثلاً <code>/socket.io/</code></td>
+</tr>
+<tr>
+<td>Postgres داخلی</td>
+<td>5432</td>
+<td>فقط داخل VPC / private network</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>6379</td>
+<td>فایروال؛ AUTH اجباری</td>
+</tr>
+<tr>
+<td>MinIO S3 API</td>
+<td>9000 (یا custom)</td>
+<td>پشت reverse proxy در prod</td>
+</tr>
+<tr>
+<td>مدیریت SSH</td>
+<td>22</td>
+<td>فقط bastion + کلید؛ غیرفعال با password login</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>سگمنت شبکه پیشنهادی (مفهومی):</strong></p>
+<ul>
+<li><code>10.0.0.0/16</code> — VPC اصلی</li>
+<li><code>10.0.10.0/24</code> — workers</li>
+<li><code>10.0.20.0/24</code> — data layer (DB)</li>
+<li><code>10.0.30.0/24</code> — management / bastion</li>
+</ul>
+<hr />
+<h2 id="sec-7">6. کانفیگ اپلیکیشن (Application configuration)</h2>
+<h3>6.1 لایه‌ها</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>لایه</th>
+<th>محتوا</th>
+<th>مثال</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Build-time</strong></td>
+<td>نسخهٔ git، نام image</td>
+<td><code>GIT_SHA</code>, <code>APP_VERSION</code></td>
+</tr>
+<tr>
+<td><strong>Deploy-time</strong></td>
+<td>replica، resource limits</td>
+<td>Helm values یا ArgoCD Application</td>
+</tr>
+<tr>
+<td><strong>Runtime</strong></td>
+<td>اتصال DB، URL بیرونی</td>
+<td>متغیرهای محیطی از Secret</td>
+</tr>
+<tr>
+<td><strong>Feature flags</strong></td>
+<td>روشن/خاموش قابلیت</td>
+<td>سرویس جدا یا env با قرارداد مشخص</td>
+</tr>
+</tbody>
+</table></div>
+<h3>6.2 قرارداد نام‌گذاری env (پیشنهاد)</h3>
+<ul>
+<li>پیشوند <code>CB_</code> برای همهٔ متغیرهای اختصاصی محصول (مثلاً <code>CB_DATABASE_URL</code>)</li>
+<li>حداقل متغیرهای مشترک همهٔ سرویس‌های Node:</li>
+<li><code>CB_ENV</code> = <code>development</code> | <code>staging</code> | <code>production</code></li>
+<li><code>CB_LOG_LEVEL</code></li>
+<li><code>CB_OTEL_EXPORTER_OTLP_ENDPOINT</code> (اختیاری)</li>
+</ul>
+<h3>6.3 فایل‌های مرجع در ریپو (وقتی کد اضافه شد)</h3>
+<ul>
+<li><code>apps/*/.env.example</code> — بدون secret؛ توضیح هر کلید</li>
+<li><code>infra/</code> (آینده) — Helm/Kustomize یا Terraform</li>
+<li><code>docker-compose.yml</code> در root برای dev یکپارچه</li>
+</ul>
+<hr />
+<h2 id="sec-8">7. Secrets و مدیریت کلید</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نوع</th>
+<th>محل نگهداری پیشنهادی</th>
+<th>چرخش (rotate)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>رشتهٔ اتصال Postgres</td>
+<td>Vault / sealed secret K8s</td>
+<td>هر ۹۰ روز یا پس از حادثه</td>
+</tr>
+<tr>
+<td>کلید JWT signing</td>
+<td>Vault، RS256 private key</td>
+<td>نیمه‌سالانه + کلید دوگانه در چرخش</td>
+</tr>
+<tr>
+<td>API keys (OpenAI، زرین‌پال، …)</td>
+<td>Vault؛ هرگز commit نشود</td>
+<td>طبق سیاست وندور</td>
+</tr>
+<tr>
+<td>TLS certificates</td>
+<td>cert-manager + Let's Encrypt یا cert میزبان</td>
+<td>auto-renew ۳۰ روز قبل از انقضا</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>قاعده:</strong> در PR فقط placeholder؛ مقدار توسط pipeline یا اپراتور روی کلاستر تزریق می‌شود (<a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a>).</p>
+<hr />
+<h2 id="sec-9">8. Kubernetes — نقشهٔ namespace و اجزای حداقلی</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>محتوا</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ingress-nginx</code> یا <code>traefik</code></td>
+<td>Ingress controller</td>
+</tr>
+<tr>
+<td><code>cert-manager</code></td>
+<td>گواهی TLS</td>
+</tr>
+<tr>
+<td><code>chatbox-prod</code></td>
+<td>Deployment سرویس‌های Chat-Box</td>
+</tr>
+<tr>
+<td><code>observability</code></td>
+<td>Prometheus، Grafana، Loki (در صورت self-host)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Resource پیشنهادی هر Pod (شروع — با HPA بعداً):</strong></p>
+<ul>
+<li>API/Chat (Node): <code>requests: cpu 250m, memory 512Mi</code> — <code>limits</code> متناسب با load test</li>
+<li>AI (Python): <code>memory 2Gi+</code> بسته به مدل محلی</li>
+</ul>
+<hr />
+<h2 id="sec-10">9. ذخیره‌سازی و پشتیبان‌گیری (زیرساخت)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>داده</th>
+<th>محل</th>
+<th>بکاپ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Postgres</td>
+<td>دیسک محلی یا volume مدیریت‌شده</td>
+<td>logical daily + WAL archive؛ تست restore ماهانه (<a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT.md</code></a>)</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>AOF/RDB طبق نیاز</td>
+<td>snapshot؛ بازیابی سریع‌تر از rebuild کامل</td>
+</tr>
+<tr>
+<td>MinIO</td>
+<td>erasure coding در چند نود</td>
+<td>replication به bucket سرد یا DC دوم</td>
+</tr>
+<tr>
+<td>لاگ‌ها</td>
+<td>Loki / فایل روی نود</td>
+<td>retention طبق سیاست؛ جدا از DB اصلی</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-11">10. CI/CD و تحویل به سرور</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>مرحله</th>
+<th>ابزار پیشنهادی (همسو با Tech Stack)</th>
+<th>خروجی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build &amp; test</td>
+<td>GitHub Actions</td>
+<td>image تگ‌خورده با <code>GIT_SHA</code></td>
+</tr>
+<tr>
+<td>Registry</td>
+<td>GitHub Container Registry یا registry خصوصی DC</td>
+<td>image قابل pull از داخل ایران</td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td>Argo CD (GitOps) یا اسکریپت Helm در pipeline</td>
+<td>sync با branch <code>release/*</code></td>
+</tr>
+<tr>
+<td>Migration DB</td>
+<td>job یک‌باره قبل یا همزمان با rollout</td>
+<td>قرارداد در ADR</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-12">11. IaC و نسخه‌پذیری زیرساخت</h2>
+<ul>
+<li><strong>هدف:</strong> تمام تغییرات firewall، سایز VM، و route در PR قابل review.</li>
+<li><strong>ابزار:</strong> OpenTofu / Terraform برای cloud API؛ Kustomize/Helm برای manifestهای K8s.</li>
+<li><strong>شروع MVP:</strong> حتی اگر فقط <code>docker-compose</code> و یک <code>README</code> در <code>infra/</code> باشد، باید <strong>منبع حقیقت</strong> مشخص باشد؛ با رشد، به IaC کامل مهاجرت شود.</li>
+</ul>
+<hr />
+<h2 id="sec-13">12. اندازه‌گیری و مقیاس (راهنمای سفارش اولیه)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>فاز</th>
+<th>تقریب workspace فعال</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MVP اولیه</td>
+<td>&lt; ۱۰۰</td>
+<td>۱ خوشهٔ کوچک، Postgres تکی با replica اختیاری</td>
+</tr>
+<tr>
+<td>رشد</td>
+<td>۱۰۰ – ۱۰۰۰</td>
+<td>جدا کردن read replica، Redis cluster</td>
+</tr>
+<tr>
+<td>مقیاس بالا</td>
+<td>۱۰۰۰+</td>
+<td>sharding topic/event، چندین pool worker</td>
+</tr>
+</tbody>
+</table></div>
+<p>اعداد دقیق سفارش سخت‌افزار باید با <strong>load test</strong> (k6) و SLA داخلی به‌روز شوند.</p>
+<hr />
+<h2 id="sec-14">13. چک‌لیست قبل از اولین Production</h2>
+<ul>
+<li>[ ] OS نودها <strong>LTS</strong>، <strong>NTP</strong> فعال، سیاست <strong>patch</strong> امنیتی مشخص</li>
+<li>[ ] نودهای Kubernetes فقط <strong>containerd</strong> (بدون Docker Engine) مگر ADR</li>
+<li>[ ] TLS روی تمام entrypointها فعال و HSTS</li>
+<li>[ ] Secretها در Vault / K8s Secret (نه git)</li>
+<li>[ ] Firewall: فقط پورت‌های لازم باز</li>
+<li>[ ] بکاپ Postgres زمان‌بندی + یک بار restore موفق</li>
+<li>[ ] لاگ با <code>correlation_id</code> از لبه تا سرویس</li>
+<li>[ ] runbook قطعی DB و failover (<a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT.md</code></a>)</li>
+<li>[ ] پایش uptime برای <code>api</code> و <code>widget</code> CDN</li>
+</ul>
+<hr />
+<h2 id="sec-15">14. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — C4، سرویس‌ها، Deployment Topology خلاصه</li>
+<li><a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> — انتخاب K8s، Traefik، Grafana stack</li>
+<li><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a> — mTLS، Vault، WAF</li>
+<li><a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT.md</code></a> — SLO، runbook، پشتیبانی</li>
+<li><a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a> — راهنمای گام‌به‌گام توسعه از نصب OS تا PR و استقرار</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="13-ARCHITECTURE-DECISION-RECORDS.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۱۳ — ADR</div>
+      </a>
+      <a class="next" href="15-DEVELOPMENT-GUIDE-FA.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۵ — راهنمای توسعه فارسی</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

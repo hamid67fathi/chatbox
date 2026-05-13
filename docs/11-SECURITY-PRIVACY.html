@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۱ · امنیت و حریم خصوصی — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — امنیت و حریم خصوصی">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html" class="active"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">خلاصهٔ تهدیدمدل (فارسی)</a></li>
+      <li><a href="#sec-2">Machine-readable (English)</a></li>
+      <li><a href="#sec-3">چک‌لیست MVP (اجرایی)</a></li>
+      <li><a href="#sec-4">حریم خصوصی (Outline برای متن حقوقی)</a></li>
+      <li><a href="#sec-5">واکنش به حادثه (خلاصه)</a></li>
+      <li><a href="#sec-6">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۱ — امنیت و حریم خصوصی</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🔐</span> Security &amp; Privacy — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="11-SECURITY-PRIVACY.md">11-SECURITY-PRIVACY.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> Security (+ Engineering برای اجرا)</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">خلاصهٔ تهدیدمدل (فارسی)</h2>
+<p>سطح حمله: <strong>ویجت عمومی</strong> (قابل تزریق در سایت‌های ناشناس)، <strong>داشبورد اپراتور</strong> (نشست طولانی)، <strong>APIهای LLM خارجی</strong> (نشت دادهٔ حساس)، <strong>چندمستأجری</strong> (عبور داده بین workspaceها). کنترل‌ها: RLS در Postgres، rate limit روی ویجت و API عمومی، حداقل‌سازی PII به سرویس LLM، audit log برای اقدامات ادمین.</p>
+<hr />
+<h2 id="sec-2">Machine-readable (English)</h2>
+<pre><code class="language-yaml">security_doc_id: 11-SECURITY-PRIVACY
+stride_focus:
+  - Spoofing: session_fixation_mitigations_lucia_patterns
+  - Tampering: signed_widget_config_optional_future
+  - Repudiation: audit_log_admin_actions
+  - Information_disclosure: rls_workspace_id_all_tenant_tables
+  - Denial_of_service: rate_limits_per_ip_and_per_widget_key
+  - Elevation_of_privilege: rbac_admin_agent_viewer
+data_residency:
+  primary: iran
+  dr: eu_hetzner_example
+  llm_providers: external_review_each_subprocessor
+widget_security:
+  - csp_guideline_for_customer_site_documented
+  - postmessage_origin_allowlist
+pii_to_llm:
+  default: redact_before_external_inference
+  exception_requires: security_ticket_and_adr_reference
+</code></pre>
+<hr />
+<h2 id="sec-3">چک‌لیست MVP (اجرایی)</h2>
+<ul>
+<li>[ ] RLS فعال روی جداول حساس + تست خودکار cross-tenant  </li>
+<li>[ ] Rate limit: <code>/widget/*</code> و <code>/api/public/*</code>  </li>
+<li>[ ] Secretها فقط از vault/env سرور — هرگز در ریپو  </li>
+<li>[ ] <code>SameSite</code> + <code>HttpOnly</code> برای کوکی نشست داشبورد  </li>
+<li>[ ] Security headers پایه (در gateway یا framework)  </li>
+<li>[ ] سیاست نگهداری پیام و حذف/خروجی داده (متن حقوقی با Legal)  </li>
+</ul>
+<hr />
+<h2 id="sec-4">حریم خصوصی (Outline برای متن حقوقی)</h2>
+<ol>
+<li>چه داده‌ای جمع می‌شود (مکالمه، متادیتا، IP، فایل).  </li>
+<li>هدف پردازش (ارائهٔ سرویس، بهبود AI با <strong>opt-in</strong> آموزش).  </li>
+<li>اشخاص ثالث (LLM، میزبان، درگاه).  </li>
+<li>حق کاربر (دسترسی، حذف، شکایت).  </li>
+<li>مدت نگهداری (هم‌تراز <code>04-DATABASE-SCHEMA.md</code> بخش retention).</li>
+</ol>
+<hr />
+<h2 id="sec-5">واکنش به حادثه (خلاصه)</h2>
+<ol>
+<li>تشخیص (alert / گزارش کاربر)  </li>
+<li>مهار (غیرفعال کردن کلید API در معرض / block IP)  </li>
+<li>ارزیابی دامنهٔ نشت  </li>
+<li>اطلاع‌رسانی طبق تعهدات قراردادی  </li>
+<li>postmortem داخلی + ADR در صورت تغییر معماری  </li>
+</ol>
+<p>جزئیات کامل در <a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT.md</code></a>.</p>
+<hr />
+<h2 id="sec-6">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — مرز شبکه  </li>
+<li><a href="05-API-SPEC.html"><code>05-API-SPEC.md</code></a> — rate limit و auth  </li>
+<li><a href="06-AI-ARCHITECTURE.html"><code>06-AI-ARCHITECTURE.md</code></a> — فیلتر PII و safety  </li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="10-GTM-PRICING-MARKETING.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۱۰ — GTM و قیمت‌گذاری</div>
+      </a>
+      <a class="next" href="12-OPERATIONS-SUPPORT.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۲ — عملیات و پشتیبانی</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

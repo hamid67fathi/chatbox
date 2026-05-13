@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat-Box — مستندات فنی</title>
+<meta name="description" content="مستندات فنی پلتفرم Chat-Box — لایو چت AI-Native برای بازار ایران">
+<link rel="stylesheet" href="_shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#overview">فهرست مستندات</a></li>
+      <li><a href="#dual">MD برای AI · HTML برای انسان</a></li>
+      <li><a href="#summary">خلاصه پروژه</a></li>
+      <li><a href="#differentiators">تمایز نسبت به رقبا</a></li>
+      <li><a href="#competitors">رقبای اصلی</a></li>
+      <li><a href="#start">شروع کار</a></li>
+      <li><a href="#status">وضعیت سند</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>خانه</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+    <h1><span class="emoji">📚</span> مستندات فنی پلتفرم Chat-Box</h1>
+
+    <blockquote>
+      <p>پلتفرم SaaS لایو چت با AI از روز اول — بهینه‌شده برای بازار ایران</p>
+    </blockquote>
+
+    <p>این پوشه شامل تمام مستندات فنی، طراحی و اجرایی پروژه است. ترتیب پیشنهادی برای خواندن (هم برای انسان و هم برای AI Agent):</p>
+
+    <h2 id="overview">🗂️ فهرست مستندات</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:50px">#</th><th>فایل</th><th>موضوع</th><th>مخاطب</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>۰۰</td><td><a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES</code></a></td><td>تفکیک نقش‌ها، مالکیت اسناد، قواعد PR</td><td>Product, همه</td></tr>
+          <tr><td>۰۱</td><td><a href="01-PRD.html"><code>01-PRD</code></a></td><td>نیازمندی‌های محصول، Persona، User Stories</td><td>Product, Eng, AI Agent</td></tr>
+          <tr><td>۰۲</td><td><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE</code></a></td><td>معماری سیستم، Component Diagrams، Data Flow</td><td>Eng, AI Agent</td></tr>
+          <tr><td>۰۳</td><td><a href="03-TECH-STACK.html"><code>03-TECH-STACK</code></a></td><td>انتخاب تکنولوژی‌ها با دلایل و trade-off</td><td>Eng, AI Agent</td></tr>
+          <tr><td>۰۴</td><td><a href="04-DATABASE-SCHEMA.html"><code>04-DATABASE-SCHEMA</code></a></td><td>Schema کامل PostgreSQL با ERD</td><td>Backend Eng, AI Agent</td></tr>
+          <tr><td>۰۵</td><td><a href="05-API-SPEC.html"><code>05-API-SPEC</code></a></td><td>REST + WebSocket API Specification</td><td>Eng, AI Agent</td></tr>
+          <tr><td>۰۶</td><td><a href="06-AI-ARCHITECTURE.html"><code>06-AI-ARCHITECTURE</code></a></td><td>لایه AI: Chatbot، Copilot، RAG</td><td>AI Eng, AI Agent</td></tr>
+          <tr><td>۰۷</td><td><a href="07-PROJECT-STRUCTURE.html"><code>07-PROJECT-STRUCTURE</code></a></td><td>Monorepo Layout (Turborepo + pnpm)</td><td>Eng, AI Agent</td></tr>
+          <tr><td>۰۸</td><td><a href="08-ROADMAP.html"><code>08-ROADMAP</code></a></td><td>فازبندی MVP، وابستگی‌ها، معیارها</td><td>همه</td></tr>
+          <tr><td>۰۹</td><td><a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE</code></a></td><td>راهنمای اجرا برای AI Agent</td><td>AI Agent</td></tr>
+          <tr><td>۱۰</td><td><a href="10-GTM-PRICING-MARKETING.html"><code>10-GTM-PRICING-MARKETING</code></a></td><td>GTM، قیمت‌گذاری، کانال اکتساب</td><td>Marketing, Product</td></tr>
+          <tr><td>۱۱</td><td><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY</code></a></td><td>تهدیدمدل، حریم خصوصی، چک‌لیست MVP</td><td>Security, Eng</td></tr>
+          <tr><td>۱۲</td><td><a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT</code></a></td><td>SRE، بکاپ، runbook، پشتیبانی مشتری</td><td>DevOps, Support</td></tr>
+          <tr><td>۱۳</td><td><a href="13-ARCHITECTURE-DECISION-RECORDS.html"><code>13-ADR</code></a></td><td>فرایند ADR + فهرست تصمیم‌ها</td><td>Eng</td></tr>
+          <tr><td>۱۴</td><td><a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE</code></a></td><td>سرورها، شبکه، کانفیگ، GitOps، IaC</td><td>DevOps</td></tr>
+          <tr><td>۱۵</td><td><a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA</code></a></td><td>راهنمای کامل توسعهٔ فنی گام‌به‌گام (فارسی)</td><td>Eng</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="dual">📄 Markdown برای AI · HTML برای انسان</h2>
+    <p>برای هر موضوع، فایل <strong><code>.md</code></strong> مرجع کاننیکال (قابل grep، دوستانه برای Agent، بخش‌های انگلیسی ساخت‌یافته) و فایل <strong><code>.html</code></strong> نمای فارسی RTL با همان استایل مشترک است. اگر تناقض باشد، مگر PR خلاف آن بگوید، <strong>MD برنده است</strong>.</p>
+
+    <h2 id="summary">🎯 خلاصه پروژه</h2>
+
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><th style="width:170px">نام محصول</th><td><strong>Chat-Box</strong></td></tr>
+          <tr><th>نوع</th><td>Multi-tenant SaaS — Live Chat + AI Customer Engagement Platform</td></tr>
+          <tr><th>بازار اصلی</th><td>ایران (فاز ۱) → کشورهای فارسی‌زبان (فاز ۲)</td></tr>
+          <tr><th>زمان MVP</th><td>۹۰ روز</td></tr>
+          <tr><th>تیم</th><td>Solo Founder + AI Agents (Claude)</td></tr>
+          <tr><th>محیط توسعه و لانچ</th><td><strong>Ubuntu</strong> Desktop یا Server <strong>22.04 / 24.04 LTS</strong> — جزئیات در <a href="14-INFRASTRUCTURE.html">سند ۱۴</a> و <a href="15-DEVELOPMENT-GUIDE-FA.html">سند ۱۵</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="differentiators">تمایز اصلی نسبت به رقبا</h3>
+
+    <ul>
+      <li><strong>AI-Native از روز اول</strong> (برخلاف رایچت/گفتینو/LiveChat که AI را add-on می‌فروشند)</li>
+      <li><strong>RTL بومی فارسی</strong> (برخلاف Crisp/LiveChat/Intercom)</li>
+      <li><strong>زیرساخت داخل ایران</strong> + درگاه پرداخت ریالی</li>
+      <li><strong>Telegram-first omnichannel</strong> (بازار ایران، نه WhatsApp)</li>
+      <li><strong>AI Copilot برای اپراتور</strong> از همان MVP</li>
+    </ul>
+
+    <h3 id="competitors">رقبای اصلی</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>رقیب</th><th>نقطه قوت</th><th>نقطه ضعف</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>LiveChat</td><td>برند جهانی، اکوسیستم</td><td>بدون RTL، بدون پرداخت ریالی</td></tr>
+          <tr><td>Crisp</td><td>پلن رایگان قوی، Hugo AI</td><td>تأخیر سرور، فاقد فارسی</td></tr>
+          <tr><td>Intercom</td><td>بهترین UX، AI پیشرفته</td><td>گران، Enterprise-only</td></tr>
+          <tr><td>رایچت</td><td>بومی، شناخته‌شده</td><td>معماری قدیمی، AI ابتدایی</td></tr>
+          <tr><td>گفتینو</td><td>محلی، اقتصادی</td><td>feature کم، بدون omnichannel</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="start">🚀 شروع کار</h2>
+
+    <div class="callout info">
+      <div class="callout-title">🤖 اگر AI Agent هستید</div>
+      <div>ابتدا <a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES</code></a>، سپس <a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE</code></a> و بعد سند مرتبط با تسک.</div>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-title">👋 اگر تازه به پروژه پیوسته‌اید</div>
+      <div>ابتدا <strong><a href="16-DEVELOPMENT-STATUS.html">۱۶ — وضعیت مراحل توسعه</a></strong> را ببینید؛ سپس <strong><a href="15-DEVELOPMENT-GUIDE-FA.html">۱۵ — راهنمای کامل توسعهٔ فنی (گام‌به‌گام)</a></strong>؛ بعد <a href="00-GOVERNANCE-ROLES.html">۰۰ — حکمرانی</a> و <a href="01-PRD.html">۰۱ — PRD</a>.</div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-title">💻 اگر می‌خواهید کد بنویسید</div>
+      <div><code>07-PROJECT-STRUCTURE</code> + <code>08-ROADMAP</code> نقطه شروع است.</div>
+    </div>
+
+    <h2 id="status">📌 وضعیت سند</h2>
+
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><th style="width:170px">ورژن</th><td>1.1.0</td></tr>
+          <tr><th>تاریخ ایجاد</th><td>1405-02-21 (May 2026)</td></tr>
+          <tr><th>نگهدارنده</th><td>CTO</td></tr>
+          <tr><th>وضعیت</th><td>Active — Living Document</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>این یک <strong>سند زنده</strong> است؛ هر تصمیم معماری مهم باید با PR در همین مستندات ثبت شود.</p>
+
+    <nav class="doc-nav">
+      <div></div>
+      <a class="next" href="00-GOVERNANCE-ROLES.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۰ — حکمرانی و نقش‌ها</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۷ · ساختار پروژه — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — ساختار پروژه">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html" class="active"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">1. اصول سازماندهی</a></li>
+      <li><a href="#sec-2">2. ساختار سطح بالا</a></li>
+      <li><a href="#sec-3">3. توضیح apps</a></li>
+      <li><a href="#sec-4">4. توضیح packages</a></li>
+      <li><a href="#sec-5">5. Tooling Configuration</a></li>
+      <li><a href="#sec-6">6. اسکریپت‌های root</a></li>
+      <li><a href="#sec-7">7. CI/CD Layout</a></li>
+      <li><a href="#sec-8">8. CODEOWNERS نمونه</a></li>
+      <li><a href="#sec-9">9. Conventions</a></li>
+      <li><a href="#sec-10">10. Hot Reload Plan در Dev</a></li>
+      <li><a href="#sec-11">11. Lazy adoption checklist</a></li>
+      <li><a href="#sec-12">12. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۷ — ساختار پروژه</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">📁</span> سند ساختار پروژه (Monorepo)</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="07-PROJECT-STRUCTURE.md">07-PROJECT-STRUCTURE.md</a></span>
+
+    </div>
+
+<blockquote>
+<p>Chat-Box — Turborepo + pnpm + polyglot (TS + Python)<br />
+ورژن 1.1 · مه 2026</p>
+</blockquote>
+<p><strong>محیط dev مرجع:</strong> <strong>Ubuntu Desktop یا Server 22.04/24.04 LTS</strong> با Docker CE و Node 20 — جزئیات در <a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a>.</p>
+<hr />
+<h2 id="sec-1">1. اصول سازماندهی</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>اصل</th>
+<th>پیامد</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Monorepo از روز ۱</strong></td>
+<td>کد share شده بین apps، single source of truth</td>
+</tr>
+<tr>
+<td><strong>apps در <code>apps/</code>، packages در <code>packages/</code></strong></td>
+<td>استاندارد Turborepo</td>
+</tr>
+<tr>
+<td><strong>هر app یک owner ذهنی</strong></td>
+<td>کسی مسئول روی AI، کسی روی dashboard</td>
+</tr>
+<tr>
+<td><strong>Polyglot نه به‌بهای ابزار</strong></td>
+<td>سرویس Python داخل monorepo با Turbo task runner</td>
+</tr>
+<tr>
+<td><strong>هر چیز shared باید package باشد</strong></td>
+<td>نه import از <code>../../other-app/...</code></td>
+</tr>
+<tr>
+<td><strong>هیچ کدی روی root</strong></td>
+<td>بجز config و scripts</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-2">2. ساختار سطح بالا</h2>
+<pre><code>chat-box/
+├── apps/                       # Deployable applications
+│   ├── api/                    # REST + WebSocket gateway (Node/Fastify)
+│   ├── chat-service/           # Chat core service (Node/Fastify)
+│   ├── auth-service/           # Auth service (Node/Fastify)
+│   ├── billing-service/        # Billing (Node)
+│   ├── notification-service/   # Email/SMS/Push worker (Node)
+│   ├── analytics-service/      # Kafka → ClickHouse ETL (Node)
+│   ├── integration-telegram/   # Telegram bot (Node + grammy)
+│   ├── ai-service/             # AI Python service (FastAPI)
+│   ├── knowledge-service/      # KB ingestion (Python)
+│   ├── dashboard/              # Agent dashboard (Next.js 14)
+│   ├── admin/                  # Internal admin panel (Next.js)
+│   ├── widget/                 # Chat widget (Vanilla TS)
+│   ├── mobile/                 # React Native (Expo)
+│   └── landing/                # Marketing site (Next.js static)
+│
+├── packages/                   # Shared TS libs
+│   ├── config/                 # tsconfig, biome, env schemas
+│   ├── ui/                     # shadcn + design system
+│   ├── icons/
+│   ├── db/                     # Drizzle schema + queries
+│   ├── auth/                   # Lucia session helpers
+│   ├── sdk/                    # @chatbox/sdk public TypeScript SDK
+│   ├── api-types/              # Shared Zod schemas (REST + WS contracts)
+│   ├── events/                 # Kafka topics + CloudEvents schemas
+│   ├── i18n/                   # Locales fa/en/ar
+│   ├── analytics-events/       # Frontend tracking helpers
+│   ├── logger/                 # pino + correlation_id
+│   ├── otel/                   # OpenTelemetry helpers
+│   └── testing/                # Test fixtures + mock factory
+│
+├── python-packages/            # Shared Python libs
+│   ├── chatbox_core/           # config، logging، tracing
+│   ├── chatbox_db/             # SQLAlchemy models (mirrors Drizzle)
+│   ├── chatbox_llm/            # LLM client abstraction + fallback
+│   ├── chatbox_rag/            # Embedding، chunking، retrieval
+│   └── chatbox_eval/           # eval harness for AI
+│
+├── infra/                      # IaC
+│   ├── k8s/                    # Helm charts per service
+│   ├── terraform/              # Cloud DNS, secrets, buckets
+│   ├── docker/                 # Dockerfiles per service
+│   └── scripts/                # deploy.sh, rollback.sh, dr-test.sh
+│
+├── docs/                       # این پوشه — مستندات
+│
+├── tools/                      # Dev scripts
+│   ├── seed/                   # Database seeding
+│   ├── codegen/                # OpenAPI → SDK
+│   └── migrate/                # Migration runner
+│
+├── .github/
+│   ├── workflows/              # CI: lint, test, build, deploy
+│   ├── CODEOWNERS
+│   └── pull_request_template.md
+│
+├── turbo.json
+├── pnpm-workspace.yaml
+├── package.json
+├── biome.json
+├── .editorconfig
+├── .gitignore
+├── .env.example
+├── docker-compose.yml          # local dev: PG, Redis, Redpanda, MinIO
+├── CLAUDE.md                   # راهنمای AI Agent (مهم!)
+├── README.md
+└── LICENSE
+</code></pre>
+<hr />
+<h2 id="sec-3">3. توضیح apps</h2>
+<h3>3.1 <code>apps/api/</code> — API Gateway</h3>
+<p>نقش: gateway و BFF برای dashboard/widget/mobile.</p>
+<pre><code>api/
+├── src/
+│   ├── routes/
+│   │   ├── auth/
+│   │   ├── workspaces/
+│   │   ├── conversations/
+│   │   ├── contacts/
+│   │   ├── knowledge-bases/
+│   │   ├── canned-responses/
+│   │   ├── analytics/
+│   │   ├── billing/
+│   │   ├── webhooks/
+│   │   └── widget/             # /widget/v1 endpoints
+│   ├── middleware/
+│   │   ├── auth.ts
+│   │   ├── tenant.ts           # X-Workspace-Id → app.current_workspace
+│   │   ├── rate-limit.ts
+│   │   ├── error-handler.ts
+│   │   └── correlation-id.ts
+│   ├── plugins/                # Fastify plugins
+│   ├── schemas/                # Zod → JSON schema for OpenAPI
+│   ├── lib/                    # helpers
+│   ├── app.ts                  # Fastify build
+│   ├── server.ts               # entry point
+│   └── env.ts                  # env validation با Zod
+├── test/
+├── Dockerfile
+├── package.json
+└── tsconfig.json
+</code></pre>
+<h3>3.2 <code>apps/chat-service/</code></h3>
+<pre><code>chat-service/
+├── src/
+│   ├── ws/
+│   │   ├── adapter.ts          # Redis adapter for Socket.IO
+│   │   ├── handlers/
+│   │   │   ├── message.ts
+│   │   │   ├── typing.ts
+│   │   │   ├── presence.ts
+│   │   │   └── conversation.ts
+│   │   ├── auth.ts             # token verification
+│   │   └── rooms.ts
+│   ├── domain/
+│   │   ├── conversation/
+│   │   ├── message/
+│   │   └── presence/
+│   ├── events/                 # Kafka producers
+│   ├── ai-bridge/              # forward to AI service
+│   ├── app.ts
+│   └── server.ts
+└── ...
+</code></pre>
+<h3>3.3 <code>apps/ai-service/</code> (Python)</h3>
+<pre><code>ai-service/
+├── src/chatbox_ai/
+│   ├── api/                    # FastAPI routes
+│   │   ├── routes/
+│   │   │   ├── reply.py
+│   │   │   ├── copilot.py
+│   │   │   ├── summarize.py
+│   │   │   ├── classify.py
+│   │   │   └── search.py
+│   │   ├── deps.py
+│   │   └── main.py
+│   ├── pipelines/
+│   │   ├── auto_reply.py
+│   │   ├── copilot.py
+│   │   ├── intent.py
+│   │   └── sentiment.py
+│   ├── providers/
+│   │   ├── openai_client.py
+│   │   ├── anthropic_client.py
+│   │   ├── local_client.py
+│   │   └── fallback.py         # circuit breaker
+│   ├── prompts/                # Jinja2 templates
+│   │   ├── auto_reply.j2
+│   │   ├── copilot.j2
+│   │   └── summarizer.j2
+│   ├── safety/
+│   │   ├── pii.py
+│   │   ├── jailbreak.py
+│   │   └── profanity.py
+│   └── settings.py
+├── tests/
+│   ├── unit/
+│   └── eval/                   # eval datasets + runner
+├── Dockerfile
+├── pyproject.toml              # uv-managed
+└── uv.lock
+</code></pre>
+<h3>3.4 <code>apps/knowledge-service/</code> (Python)</h3>
+<pre><code>knowledge-service/
+├── src/chatbox_kb/
+│   ├── api/
+│   │   ├── routes/
+│   │   │   ├── documents.py
+│   │   │   ├── jobs.py
+│   │   │   └── search.py
+│   │   └── main.py
+│   ├── ingest/
+│   │   ├── extract/            # Unstructured.io wrappers
+│   │   ├── chunk/
+│   │   ├── embed/
+│   │   ├── crawl/              # URL crawler
+│   │   └── pipeline.py
+│   ├── workers/                # BullMQ via redis-py
+│   └── settings.py
+└── ...
+</code></pre>
+<h3>3.5 <code>apps/dashboard/</code> (Next.js 14)</h3>
+<pre><code>dashboard/
+├── src/
+│   ├── app/                    # App Router
+│   │   ├── (auth)/
+│   │   │   ├── login/
+│   │   │   ├── signup/
+│   │   │   └── otp/
+│   │   ├── (workspace)/
+│   │   │   ├── [workspace]/
+│   │   │   │   ├── inbox/      # Inbox اپراتور
+│   │   │   │   │   ├── [convId]/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── contacts/
+│   │   │   │   ├── knowledge/
+│   │   │   │   ├── settings/
+│   │   │   │   ├── team/
+│   │   │   │   ├── analytics/
+│   │   │   │   ├── billing/
+│   │   │   │   └── layout.tsx
+│   │   │   └── (onboarding)/
+│   │   ├── api/                # Route handlers (rare)
+│   │   ├── layout.tsx
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── inbox/
+│   │   ├── conversation/
+│   │   ├── copilot/
+│   │   ├── kb/
+│   │   └── ui/                 # local extensions، اصلیش در packages/ui
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── api.ts              # کلاینت rest
+│   │   ├── ws.ts               # Socket.IO client
+│   │   ├── auth.ts
+│   │   └── i18n.ts
+│   ├── stores/                 # Zustand
+│   └── styles/
+├── public/
+├── tailwind.config.ts          # با tailwindcss-rtl plugin
+├── next.config.mjs
+└── package.json
+</code></pre>
+<h3>3.6 <code>apps/widget/</code> (Vanilla TS)</h3>
+<pre><code>widget/
+├── src/
+│   ├── core/
+│   │   ├── widget.ts           # main entry
+│   │   ├── transport.ts        # WS + HTTP fallback
+│   │   ├── session.ts
+│   │   └── auto-detect-rtl.ts
+│   ├── ui/                     # Web Components
+│   │   ├── chat-button.ts
+│   │   ├── chat-panel.ts
+│   │   ├── message-list.ts
+│   │   ├── composer.ts
+│   │   └── prechat-form.ts
+│   ├── styles/                 # CSS-in-JS که در shadow DOM می‌رود
+│   ├── types/
+│   └── index.ts                # initChatBox()
+├── test/
+├── tsup.config.ts              # bundler
+├── package.json
+└── README.md
+</code></pre>
+<p><strong>Build target:</strong><br />
+- <code>dist/widget.js</code> — UMD &lt; 30KB gzipped<br />
+- <code>dist/widget.esm.js</code></p>
+<h3>3.7 <code>apps/mobile/</code> (React Native + Expo)</h3>
+<pre><code>mobile/
+├── src/
+│   ├── app/                    # expo-router
+│   │   ├── (auth)/
+│   │   ├── (workspace)/
+│   │   │   ├── inbox/
+│   │   │   ├── conversation/[id].tsx
+│   │   │   └── settings.tsx
+│   │   └── _layout.tsx
+│   ├── components/
+│   ├── lib/
+│   ├── hooks/
+│   └── stores/
+├── assets/
+├── app.config.ts
+└── eas.json
+</code></pre>
+<hr />
+<h2 id="sec-4">4. توضیح packages</h2>
+<h3>4.1 <code>packages/db/</code></h3>
+<pre><code>db/
+├── src/
+│   ├── schema/
+│   │   ├── workspaces.ts
+│   │   ├── users.ts
+│   │   ├── conversations.ts
+│   │   ├── messages.ts
+│   │   ├── kb.ts
+│   │   ├── billing.ts
+│   │   └── index.ts            # re-export
+│   ├── migrations/
+│   ├── seed/
+│   ├── client.ts               # Drizzle client factory
+│   ├── tenant.ts               # withTenant() helper
+│   └── index.ts
+├── drizzle.config.ts
+└── package.json
+</code></pre>
+<h3>4.2 <code>packages/api-types/</code></h3>
+<pre><code>api-types/
+├── src/
+│   ├── rest/                   # Zod schemas for every endpoint
+│   │   ├── auth.ts
+│   │   ├── conversations.ts
+│   │   ├── messages.ts
+│   │   └── ...
+│   ├── ws/                     # Socket.IO event types
+│   │   ├── client-to-server.ts
+│   │   └── server-to-client.ts
+│   ├── widget/
+│   └── index.ts
+└── package.json
+</code></pre>
+<p>این package <strong>منبع حقیقت</strong> برای contract است. هم سرور Zod validate می‌کند، هم frontend type می‌گیرد.</p>
+<h3>4.3 <code>packages/ui/</code> (shadcn + customization)</h3>
+<pre><code>ui/
+├── src/
+│   ├── primitives/             # button, input, dialog, ...
+│   ├── patterns/               # ConversationCard, InboxList, MessageBubble
+│   ├── icons/
+│   ├── hooks/                  # useDirection, useKeyboard
+│   ├── lib/cn.ts
+│   ├── styles/
+│   │   ├── tokens.css          # CSS variables
+│   │   └── rtl.css
+│   └── index.ts
+└── package.json
+</code></pre>
+<h3>4.4 <code>packages/events/</code></h3>
+<pre><code>events/
+├── src/
+│   ├── topics.ts               # 'chatbox.events.v1'
+│   ├── schemas/                # CloudEvents schemas per event type
+│   ├── producer.ts             # type-safe producer
+│   └── consumer.ts
+└── package.json
+</code></pre>
+<hr />
+<h2 id="sec-5">5. Tooling Configuration</h2>
+<h3>5.1 <code>pnpm-workspace.yaml</code></h3>
+<pre><code class="language-yaml">packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'tools/*'
+</code></pre>
+<h3>5.2 <code>turbo.json</code> نمونه</h3>
+<pre><code class="language-jsonc">{
+  &quot;$schema&quot;: &quot;https://turbo.build/schema.json&quot;,
+  &quot;globalDependencies&quot;: [&quot;.env&quot;],
+  &quot;tasks&quot;: {
+    &quot;build&quot;: {
+      &quot;dependsOn&quot;: [&quot;^build&quot;],
+      &quot;outputs&quot;: [&quot;.next/**&quot;, &quot;dist/**&quot;, &quot;!.next/cache/**&quot;]
+    },
+    &quot;dev&quot;: {
+      &quot;cache&quot;: false,
+      &quot;persistent&quot;: true
+    },
+    &quot;lint&quot;: { &quot;outputs&quot;: [] },
+    &quot;typecheck&quot;: { &quot;dependsOn&quot;: [&quot;^build&quot;], &quot;outputs&quot;: [] },
+    &quot;test&quot;: { &quot;dependsOn&quot;: [&quot;^build&quot;], &quot;outputs&quot;: [&quot;coverage/**&quot;] },
+    &quot;db:push&quot;: { &quot;cache&quot;: false },
+    &quot;db:generate&quot;: { &quot;cache&quot;: false }
+  }
+}
+</code></pre>
+<h3>5.3 <code>biome.json</code></h3>
+<pre><code class="language-jsonc">{
+  &quot;$schema&quot;: &quot;https://biomejs.dev/schemas/1.9.0/schema.json&quot;,
+  &quot;formatter&quot;: { &quot;indentStyle&quot;: &quot;space&quot;, &quot;indentWidth&quot;: 2, &quot;lineWidth&quot;: 100 },
+  &quot;linter&quot;: {
+    &quot;rules&quot;: {
+      &quot;recommended&quot;: true,
+      &quot;style&quot;: { &quot;useNamingConvention&quot;: &quot;off&quot; }
+    }
+  },
+  &quot;javascript&quot;: { &quot;formatter&quot;: { &quot;quoteStyle&quot;: &quot;single&quot;, &quot;semicolons&quot;: &quot;always&quot; } }
+}
+</code></pre>
+<h3>5.4 <code>.env.example</code></h3>
+<pre><code class="language-bash"># Database
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/chatbox
+DATABASE_RO_URL=
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# Kafka / Redpanda
+KAFKA_BROKERS=localhost:19092
+
+# Object Storage
+S3_ENDPOINT=http://localhost:9000
+S3_BUCKET=chatbox-files
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+
+# AI
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+COHERE_API_KEY=
+
+# Payment
+ZARINPAL_MERCHANT_ID=
+
+# Auth
+JWT_PRIVATE_KEY=
+JWT_PUBLIC_KEY=
+SESSION_SECRET=
+
+# Telegram
+TELEGRAM_WEBHOOK_BASE=
+
+# Observability
+OTEL_EXPORTER_OTLP_ENDPOINT=
+SENTRY_DSN=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
+</code></pre>
+<h3>5.5 <code>docker-compose.yml</code> (local dev)</h3>
+<p>شامل: PostgreSQL + pgvector، Redis، Redpanda، MinIO، MailHog، Langfuse، Adminer.</p>
+<hr />
+<h2 id="sec-6">6. اسکریپت‌های root</h2>
+<pre><code class="language-jsonc">// package.json (root)
+{
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;turbo run dev --parallel&quot;,
+    &quot;build&quot;: &quot;turbo run build&quot;,
+    &quot;lint&quot;: &quot;turbo run lint &amp;&amp; biome check .&quot;,
+    &quot;format&quot;: &quot;biome format --write .&quot;,
+    &quot;typecheck&quot;: &quot;turbo run typecheck&quot;,
+    &quot;test&quot;: &quot;turbo run test&quot;,
+    &quot;db:push&quot;: &quot;pnpm --filter @chatbox/db db:push&quot;,
+    &quot;db:seed&quot;: &quot;pnpm --filter @chatbox/db db:seed&quot;,
+    &quot;db:generate&quot;: &quot;pnpm --filter @chatbox/db db:generate&quot;,
+    &quot;infra:up&quot;: &quot;docker compose up -d&quot;,
+    &quot;infra:down&quot;: &quot;docker compose down&quot;,
+    &quot;py:install&quot;: &quot;uv pip install -r apps/ai-service/requirements.txt&quot;,
+    &quot;py:dev&quot;: &quot;turbo run dev --filter=ai-service --filter=knowledge-service&quot;
+  }
+}
+</code></pre>
+<hr />
+<h2 id="sec-7">7. CI/CD Layout</h2>
+<pre><code>.github/workflows/
+├── ci.yml                      # PR: lint + typecheck + test + build
+├── deploy-staging.yml          # merge to develop
+├── deploy-prod.yml             # tag v* on main
+├── ai-eval.yml                 # nightly on ai-service changes
+└── db-migration-check.yml      # forbid breaking migrations
+</code></pre>
+<p>CI parallelism از Turbo cache روی GitHub Actions cache استفاده می‌کند.</p>
+<hr />
+<h2 id="sec-8">8. CODEOWNERS نمونه</h2>
+<pre><code>*                       @cto
+apps/ai-service/        @ai-lead
+apps/knowledge-service/ @ai-lead
+apps/dashboard/         @frontend
+apps/widget/            @frontend
+infra/                  @cto
+docs/                   @cto
+</code></pre>
+<hr />
+<h2 id="sec-9">9. Conventions</h2>
+<h3>9.1 نام‌گذاری</h3>
+<ul>
+<li><strong>apps:</strong> kebab-case، singular (<code>chat-service</code> نه <code>chat-services</code>)</li>
+<li><strong>packages:</strong> scope <code>@chatbox/</code>، kebab-case (<code>@chatbox/db</code>)</li>
+<li><strong>فایل‌ها:</strong> kebab-case (<code>conversation-card.tsx</code>)</li>
+<li><strong>components React:</strong> PascalCase export</li>
+<li><strong>constants:</strong> SCREAMING_SNAKE</li>
+<li><strong>types:</strong> PascalCase با پسوند <code>Schema</code> برای Zod (مثل <code>MessageSchema</code>)</li>
+</ul>
+<h3>9.2 Imports</h3>
+<pre><code class="language-ts">// 1) external
+import { z } from 'zod';
+// 2) @chatbox/*
+import { db } from '@chatbox/db';
+// 3) relative
+import { foo } from './foo';
+</code></pre>
+<p>Biome این ترتیب را خودکار درست می‌کند.</p>
+<h3>9.3 Branch &amp; PR</h3>
+<ul>
+<li><code>feat/&lt;scope&gt;-&lt;short&gt;</code> (e.g., <code>feat/chat-typing-indicator</code>)</li>
+<li><code>fix/&lt;scope&gt;-&lt;short&gt;</code></li>
+<li><code>chore/&lt;scope&gt;-&lt;short&gt;</code></li>
+<li>PR: title همان scope، body طبق template</li>
+<li><strong>squash merge</strong> پیش‌فرض، Conventional Commits در body</li>
+</ul>
+<hr />
+<h2 id="sec-10">10. Hot Reload Plan در Dev</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>سرویس</th>
+<th>روش</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API/Chat/... (Node)</td>
+<td><code>tsx watch</code> با <code>--no-clear-screen</code></td>
+</tr>
+<tr>
+<td>AI/KB (Python)</td>
+<td><code>uvicorn --reload</code></td>
+</tr>
+<tr>
+<td>Dashboard/Admin</td>
+<td><code>next dev --turbo</code></td>
+</tr>
+<tr>
+<td>Widget</td>
+<td><code>tsup --watch</code></td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td><code>expo start</code></td>
+</tr>
+<tr>
+<td>DB schema</td>
+<td><code>drizzle-kit push</code> در watch mode</td>
+</tr>
+</tbody>
+</table></div>
+<p>همه با یک <code>pnpm dev</code> در root راه می‌افتند (Turbo parallel).</p>
+<hr />
+<h2 id="sec-11">11. Lazy adoption checklist</h2>
+<p>نباید روز اول همه چیز را بسازیم. ترتیب پیشنهادی:</p>
+<ol>
+<li><strong>Sprint 0:</strong> <code>apps/{api, chat-service, dashboard, widget}</code> + <code>packages/{db, api-types, ui, auth}</code></li>
+<li><strong>Sprint 1:</strong> اضافه‌کردن <code>ai-service</code>, <code>knowledge-service</code></li>
+<li><strong>Sprint 2:</strong> اضافه‌کردن <code>billing</code>, <code>notification</code>, <code>integration-telegram</code></li>
+<li><strong>Sprint 3:</strong> اضافه‌کردن <code>mobile</code>, <code>admin</code></li>
+<li><strong>Sprint 4:</strong> اضافه‌کردن <code>analytics-service</code>, <code>landing</code></li>
+</ol>
+<hr />
+<h2 id="sec-12">12. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> — جزئیات tech هر app</li>
+<li><a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a> — Sprint plan</li>
+<li><a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE.md</code></a> — راهنمای AI Agent برای کار با این monorepo</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="06-AI-ARCHITECTURE.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۶ — معماری AI</div>
+      </a>
+      <a class="next" href="08-ROADMAP.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۸ — Roadmap</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

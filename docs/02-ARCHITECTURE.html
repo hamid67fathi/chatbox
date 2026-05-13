@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۲ · معماری سیستم — Chat-Box</title>
+<meta name="description" content="سند معماری Chat-Box — C4 diagrams، Microservices، Deployment، Failure modes">
+<link rel="stylesheet" href="_shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+    </nav>
+
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#principles">۱. اصول معماری</a></li>
+      <li><a href="#context">۲. نمای System Context</a></li>
+      <li><a href="#container">۳. نمای Container</a></li>
+      <li><a href="#services">۴. تشریح سرویس‌ها</a></li>
+      <li><a href="#flow">۵. جریان پیام ریل‌تایم</a></li>
+      <li><a href="#patterns">۶. الگوهای کلیدی</a></li>
+      <li><a href="#deploy">۷. Deployment Topology</a></li>
+      <li><a href="#security">۸. Networking &amp; Security</a></li>
+      <li><a href="#observability">۹. Observability Stack</a></li>
+      <li><a href="#failure">۱۰. Failure Modes</a></li>
+      <li><a href="#refs">۱۱. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۲ — معماری</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+    <h1><span class="emoji">🏗️</span> سند معماری سیستم</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Multi-tenant SaaS</span>
+      <span class="pill">Audience: Eng · AI Agent</span>
+    </div>
+
+    <blockquote>
+      <p><strong>Chat-Box</strong> — Multi-tenant SaaS Architecture</p>
+    </blockquote>
+
+    <h2 id="principles">۱. اصول معماری (Architectural Principles)</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:50px">#</th><th>اصل</th><th>پیامد عملی</th></tr></thead>
+        <tbody>
+          <tr><td>۱</td><td><strong>Event-Driven Core</strong></td><td>همه چیز روی Redis Pub/Sub + Kafka</td></tr>
+          <tr><td>۲</td><td><strong>Stateless Services</strong></td><td>هر service horizontal scalable</td></tr>
+          <tr><td>۳</td><td><strong>Multi-tenant by Design</strong></td><td><code>tenant_id</code> در هر row + RLS</td></tr>
+          <tr><td>۴</td><td><strong>API-First</strong></td><td>هر feature ابتدا API، بعد UI</td></tr>
+          <tr><td>۵</td><td><strong>AI as a Service (Internal)</strong></td><td>لایه AI سرویس مستقل با خودش scale می‌شود</td></tr>
+          <tr><td>۶</td><td><strong>Fail-Open for Reads, Fail-Closed for Writes</strong></td><td>خواندن همیشه، نوشتن فقط تأیید شده</td></tr>
+          <tr><td>۷</td><td><strong>Iran-first Hosting</strong></td><td>Primary در ایران، DR در اروپا</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="context">۲. نمای کلان <small>(C4 — Level 1: System Context)</small></h2>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TB
+    visitor(("👤 بازدیدکننده<br/>کاربر سایت مشتری"))
+    agent(("👤 اپراتور<br/>کارمند پشتیبانی"))
+    admin(("👤 Admin Workspace<br/>صاحب کسب‌وکار"))
+
+    chatbox["🟢 Chat-Box Platform<br/>AI-Native Live Chat SaaS"]
+
+    openai["OpenAI / Anthropic<br/>LLM APIs"]
+    zarinpal["Zarinpal<br/>Payment Gateway"]
+    telegram["Telegram Bot API<br/>Messaging"]
+    s3["Object Storage<br/>Files & Media"]
+    smtp["SMTP / SMS<br/>Notifications"]
+
+    visitor -->|Chats via Widget WSS| chatbox
+    agent -->|Manages chats HTTPS/WSS| chatbox
+    admin -->|Configures workspace HTTPS| chatbox
+    chatbox -->|AI inference| openai
+    chatbox -->|Payments| zarinpal
+    chatbox -->|Bot integration| telegram
+    chatbox -->|Stores files| s3
+    chatbox -->|Sends notifications| smtp
+
+    style chatbox fill:#0d9488,color:#fff,stroke:#0f766e,stroke-width:2px
+      </div>
+    </div>
+
+    <h2 id="container">۳. نمای داخلی <small>(C4 — Level 2: Container)</small></h2>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TB
+    subgraph Client["👤 Client Layer"]
+        WIDGET["Chat Widget<br/>(Vanilla JS, &lt;30KB)"]
+        DASH["Agent Dashboard<br/>(Next.js 14)"]
+        MOBILE["Mobile App<br/>(React Native)"]
+        ADMIN["Admin Panel<br/>(Next.js)"]
+    end
+
+    subgraph Edge["🌐 Edge Layer"]
+        CDN["CDN<br/>(Arvan + Cloudflare)"]
+        LB["Load Balancer<br/>(Nginx)"]
+    end
+
+    subgraph Gateway["🚪 API Gateway"]
+        GW["API Gateway<br/>(Kong / Traefik)"]
+        WSGW["WebSocket Gateway<br/>(Socket.io Cluster)"]
+    end
+
+    subgraph Services["⚙️ Microservices"]
+        AUTH["Auth Service<br/>(Node/Fastify)"]
+        CHAT["Chat Service<br/>(Node/Fastify)"]
+        AI["AI Service<br/>(Python/FastAPI)"]
+        KB["Knowledge Service<br/>(Python)"]
+        BILLING["Billing Service<br/>(Node)"]
+        NOTIF["Notification Service<br/>(Node)"]
+        ANALYTICS["Analytics Service<br/>(Node)"]
+        INTEG["Integration Service<br/>(Node) — Telegram"]
+    end
+
+    subgraph Messaging["📨 Messaging Backbone"]
+        REDIS["Redis<br/>(Pub/Sub + Cache)"]
+        KAFKA["Kafka / Redpanda<br/>(Events)"]
+        QUEUE["BullMQ<br/>(Jobs)"]
+    end
+
+    subgraph Data["🗄️ Data Layer"]
+        PG[("PostgreSQL 16<br/>+ pgvector")]
+        CLICK[("ClickHouse<br/>Analytics")]
+        ES[("Elasticsearch<br/>Search")]
+        S3[("MinIO / S3<br/>Files")]
+    end
+
+    WIDGET --> CDN
+    DASH --> CDN
+    MOBILE --> LB
+    ADMIN --> CDN
+
+    CDN --> LB
+    LB --> GW
+    LB --> WSGW
+
+    GW --> AUTH
+    GW --> CHAT
+    GW --> BILLING
+    GW --> ANALYTICS
+    GW --> KB
+    GW --> INTEG
+
+    WSGW --> CHAT
+    WSGW <--> REDIS
+
+    CHAT --> PG
+    CHAT --> REDIS
+    CHAT --> KAFKA
+    CHAT --> AI
+
+    AI --> PG
+    AI --> KB
+    AI -.->|External| EXTERNAL["OpenAI / Claude / Cohere"]
+
+    KB --> PG
+    KB --> S3
+
+    AUTH --> PG
+    AUTH --> REDIS
+
+    BILLING --> PG
+    BILLING -.-> ZARINPAL["Zarinpal"]
+
+    NOTIF --> QUEUE
+    NOTIF -.-> EXT_SMS["SMS / Email / Push"]
+
+    ANALYTICS --> CLICK
+    KAFKA --> ANALYTICS
+    KAFKA --> NOTIF
+
+    INTEG --> CHAT
+    INTEG -.-> TG["Telegram"]
+      </div>
+    </div>
+
+    <h2 id="services">۴. تشریح سرویس‌ها</h2>
+
+    <h3>۴.۱ Auth Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> Signup, Login (OTP/Password), JWT, 2FA, Sessions, RBAC</li>
+      <li><strong>زبان/فریمورک:</strong> Node.js + Fastify</li>
+      <li><strong>DB:</strong> PostgreSQL (users, sessions, tokens)</li>
+      <li><strong>Scale:</strong> stateless, behind LB</li>
+      <li><strong>Endpoints:</strong> <code>/auth/*</code></li>
+    </ul>
+
+    <h3>۴.۲ Chat Service <em>(هسته سیستم)</em></h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> پیام‌رسانی، Conversation lifecycle، Assignment، typing/read receipts</li>
+      <li><strong>زبان/فریمورک:</strong> Node.js + Fastify + Socket.io</li>
+      <li><strong>DB:</strong> PostgreSQL (conversations, messages), Redis (online state)</li>
+      <li><strong>Pub/Sub:</strong> Redis (real-time fan-out), Kafka (durable event log)</li>
+      <li><strong>Scale:</strong> N replicas + Redis Adapter for Socket.io</li>
+    </ul>
+
+    <h3>۴.۳ AI Service ⭐ <em>(تمایز اصلی)</em></h3>
+    <ul>
+      <li><strong>مسئولیت:</strong>
+        <ul>
+          <li>تولید پاسخ به مشتری (RAG-based)</li>
+          <li>پیشنهاد پاسخ به اپراتور (Copilot)</li>
+          <li>دسته‌بندی intent، تشخیص sentiment</li>
+          <li>خلاصه‌سازی مکالمه</li>
+        </ul>
+      </li>
+      <li><strong>زبان/فریمورک:</strong> Python + FastAPI + LangChain</li>
+      <li><strong>مدل‌ها:</strong> GPT-4o-mini (default), GPT-4o (premium tier), Local Persian model (fallback)</li>
+      <li><strong>Vector DB:</strong> PostgreSQL + pgvector (فاز ۱)، Qdrant (فاز ۲)</li>
+      <li><strong>Scale:</strong> stateless, GPU-optional</li>
+    </ul>
+
+    <h3>۴.۴ Knowledge Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> Ingest URL/PDF/Docx → Chunk → Embed → ذخیره</li>
+      <li><strong>زبان/فریمورک:</strong> Python + FastAPI + Unstructured.io</li>
+      <li><strong>Job Queue:</strong> BullMQ برای crawling</li>
+    </ul>
+
+    <h3>۴.۵ Billing Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> Subscription، Invoice، درگاه پرداخت، Trial، Grace</li>
+      <li><strong>زبان/فریمورک:</strong> Node.js + Fastify</li>
+      <li><strong>Webhook:</strong> Zarinpal callbacks</li>
+    </ul>
+
+    <h3>۴.۶ Notification Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> Email (SMTP)، SMS (Kavenegar)، Push (FCM/APNs)، In-app</li>
+      <li><strong>زبان/فریمورک:</strong> Node.js + BullMQ</li>
+      <li><strong>Pattern:</strong> Worker consume از queue</li>
+    </ul>
+
+    <h3>۴.۷ Analytics Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> ETL از Kafka → ClickHouse، dashboards، export</li>
+      <li><strong>DB:</strong> ClickHouse</li>
+      <li><strong>Pattern:</strong> Streaming ingestion</li>
+    </ul>
+
+    <h3>۴.۸ Integration Service</h3>
+    <ul>
+      <li><strong>مسئولیت:</strong> Telegram bot lifecycle، webhook دریافت، فرمت‌سازی</li>
+      <li><strong>زبان/فریمورک:</strong> Node.js + grammy.js</li>
+    </ul>
+
+    <h2 id="flow">۵. جریان پیام ریل‌تایم <small>(Sequence Diagram)</small></h2>
+
+    <div class="callout info">
+      <div class="callout-title">📨 سناریو</div>
+      <div>بازدیدکننده پیامی می‌فرستد و AI پاسخ می‌دهد.</div>
+    </div>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor V as Visitor
+    participant W as Widget
+    participant WSGW as WS Gateway
+    participant CS as Chat Service
+    participant PG as PostgreSQL
+    participant R as Redis Pub/Sub
+    participant AI as AI Service
+    participant KB as Knowledge Base
+    participant A as Agent Dashboard
+
+    V->>W: تایپ پیام و enter
+    W->>WSGW: emit("message:send", {text})
+    WSGW->>CS: forwardMessage(tenantId, convId, text)
+    CS->>PG: INSERT INTO messages (...)
+    PG-->>CS: message_id
+    CS->>R: publish "conv:{id}:message" {payload}
+    R-->>WSGW: subscribers receive
+    WSGW-->>W: ACK ("message:sent", id)
+    WSGW-->>A: emit("inbox:newMessage")
+
+    par AI Auto-Reply
+        CS->>AI: requestReply(convId, text, context)
+        AI->>KB: searchKnowledge(text)
+        KB-->>AI: relevant_chunks[]
+        AI->>AI: call LLM (GPT-4o-mini)
+        AI-->>CS: reply{text, confidence}
+        alt confidence > 0.7
+            CS->>PG: INSERT message (sender=AI)
+            CS->>R: publish AI reply
+            R-->>W: visitor sees reply
+        else escalate to human
+            CS->>R: publish "conv:assign"
+            R-->>A: notify agent
+        end
+    end
+      </div>
+    </div>
+
+    <h2 id="patterns">۶. الگوهای کلیدی (Patterns)</h2>
+
+    <h3>۶.۱ Multi-Tenant Isolation</h3>
+    <ul>
+      <li>هر row دارای <code>workspace_id</code></li>
+      <li>PostgreSQL <strong>Row-Level Security (RLS)</strong> فعال</li>
+      <li>در application layer: middleware <code>tenantScope()</code> که هر query را به workspace فعلی محدود می‌کند</li>
+      <li>در Redis: key prefix <code>ws:{id}:*</code></li>
+      <li>در S3: bucket per region، prefix path <code>workspaces/{id}/</code></li>
+    </ul>
+
+    <h3>۶.۲ Real-time Fan-out</h3>
+    <ul>
+      <li>Socket.io با <strong>Redis Adapter</strong> — همه instanceها به یک channel گوش می‌دهند</li>
+      <li>پیام جدید → publish به <code>conv:{conversation_id}</code> → همه socketهای connected دریافت می‌کنند</li>
+      <li>برای presence (online/offline) از <code>set ws:{id}:online_agents</code> با TTL</li>
+    </ul>
+
+    <h3>۶.۳ Event Sourcing (سبک)</h3>
+    <ul>
+      <li>هر اکشن مهم (پیام، assign، tag، close) به Kafka publish می‌شود</li>
+      <li>Topic: <code>chatbox.events.v1</code></li>
+      <li>Consumerها: Analytics, AI training feed, Audit log</li>
+      <li>Format: <strong>CloudEvents 1.0</strong> specification</li>
+    </ul>
+
+    <h3>۶.۴ AI Cascade <small>(هزینه + کیفیت)</small></h3>
+<pre><code>intent classifier (cheap, local model)
+        ↓
+if FAQ-like    → RAG with mini model (GPT-4o-mini)
+if complex     → reasoning model (GPT-4o)
+if confident &lt; threshold → escalate to human</code></pre>
+
+    <h3>۶.۵ Optimistic UI</h3>
+    <ul>
+      <li>پیام در client بلافاصله نمایش داده می‌شود (status: <code>sending</code>)</li>
+      <li>بعد از ACK سرور: status: <code>sent</code></li>
+      <li>اگر error: status: <code>failed</code>، retry button</li>
+    </ul>
+
+    <h2 id="deploy">۷. Deployment Topology</h2>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart LR
+    subgraph IranDC["🇮🇷 Iran DC (Primary)<br/>Arvan / ParsPack"]
+        K8S_IR["Kubernetes Cluster<br/>3x Control + 6x Worker"]
+        PG_PRIMARY[("PostgreSQL<br/>Primary + 2 Replicas")]
+        REDIS_IR["Redis Cluster<br/>3 masters + 3 replicas"]
+        S3_IR["MinIO<br/>3 nodes"]
+        CLICK_IR["ClickHouse<br/>2 shards × 2 replicas"]
+    end
+
+    subgraph EU["🇪🇺 EU DC (DR + AI)<br/>Hetzner"]
+        K8S_EU["Kubernetes Cluster<br/>AI Service + Backup"]
+        PG_DR[("PostgreSQL<br/>WAL Replica")]
+        AI_GPU["AI Service<br/>(GPU optional)"]
+    end
+
+    PG_PRIMARY -.->|Async WAL| PG_DR
+    K8S_IR -.->|VPN tunnel| K8S_EU
+    K8S_IR --> AI_GPU
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-title">💡 چرا این توپولوژی؟</div>
+      <ul style="margin:6px 0 0">
+        <li>داده ایرانی روی خاک ایران (تعهد به مشتری + الزام قانونی)</li>
+        <li>AI Service خارج چون APIهای OpenAI/Anthropic از داخل بسته است → proxy via EU</li>
+        <li>Backup در EU برای disaster recovery (سیلاب، قطع برق، ...)</li>
+      </ul>
+    </div>
+
+    <h2 id="security">۸. Networking &amp; Security</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>لایه</th><th>تکنولوژی</th><th>یادداشت</th></tr></thead>
+        <tbody>
+          <tr><td>WAF</td><td>Cloudflare + Arvan</td><td>DDoS، rate limit، bot detection</td></tr>
+          <tr><td>TLS Termination</td><td>Nginx Ingress</td><td>TLS ۱.۳، HSTS</td></tr>
+          <tr><td>Auth</td><td>JWT (RS256)</td><td>Access 15min، Refresh 7 days با rotation</td></tr>
+          <tr><td>Service-to-Service</td><td>mTLS + JWT</td><td>داخل cluster</td></tr>
+          <tr><td>Secrets</td><td>HashiCorp Vault</td><td>rotate ماهانه</td></tr>
+          <tr><td>Encryption at rest</td><td>AES-256 (LUKS + pg_tde)</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="observability">۹. Observability Stack</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>دسته</th><th>ابزار</th><th>استفاده</th></tr></thead>
+        <tbody>
+          <tr><td>Metrics</td><td>Prometheus + Grafana</td><td>RED metrics، USE metrics</td></tr>
+          <tr><td>Logs</td><td>Loki</td><td>structured JSON، correlation_id</td></tr>
+          <tr><td>Tracing</td><td>Tempo / Jaeger</td><td>OpenTelemetry SDK</td></tr>
+          <tr><td>Error tracking</td><td>Sentry (self-hosted)</td><td>با sourcemaps</td></tr>
+          <tr><td>Uptime</td><td>Uptime Kuma</td><td>external probes</td></tr>
+          <tr><td>AI Observability</td><td>Langfuse (self-hosted)</td><td>تمام prompt/response لاگ</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="failure">۱۰. Failure Modes &amp; Mitigation</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>سناریو</th><th>تشخیص</th><th>پاسخ</th></tr></thead>
+        <tbody>
+          <tr><td>OpenAI API down</td><td>error rate spike</td><td>switch به Claude، بعد به مدل local</td></tr>
+          <tr><td>PostgreSQL Primary down</td><td>health check fail</td><td>promote replica (15s RTO)</td></tr>
+          <tr><td>Redis cluster down</td><td>timeout</td><td>degrade: polling mode (HTTP long-poll fallback)</td></tr>
+          <tr><td>فیلترینگ WebSocket</td><td>client reports</td><td>fallback به HTTP long-polling روی پورت ۴۴۳</td></tr>
+          <tr><td>Zarinpal timeout</td><td>webhook delayed</td><td>grace period ۷۲h + manual reconciliation</td></tr>
+          <tr><td>Telegram API rate limit</td><td><code>429</code></td><td>exponential backoff + queue</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="refs">۱۱. مرجع‌های مرتبط</h2>
+
+    <ul>
+      <li><code>03-TECH-STACK</code> — انتخاب تکنولوژی‌ها</li>
+      <li><code>04-DATABASE-SCHEMA</code> — Schema جزئیات</li>
+      <li><code>05-API-SPEC</code> — API</li>
+      <li><code>06-AI-ARCHITECTURE</code> — جزئیات AI Layer</li>
+    </ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="01-PRD.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۱ — PRD: نیازمندی‌های محصول</div>
+      </a>
+      <a class="next" href="03-TECH-STACK.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۳ — Tech Stack</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

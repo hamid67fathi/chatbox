@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۴ · Schema دیتابیس — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — Schema دیتابیس">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html" class="active"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">1. اصول طراحی Schema</a></li>
+      <li><a href="#sec-2">2. ERD (نمای کلان)</a></li>
+      <li><a href="#sec-3">3. Schema کامل (SQL)</a></li>
+      <li><a href="#sec-4">4. لایه AI (Knowledge Base)</a></li>
+      <li><a href="#sec-5">5. Auth &amp; Sessions</a></li>
+      <li><a href="#sec-6">6. Billing</a></li>
+      <li><a href="#sec-7">7. Integrations</a></li>
+      <li><a href="#sec-8">8. Audit &amp; Events</a></li>
+      <li><a href="#sec-9">9. Row-Level Security (RLS)</a></li>
+      <li><a href="#sec-10">10. Triggers مهم</a></li>
+      <li><a href="#sec-11">11. استراتژی Index و Performance</a></li>
+      <li><a href="#sec-12">12. Migration و Seeding</a></li>
+      <li><a href="#sec-13">13. Data Retention</a></li>
+      <li><a href="#sec-14">14. Backup &amp; DR</a></li>
+      <li><a href="#sec-15">15. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۴ — Schema دیتابیس</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🗄️</span> سند Schema دیتابیس</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="04-DATABASE-SCHEMA.md">04-DATABASE-SCHEMA.md</a></span>
+
+    </div>
+
+<blockquote>
+<p>Chat-Box — Schema کامل PostgreSQL 16 با pgvector<br />
+ورژن 1.0 · مه 2026</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">1. اصول طراحی Schema</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>اصل</th>
+<th>پیامد</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>۱</td>
+<td><strong>هر row دارای <code>workspace_id</code></strong></td>
+<td>multi-tenant با RLS</td>
+</tr>
+<tr>
+<td>۲</td>
+<td><strong>PK ها UUIDv7</strong></td>
+<td>sortable + global unique</td>
+</tr>
+<tr>
+<td>۳</td>
+<td><strong>soft-delete پیش‌فرض</strong></td>
+<td><code>deleted_at</code> column</td>
+</tr>
+<tr>
+<td>۴</td>
+<td><strong>audit columns</strong></td>
+<td><code>created_at</code>, <code>updated_at</code>, <code>created_by</code></td>
+</tr>
+<tr>
+<td>۵</td>
+<td><strong>enums به‌جای string</strong></td>
+<td>type-safety و سرعت</td>
+</tr>
+<tr>
+<td>۶</td>
+<td><strong>JSONB برای metadata غیرکوئری‌پذیر</strong></td>
+<td>flexibility</td>
+</tr>
+<tr>
+<td>۷</td>
+<td><strong>FK با <code>ON DELETE CASCADE</code> فقط داخل tenant</strong></td>
+<td>جلوگیری از orphan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-2">2. ERD (نمای کلان)</h2>
+<div class="mermaid">
+erDiagram
+    WORKSPACE ||--o{ USER : has
+    WORKSPACE ||--o{ CONTACT : has
+    WORKSPACE ||--o{ CONVERSATION : owns
+    WORKSPACE ||--o{ KNOWLEDGE_BASE : owns
+    WORKSPACE ||--o{ INTEGRATION : configures
+    WORKSPACE ||--o{ SUBSCRIPTION : has
+    USER ||--o{ CONVERSATION : assigned
+    USER ||--o{ MESSAGE : sends
+    CONTACT ||--o{ CONVERSATION : starts
+    CONVERSATION ||--o{ MESSAGE : contains
+    CONVERSATION ||--o{ CONVERSATION_TAG : tagged
+    KNOWLEDGE_BASE ||--o{ KB_DOCUMENT : contains
+    KB_DOCUMENT ||--o{ KB_CHUNK : split
+    KB_CHUNK }o--|| EMBEDDING : vector
+    MESSAGE }o--|| AI_INTERACTION : generated
+</div>
+<hr />
+<h2 id="sec-3">3. Schema کامل (SQL)</h2>
+<h3>3.1 Extensions</h3>
+<pre><code class="language-sql">CREATE EXTENSION IF NOT EXISTS &quot;uuid-ossp&quot;;
+CREATE EXTENSION IF NOT EXISTS &quot;pg_trgm&quot;;        -- trigram fuzzy search
+CREATE EXTENSION IF NOT EXISTS &quot;vector&quot;;          -- pgvector
+CREATE EXTENSION IF NOT EXISTS &quot;pgcrypto&quot;;        -- gen_random_uuid
+CREATE EXTENSION IF NOT EXISTS &quot;pg_stat_statements&quot;;
+</code></pre>
+<h3>3.2 Enum types</h3>
+<pre><code class="language-sql">CREATE TYPE user_role AS ENUM ('owner', 'admin', 'agent', 'viewer');
+CREATE TYPE user_status AS ENUM ('active', 'invited', 'suspended');
+CREATE TYPE workspace_plan AS ENUM ('free', 'starter', 'pro', 'enterprise');
+CREATE TYPE conversation_status AS ENUM ('open', 'pending', 'resolved', 'closed', 'spam');
+CREATE TYPE conversation_channel AS ENUM ('widget', 'telegram', 'email', 'api');
+CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'audio', 'system', 'ai_reply');
+CREATE TYPE message_sender_type AS ENUM ('contact', 'agent', 'ai', 'system');
+CREATE TYPE message_status AS ENUM ('queued', 'sent', 'delivered', 'read', 'failed');
+CREATE TYPE invoice_status AS ENUM ('draft', 'pending', 'paid', 'failed', 'refunded');
+CREATE TYPE kb_doc_status AS ENUM ('uploaded', 'processing', 'indexed', 'failed');
+</code></pre>
+<h3>3.3 جدول <code>workspaces</code></h3>
+<pre><code class="language-sql">CREATE TABLE workspaces (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug            TEXT        NOT NULL UNIQUE,
+  name            TEXT        NOT NULL,
+  owner_user_id   UUID        NOT NULL,
+  plan            workspace_plan NOT NULL DEFAULT 'free',
+  locale          TEXT        NOT NULL DEFAULT 'fa-IR',
+  timezone        TEXT        NOT NULL DEFAULT 'Asia/Tehran',
+  settings        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  ai_credits      INTEGER     NOT NULL DEFAULT 0,
+  trial_ends_at   TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at      TIMESTAMPTZ
+);
+
+CREATE INDEX idx_workspaces_owner ON workspaces(owner_user_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_workspaces_plan ON workspaces(plan) WHERE deleted_at IS NULL;
+</code></pre>
+<h3>3.4 جدول <code>users</code></h3>
+<pre><code class="language-sql">CREATE TABLE users (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  email           TEXT        UNIQUE,
+  phone           TEXT        UNIQUE,
+  password_hash   TEXT,
+  full_name       TEXT,
+  avatar_url      TEXT,
+  locale          TEXT        NOT NULL DEFAULT 'fa-IR',
+  totp_secret     TEXT,
+  email_verified  BOOLEAN     NOT NULL DEFAULT false,
+  phone_verified  BOOLEAN     NOT NULL DEFAULT false,
+  last_login_at   TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at      TIMESTAMPTZ,
+
+  CONSTRAINT chk_user_identity CHECK (email IS NOT NULL OR phone IS NOT NULL)
+);
+
+CREATE INDEX idx_users_email_active ON users(email) WHERE deleted_at IS NULL;
+CREATE INDEX idx_users_phone_active ON users(phone) WHERE deleted_at IS NULL;
+</code></pre>
+<h3>3.5 جدول <code>workspace_members</code> (join)</h3>
+<pre><code class="language-sql">CREATE TABLE workspace_members (
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role            user_role   NOT NULL DEFAULT 'agent',
+  status          user_status NOT NULL DEFAULT 'invited',
+  invited_by      UUID        REFERENCES users(id),
+  joined_at       TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  PRIMARY KEY (workspace_id, user_id)
+);
+
+CREATE INDEX idx_members_user ON workspace_members(user_id);
+</code></pre>
+<h3>3.6 جدول <code>contacts</code> (مشتری نهایی)</h3>
+<pre><code class="language-sql">CREATE TABLE contacts (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  external_id     TEXT,                 -- شناسه از سیستم مشتری
+  full_name       TEXT,
+  email           TEXT,
+  phone           TEXT,
+  telegram_id     BIGINT,
+  avatar_url      TEXT,
+  metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  tags            TEXT[]      NOT NULL DEFAULT '{}',
+  first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_contacts_ws_email ON contacts(workspace_id, email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX idx_contacts_ws_phone ON contacts(workspace_id, phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX idx_contacts_ws_tg ON contacts(workspace_id, telegram_id) WHERE telegram_id IS NOT NULL;
+CREATE INDEX idx_contacts_tags ON contacts USING GIN(tags);
+CREATE INDEX idx_contacts_metadata ON contacts USING GIN(metadata);
+</code></pre>
+<h3>3.7 جدول <code>conversations</code></h3>
+<pre><code class="language-sql">CREATE TABLE conversations (
+  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id        UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  contact_id          UUID        NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  channel             conversation_channel NOT NULL,
+  status              conversation_status  NOT NULL DEFAULT 'open',
+  assigned_agent_id   UUID        REFERENCES users(id),
+  ai_handled          BOOLEAN     NOT NULL DEFAULT false,
+  priority            SMALLINT    NOT NULL DEFAULT 0,  -- 0..3
+  sentiment_score     NUMERIC(3,2),                     -- -1.00..1.00
+  csat_score          SMALLINT,                         -- 1..5
+  subject             TEXT,
+  last_message_at     TIMESTAMPTZ,
+  last_agent_reply_at TIMESTAMPTZ,
+  first_response_sec  INTEGER,
+  closed_at           TIMESTAMPTZ,
+  metadata            JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_conv_ws_status ON conversations(workspace_id, status, last_message_at DESC);
+CREATE INDEX idx_conv_assigned ON conversations(assigned_agent_id, status) WHERE assigned_agent_id IS NOT NULL;
+CREATE INDEX idx_conv_contact ON conversations(contact_id, created_at DESC);
+CREATE INDEX idx_conv_ws_channel ON conversations(workspace_id, channel);
+</code></pre>
+<h3>3.8 جدول <code>messages</code></h3>
+<pre><code class="language-sql">CREATE TABLE messages (
+  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id        UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  conversation_id     UUID        NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  sender_type         message_sender_type NOT NULL,
+  sender_user_id      UUID        REFERENCES users(id),    -- اگر agent باشد
+  sender_contact_id   UUID        REFERENCES contacts(id), -- اگر contact باشد
+  type                message_type NOT NULL DEFAULT 'text',
+  body                TEXT,                                -- متن، یا alt برای media
+  attachments         JSONB,                               -- [{url, type, name, size}]
+  reply_to_id         UUID        REFERENCES messages(id),
+  reactions           JSONB,                               -- {emoji: [user_ids]}
+  status              message_status NOT NULL DEFAULT 'sent',
+  ai_confidence       NUMERIC(3,2),                        -- 0..1 برای ai_reply
+  ai_model            TEXT,                                -- gpt-4o-mini, claude, ...
+  ai_cost_usd         NUMERIC(10,6),
+  edited_at           TIMESTAMPTZ,
+  delivered_at        TIMESTAMPTZ,
+  read_at             TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_msg_conv ON messages(conversation_id, created_at);
+CREATE INDEX idx_msg_ws_created ON messages(workspace_id, created_at DESC);
+CREATE INDEX idx_msg_fts ON messages USING GIN(to_tsvector('simple', body));
+</code></pre>
+<blockquote>
+<p><strong>توجه:</strong> برای فاز ۲ این جدول <code>partition by RANGE(created_at)</code> می‌شود (ماهانه).</p>
+</blockquote>
+<h3>3.9 جدول <code>conversation_tags</code></h3>
+<pre><code class="language-sql">CREATE TABLE conversation_tags (
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  tag             TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (conversation_id, tag)
+);
+CREATE INDEX idx_conv_tags_tag ON conversation_tags(tag);
+</code></pre>
+<h3>3.10 جدول <code>conversation_notes</code> (یادداشت داخلی)</h3>
+<pre><code class="language-sql">CREATE TABLE conversation_notes (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID        NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  author_id       UUID        NOT NULL REFERENCES users(id),
+  body            TEXT        NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+</code></pre>
+<h3>3.11 جدول <code>canned_responses</code></h3>
+<pre><code class="language-sql">CREATE TABLE canned_responses (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  shortcut        TEXT        NOT NULL,        -- /greet
+  title           TEXT        NOT NULL,
+  body            TEXT        NOT NULL,
+  variables       JSONB,                       -- [&quot;name&quot;, &quot;order_id&quot;]
+  created_by      UUID        REFERENCES users(id),
+  usage_count     INTEGER     NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  UNIQUE (workspace_id, shortcut)
+);
+</code></pre>
+<hr />
+<h2 id="sec-4">4. لایه AI (Knowledge Base)</h2>
+<h3>4.1 <code>knowledge_bases</code></h3>
+<pre><code class="language-sql">CREATE TABLE knowledge_bases (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  name            TEXT        NOT NULL,
+  description     TEXT,
+  embedding_model TEXT        NOT NULL DEFAULT 'text-embedding-3-small',
+  settings        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+</code></pre>
+<h3>4.2 <code>kb_documents</code></h3>
+<pre><code class="language-sql">CREATE TABLE kb_documents (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  kb_id           UUID        NOT NULL REFERENCES knowledge_bases(id) ON DELETE CASCADE,
+  source_type     TEXT        NOT NULL,     -- url | pdf | docx | manual
+  source_url      TEXT,
+  file_path       TEXT,
+  title           TEXT,
+  status          kb_doc_status NOT NULL DEFAULT 'uploaded',
+  size_bytes      BIGINT,
+  page_count      INTEGER,
+  chunk_count     INTEGER     NOT NULL DEFAULT 0,
+  last_indexed_at TIMESTAMPTZ,
+  error_message   TEXT,
+  metadata        JSONB,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_kbdoc_kb ON kb_documents(kb_id, status);
+</code></pre>
+<h3>4.3 <code>kb_chunks</code> (vector store)</h3>
+<pre><code class="language-sql">CREATE TABLE kb_chunks (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  document_id     UUID        NOT NULL REFERENCES kb_documents(id) ON DELETE CASCADE,
+  chunk_index     INTEGER     NOT NULL,
+  content         TEXT        NOT NULL,
+  content_tokens  INTEGER,
+  embedding       VECTOR(1536),                -- text-embedding-3-small dim
+  metadata        JSONB,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- HNSW index برای ANN search
+CREATE INDEX idx_chunks_embedding_hnsw
+  ON kb_chunks USING hnsw (embedding vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
+
+CREATE INDEX idx_chunks_doc ON kb_chunks(document_id, chunk_index);
+CREATE INDEX idx_chunks_ws ON kb_chunks(workspace_id);
+</code></pre>
+<h3>4.4 <code>ai_interactions</code> (log کامل)</h3>
+<pre><code class="language-sql">CREATE TABLE ai_interactions (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  conversation_id UUID        REFERENCES conversations(id) ON DELETE CASCADE,
+  message_id      UUID        REFERENCES messages(id) ON DELETE SET NULL,
+  purpose         TEXT        NOT NULL,        -- auto_reply | copilot | summary | classify
+  model           TEXT        NOT NULL,
+  prompt          TEXT,
+  response        TEXT,
+  retrieved_chunks JSONB,                       -- [{chunk_id, score}]
+  input_tokens    INTEGER,
+  output_tokens   INTEGER,
+  cost_usd        NUMERIC(10,6),
+  latency_ms      INTEGER,
+  confidence      NUMERIC(3,2),
+  escalated       BOOLEAN     NOT NULL DEFAULT false,
+  feedback        SMALLINT,                    -- -1 / 0 / +1 از اپراتور
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_ai_ws_created ON ai_interactions(workspace_id, created_at DESC);
+CREATE INDEX idx_ai_purpose ON ai_interactions(purpose, created_at DESC);
+</code></pre>
+<hr />
+<h2 id="sec-5">5. Auth &amp; Sessions</h2>
+<h3>5.1 <code>sessions</code></h3>
+<pre><code class="language-sql">CREATE TABLE sessions (
+  id              TEXT        PRIMARY KEY,     -- Lucia generates
+  user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at      TIMESTAMPTZ NOT NULL,
+  user_agent      TEXT,
+  ip_address      INET,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_sessions_user ON sessions(user_id);
+CREATE INDEX idx_sessions_expires ON sessions(expires_at);
+</code></pre>
+<h3>5.2 <code>otp_codes</code></h3>
+<pre><code class="language-sql">CREATE TABLE otp_codes (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  identifier      TEXT        NOT NULL,        -- email or phone
+  code_hash       TEXT        NOT NULL,
+  purpose         TEXT        NOT NULL,        -- login | reset | verify
+  attempts        SMALLINT    NOT NULL DEFAULT 0,
+  expires_at      TIMESTAMPTZ NOT NULL,
+  consumed_at     TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_otp_identifier ON otp_codes(identifier, purpose) WHERE consumed_at IS NULL;
+</code></pre>
+<hr />
+<h2 id="sec-6">6. Billing</h2>
+<h3>6.1 <code>subscriptions</code></h3>
+<pre><code class="language-sql">CREATE TABLE subscriptions (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL UNIQUE REFERENCES workspaces(id) ON DELETE CASCADE,
+  plan            workspace_plan NOT NULL,
+  status          TEXT        NOT NULL,        -- trialing | active | past_due | canceled
+  period_start    DATE        NOT NULL,
+  period_end      DATE        NOT NULL,
+  seats           INTEGER     NOT NULL DEFAULT 1,
+  amount_irr      BIGINT,
+  auto_renew      BOOLEAN     NOT NULL DEFAULT true,
+  canceled_at     TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+</code></pre>
+<h3>6.2 <code>invoices</code></h3>
+<pre><code class="language-sql">CREATE TABLE invoices (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  subscription_id UUID        REFERENCES subscriptions(id),
+  number          TEXT        NOT NULL UNIQUE,    -- INV-1405-000001
+  status          invoice_status NOT NULL DEFAULT 'draft',
+  amount_irr      BIGINT      NOT NULL,
+  tax_irr         BIGINT      NOT NULL DEFAULT 0,
+  total_irr       BIGINT      NOT NULL,
+  gateway         TEXT,                            -- zarinpal | nextpay
+  gateway_ref     TEXT,
+  paid_at         TIMESTAMPTZ,
+  pdf_url         TEXT,
+  metadata        JSONB,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_invoices_ws ON invoices(workspace_id, created_at DESC);
+</code></pre>
+<h3>6.3 <code>usage_records</code> (متر زدن AI)</h3>
+<pre><code class="language-sql">CREATE TABLE usage_records (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  metric          TEXT        NOT NULL,        -- ai_messages | kb_storage_mb | seats
+  quantity        BIGINT      NOT NULL,
+  period          DATE        NOT NULL,
+  cost_irr        BIGINT,
+  metadata        JSONB,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_usage_ws_period ON usage_records(workspace_id, period);
+</code></pre>
+<hr />
+<h2 id="sec-7">7. Integrations</h2>
+<h3>7.1 <code>integrations</code></h3>
+<pre><code class="language-sql">CREATE TABLE integrations (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  type            TEXT        NOT NULL,        -- telegram | webhook | api
+  name            TEXT        NOT NULL,
+  config          JSONB       NOT NULL,        -- {bot_token: ...} (رمزنگاری شده)
+  active          BOOLEAN     NOT NULL DEFAULT true,
+  last_used_at    TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  UNIQUE (workspace_id, type, name)
+);
+</code></pre>
+<h3>7.2 <code>webhooks</code> (outbound)</h3>
+<pre><code class="language-sql">CREATE TABLE webhooks (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  url             TEXT        NOT NULL,
+  secret          TEXT        NOT NULL,
+  events          TEXT[]      NOT NULL,         -- ['conversation.created', 'message.sent']
+  active          BOOLEAN     NOT NULL DEFAULT true,
+  failure_count   INTEGER     NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+</code></pre>
+<hr />
+<h2 id="sec-8">8. Audit &amp; Events</h2>
+<h3>8.1 <code>audit_logs</code></h3>
+<pre><code class="language-sql">CREATE TABLE audit_logs (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    UUID        REFERENCES workspaces(id) ON DELETE SET NULL,
+  actor_user_id   UUID        REFERENCES users(id),
+  action          TEXT        NOT NULL,         -- user.invite | workspace.update
+  target_type     TEXT,
+  target_id       UUID,
+  diff            JSONB,
+  ip_address      INET,
+  user_agent      TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_audit_ws_created ON audit_logs(workspace_id, created_at DESC);
+</code></pre>
+<hr />
+<h2 id="sec-9">9. Row-Level Security (RLS)</h2>
+<h3>9.1 فعال‌سازی RLS</h3>
+<pre><code class="language-sql">-- برای هر جدول tenant-scoped:
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kb_chunks     ENABLE ROW LEVEL SECURITY;
+-- ... و بقیه‌ی جداول workspace-scoped
+</code></pre>
+<h3>9.2 Policy نمونه</h3>
+<pre><code class="language-sql">-- application هر کانکشن را با SET می‌کند:
+-- SET app.current_workspace = '&lt;workspace_id&gt;';
+
+CREATE POLICY tenant_isolation ON conversations
+  USING (workspace_id = current_setting('app.current_workspace')::uuid);
+
+CREATE POLICY tenant_isolation ON messages
+  USING (workspace_id = current_setting('app.current_workspace')::uuid);
+</code></pre>
+<h3>9.3 Bypass برای admin</h3>
+<pre><code class="language-sql">-- یک role جدا برای internal admin/migrations:
+CREATE ROLE chatbox_admin;
+ALTER ROLE chatbox_admin BYPASSRLS;
+</code></pre>
+<hr />
+<h2 id="sec-10">10. Triggers مهم</h2>
+<h3>10.1 updated_at خودکار</h3>
+<pre><code class="language-sql">CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_workspaces_updated BEFORE UPDATE ON workspaces
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+-- ... برای هر جدول
+</code></pre>
+<h3>10.2 conversation.last_message_at از message</h3>
+<pre><code class="language-sql">CREATE OR REPLACE FUNCTION update_conversation_last_message()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE conversations
+     SET last_message_at = NEW.created_at,
+         last_agent_reply_at = CASE WHEN NEW.sender_type = 'agent' THEN NEW.created_at ELSE last_agent_reply_at END,
+         updated_at = now()
+   WHERE id = NEW.conversation_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_msg_update_conv AFTER INSERT ON messages
+  FOR EACH ROW EXECUTE FUNCTION update_conversation_last_message();
+</code></pre>
+<hr />
+<h2 id="sec-11">11. استراتژی Index و Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>سناریو</th>
+<th>Index</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inbox اپراتور</td>
+<td><code>idx_conv_ws_status</code></td>
+<td>DESC روی last_message_at</td>
+</tr>
+<tr>
+<td>سرچ پیام</td>
+<td><code>idx_msg_fts</code> (GIN tsvector)</td>
+<td>برای فارسی: configuration <code>simple</code> بهتر است</td>
+</tr>
+<tr>
+<td>Vector RAG</td>
+<td><code>idx_chunks_embedding_hnsw</code></td>
+<td>HNSW با m=16، ef=64</td>
+</tr>
+<tr>
+<td>Lookup مخاطب</td>
+<td><code>idx_contacts_ws_email</code></td>
+<td>unique partial</td>
+</tr>
+<tr>
+<td>Recent AI usage</td>
+<td><code>idx_ai_ws_created</code></td>
+<td>برای billing</td>
+</tr>
+</tbody>
+</table></div>
+<h3>نکات</h3>
+<ul>
+<li><code>pg_stat_statements</code> فعال باشد، slow queries (&gt; 100ms) ماهانه review</li>
+<li><code>EXPLAIN ANALYZE</code> بخشی از CI برای migrations</li>
+<li>جدول <code>messages</code> بعد از ۵۰M row → partitioning ماهانه</li>
+</ul>
+<hr />
+<h2 id="sec-12">12. Migration و Seeding</h2>
+<h3>Migration framework</h3>
+<p><strong>Drizzle Kit</strong> برای schema diff و migration:</p>
+<pre><code class="language-bash">pnpm drizzle-kit generate:pg     # تولید SQL
+pnpm drizzle-kit push            # اجرا
+</code></pre>
+<h3>Seed data</h3>
+<ul>
+<li>یک <code>super_admin</code> user</li>
+<li>یک <code>demo_workspace</code> با ۵ conversation نمونه</li>
+<li>۳ canned response پیش‌فرض</li>
+<li>پلن‌های billing با قیمت</li>
+</ul>
+<h3>Naming convention</h3>
+<ul>
+<li>جداول snake_case، PK = <code>id</code></li>
+<li>جدول‌های join: <code>singular1_singular2s</code> (مثلاً <code>workspace_members</code>)</li>
+<li>timestamps همیشه <code>TIMESTAMPTZ</code>، نام <code>_at</code> در آخر</li>
+</ul>
+<hr />
+<h2 id="sec-13">13. Data Retention</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>داده</th>
+<th>TTL</th>
+<th>روش</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sessions منقضی</td>
+<td>۳۰ روز</td>
+<td>cron daily DELETE</td>
+</tr>
+<tr>
+<td>OTP consumed</td>
+<td>۷ روز</td>
+<td>cron</td>
+</tr>
+<tr>
+<td>Audit logs</td>
+<td>۳۶۵ روز</td>
+<td>archive به ClickHouse</td>
+</tr>
+<tr>
+<td>Soft-deleted rows</td>
+<td>۹۰ روز</td>
+<td>hard delete با cron</td>
+</tr>
+<tr>
+<td>AI interactions</td>
+<td>۳۶۵ روز</td>
+<td>archive به ClickHouse</td>
+</tr>
+<tr>
+<td>Messages (پلن free)</td>
+<td>۹۰ روز</td>
+<td>archive</td>
+</tr>
+<tr>
+<td>Messages (پلن paid)</td>
+<td>نامحدود</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-14">14. Backup &amp; DR</h2>
+<ul>
+<li><strong>Continuous WAL archiving</strong> به Object Storage (MinIO + S3 خارجی)</li>
+<li><strong>Snapshot روزانه</strong> کامل: ۳۰ روز نگه‌داری</li>
+<li><strong>Snapshot هفتگی:</strong> ۹۰ روز</li>
+<li><strong>Cross-region replica</strong> (EU) async</li>
+<li><strong>RTO:</strong> ۱۵ دقیقه — <strong>RPO:</strong> ۵ دقیقه</li>
+</ul>
+<hr />
+<h2 id="sec-15">15. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — کجای معماری از این schema استفاده می‌شود</li>
+<li><a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> — چرا Postgres</li>
+<li><a href="06-AI-ARCHITECTURE.html"><code>06-AI-ARCHITECTURE.md</code></a> — جزئیات استفاده pgvector</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="03-TECH-STACK.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۳ — Tech Stack</div>
+      </a>
+      <a class="next" href="05-API-SPEC.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۵ — API</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

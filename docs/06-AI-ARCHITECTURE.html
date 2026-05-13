@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۶ · معماری AI — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — معماری AI">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html" class="active"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">1. اصول معماری AI</a></li>
+      <li><a href="#sec-2">2. نمای کلی لایه AI</a></li>
+      <li><a href="#sec-3">3. مدل‌های مورد استفاده</a></li>
+      <li><a href="#sec-4">4. Pipeline تفصیلی</a></li>
+      <li><a href="#sec-5">5. Knowledge Base Ingestion</a></li>
+      <li><a href="#sec-6">6. Prompt Templates (کلیدی)</a></li>
+      <li><a href="#sec-7">7. Caching Strategy</a></li>
+      <li><a href="#sec-8">8. Fallback Chain</a></li>
+      <li><a href="#sec-9">9. Evaluation Framework</a></li>
+      <li><a href="#sec-10">10. Cost Management</a></li>
+      <li><a href="#sec-11">11. Persian-Specific Considerations</a></li>
+      <li><a href="#sec-12">12. Privacy &amp; Compliance</a></li>
+      <li><a href="#sec-13">13. مرحله Roadmap AI</a></li>
+      <li><a href="#sec-14">14. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۶ — معماری AI</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🤖</span> سند معماری AI</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="06-AI-ARCHITECTURE.md">06-AI-ARCHITECTURE.md</a></span>
+
+    </div>
+
+<blockquote>
+<p>Chat-Box — لایه AI: Auto-Reply، Copilot، RAG، Routing، Eval<br />
+ورژن 1.0 · مه 2026</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">1. اصول معماری AI</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>اصل</th>
+<th>پیامد عملی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>AI-First از روز اول</strong></td>
+<td>هر مکالمه ابتدا از کانال AI رد می‌شود</td>
+</tr>
+<tr>
+<td><strong>Cascading model strategy</strong></td>
+<td>سبک → سنگین، فقط در صورت نیاز</td>
+</tr>
+<tr>
+<td><strong>Persian-native</strong></td>
+<td>همه prompt ها به فارسی، embedding چندزبانه</td>
+</tr>
+<tr>
+<td><strong>Eval قبل از Deploy</strong></td>
+<td>هر تغییر prompt یا مدل از gates عبور کند</td>
+</tr>
+<tr>
+<td><strong>Cost-aware</strong></td>
+<td>budget per workspace، fallback اتوماتیک</td>
+</tr>
+<tr>
+<td><strong>Human escalation graceful</strong></td>
+<td>confidence پایین = handoff شفاف</td>
+</tr>
+<tr>
+<td><strong>Observable</strong></td>
+<td>Langfuse برای trace هر prompt/response</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-2">2. نمای کلی لایه AI</h2>
+<div class="mermaid">
+flowchart TB
+    subgraph Input["📥 ورودی"]
+        MSG["پیام جدید کاربر"]
+    end
+
+    subgraph Pipeline["🧠 AI Pipeline"]
+        SAFE["Safety Filter<br/>(PII, profanity, jailbreak)"]
+        INTENT["Intent Classifier<br/>(local model)"]
+        ROUTE{"Router"}
+        FAQ["FAQ Path<br/>RAG + GPT-4o-mini"]
+        COMPLEX["Complex Path<br/>GPT-4o"]
+        ESCALATE["Human Escalation"]
+        COPILOT["Copilot<br/>(suggestions)"]
+        SUMMARY["Summarizer"]
+        SENTIMENT["Sentiment"]
+    end
+
+    subgraph Retrieval["🔍 Retrieval"]
+        EMBED["Embedding"]
+        VEC[(pgvector)]
+        RERANK["Cohere Rerank"]
+        KB[(KB Documents)]
+    end
+
+    subgraph Models["🎯 Model Tier"]
+        LOCAL["Aya-23 / PersianMind<br/>(local fallback)"]
+        MINI["GPT-4o-mini<br/>Claude Haiku"]
+        REASONING["GPT-4o / Claude Sonnet"]
+    end
+
+    subgraph Obs["🔬 Observability"]
+        LF["Langfuse<br/>Traces & Eval"]
+        DB[("ai_interactions")]
+    end
+
+    MSG --> SAFE --> INTENT --> ROUTE
+    ROUTE -->|simple| FAQ
+    ROUTE -->|complex| COMPLEX
+    ROUTE -->|off-topic / low-conf| ESCALATE
+    FAQ --> EMBED --> VEC
+    VEC --> RERANK
+    RERANK --> MINI
+    COMPLEX --> REASONING
+    LOCAL -.->|fallback| FAQ
+    MINI --> Obs
+    REASONING --> Obs
+    KB --> VEC
+</div>
+<hr />
+<h2 id="sec-3">3. مدل‌های مورد استفاده</h2>
+<h3>3.1 جدول مدل‌ها</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>مدل</th>
+<th>استفاده</th>
+<th>هزینه (per 1M tokens)</th>
+<th>latency P95</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mini</td>
+<td><strong>GPT-4o-mini</strong></td>
+<td>RAG-based auto-reply، classify</td>
+<td>$0.15 / $0.60</td>
+<td>~800ms</td>
+</tr>
+<tr>
+<td>Mini Fallback</td>
+<td><strong>Claude 3.5 Haiku</strong></td>
+<td>همان، fallback</td>
+<td>$0.80 / $4.00</td>
+<td>~700ms</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td><strong>GPT-4o</strong></td>
+<td>پاسخ پیچیده، summarize طولانی</td>
+<td>$2.50 / $10</td>
+<td>~2.5s</td>
+</tr>
+<tr>
+<td>Reasoning Fallback</td>
+<td><strong>Claude 3.5 Sonnet</strong></td>
+<td>همان</td>
+<td>$3.00 / $15</td>
+<td>~2s</td>
+</tr>
+<tr>
+<td>Local</td>
+<td><strong>Aya-23 (8B)</strong></td>
+<td>fallback مطلق، privacy-strict tenants</td>
+<td>self-host (GPU)</td>
+<td>~1.5s</td>
+</tr>
+<tr>
+<td>Embedding</td>
+<td><strong>text-embedding-3-small</strong> (1536d)</td>
+<td>RAG vectors</td>
+<td>$0.02 / 1M</td>
+<td>~150ms</td>
+</tr>
+<tr>
+<td>Embedding fallback</td>
+<td><strong>BGE-M3</strong> (1024d)</td>
+<td>local</td>
+<td>self-host</td>
+<td>~300ms</td>
+</tr>
+<tr>
+<td>Rerank</td>
+<td><strong>Cohere rerank-multilingual-v3</strong></td>
+<td>reorder top-k</td>
+<td>$1 / 1k searches</td>
+<td>~200ms</td>
+</tr>
+</tbody>
+</table></div>
+<h3>3.2 انتخاب مدل بر اساس tenant tier</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Default model</th>
+<th>Reasoning model</th>
+<th>Embedding</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free</td>
+<td>gpt-4o-mini</td>
+<td>— (escalate)</td>
+<td>text-embedding-3-small</td>
+<td>100 AI msg/month</td>
+</tr>
+<tr>
+<td>Starter</td>
+<td>gpt-4o-mini</td>
+<td>gpt-4o (limit)</td>
+<td>text-embedding-3-small</td>
+<td>1k AI msg/month</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td>gpt-4o-mini</td>
+<td>gpt-4o</td>
+<td>text-embedding-3-small</td>
+<td>10k AI msg/month</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>configurable</td>
+<td>configurable</td>
+<td>configurable</td>
+<td>unlimited + local option</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-4">4. Pipeline تفصیلی</h2>
+<h3>4.1 Safety Filter</h3>
+<p>پیش از هر LLM call:</p>
+<ul>
+<li><strong>PII detection:</strong> کارت ملی، شماره کارت بانکی، آدرس → mask</li>
+<li><strong>Profanity:</strong> لیست واژگان فارسی + classifier سبک</li>
+<li><strong>Jailbreak/prompt injection:</strong> الگوهای رایج (<code>ignore previous instructions</code>، ...)</li>
+<li><strong>Length limit:</strong> max 4000 char per message; truncate با warning</li>
+</ul>
+<p>اگر فیلتر آلارم دهد → log + در صورت high-risk، escalate به انسان.</p>
+<h3>4.2 Intent Classifier</h3>
+<p>یک مدل سبک محلی (یا fine-tuned با fast call):</p>
+<p><strong>کلاس‌ها:</strong><br />
+- <code>faq</code> — سؤال FAQ-like (پشتیبانی، محصول، قیمت)<br />
+- <code>transactional</code> — نیاز به action (لغو سفارش، تغییر آدرس)<br />
+- <code>complaint</code> — شکایت/منفی<br />
+- <code>chitchat</code> — گفت‌وگوی غیرمرتبط<br />
+- <code>off_topic</code> — خارج از حوزه</p>
+<p><strong>اجرا:</strong><br />
+- مرحله ۱: keyword + regex سریع<br />
+- مرحله ۲: GPT-4o-mini با classification prompt (در صورت ابهام)<br />
+- caching: hash پیام → result (TTL ۲۴ ساعت)</p>
+<h3>4.3 Router</h3>
+<pre><code>intent = &quot;faq&quot;           → RAG path (mini model)
+intent = &quot;transactional&quot; → tool-use path (mini model with function-calling)
+intent = &quot;complaint&quot;     → escalate immediately + sentiment tag
+intent = &quot;chitchat&quot;      → mini model with persona prompt
+intent = &quot;off_topic&quot;     → escalate
+</code></pre>
+<p>اگر <strong>confidence &lt; 0.5</strong> در هر مرحله → escalate.</p>
+<h3>4.4 RAG Pipeline (Auto-Reply)</h3>
+<pre><code>1. Embed query (text-embedding-3-small)
+2. Vector search در pgvector (top 20 candidates)
+3. Cohere rerank → top 5
+4. Build context window:
+   - system prompt (persona تنظیم workspace)
+   - retrieved chunks (با source citation)
+   - conversation history (last 10 messages)
+   - current message
+5. Call GPT-4o-mini با max_tokens=400
+6. Output:
+   - text (پاسخ نهایی)
+   - confidence (از self-evaluation prompt)
+   - cited_chunks (برای dashboard show)
+7. اگر confidence &gt; threshold (default 0.7):
+   - publish به user
+   - log به ai_interactions
+8. اگر &lt; threshold:
+   - escalate به human، attach suggestion
+</code></pre>
+<h3>4.5 Tool-Use (Transactional)</h3>
+<p>برای intent های action-base، <strong>function calling</strong> فعال است:</p>
+<p><strong>Tools موجود (per workspace قابل تنظیم):</strong></p>
+<pre><code class="language-jsonc">[
+  {
+    &quot;name&quot;: &quot;search_order&quot;,
+    &quot;description&quot;: &quot;جستجوی سفارش بر اساس شماره&quot;,
+    &quot;parameters&quot;: { &quot;order_id&quot;: &quot;string&quot; }
+  },
+  {
+    &quot;name&quot;: &quot;cancel_order&quot;,
+    &quot;description&quot;: &quot;لغو سفارش&quot;,
+    &quot;parameters&quot;: { &quot;order_id&quot;: &quot;string&quot;, &quot;reason&quot;: &quot;string&quot; },
+    &quot;requires_confirmation&quot;: true
+  },
+  {
+    &quot;name&quot;: &quot;create_ticket&quot;,
+    &quot;description&quot;: &quot;ساخت تیکت پشتیبانی برای موارد سخت&quot;,
+    &quot;parameters&quot;: { &quot;subject&quot;: &quot;string&quot;, &quot;priority&quot;: &quot;low|normal|high&quot; }
+  }
+]
+</code></pre>
+<p>Workspace می‌تواند tool هایش را با Webhook به سیستم خودش (مثلاً WooCommerce) متصل کند.</p>
+<h3>4.6 Copilot (پیشنهاد به اپراتور)</h3>
+<ul>
+<li>Trigger: هر بار اپراتور وارد یک conversation می‌شود، یا دکمه “پیشنهاد بده” می‌زند</li>
+<li>Context: کل تاریخچه + KB + persona</li>
+<li>Output: ۳ پیشنهاد (Brief, Friendly, Detailed)</li>
+<li>Latency target: <strong>&lt; 800ms</strong></li>
+<li>Streaming: SSE برای نمایش تدریجی</li>
+</ul>
+<h3>4.7 Summarizer</h3>
+<ul>
+<li>در ۳ سناریو فعال:</li>
+<li><strong>Handoff</strong> — وقتی conv به اپراتور escalate می‌شود</li>
+<li><strong>Reopen</strong> — وقتی مکالمه بعد از ۲۴ ساعت ادامه پیدا می‌کند</li>
+<li><strong>Manual</strong> — اپراتور دکمه می‌زند</li>
+<li>Output: ۳–۵ خط: مشتری کیست، چه می‌خواست، چه گفته شده، action لازم</li>
+</ul>
+<h3>4.8 Sentiment</h3>
+<ul>
+<li>بعد از هر پیام مشتری</li>
+<li>مدل سبک محلی (یا mini با cache)</li>
+<li>output: score [-1..+1] + label</li>
+<li>اگر <code>&lt; -0.5</code> → flag در inbox، priority++</li>
+</ul>
+<hr />
+<h2 id="sec-5">5. Knowledge Base Ingestion</h2>
+<div class="mermaid">
+flowchart LR
+    INPUT["URL / PDF / DOCX / TXT"]
+    EXTRACT["Unstructured.io<br/>Extract text"]
+    CLEAN["Clean & normalize<br/>RTL/LTR، تاریخ، اعداد"]
+    CHUNK["Chunker<br/>(500 token + 50 overlap)"]
+    EMBED["Embed<br/>(text-embedding-3-small)"]
+    STORE["pgvector<br/>HNSW index"]
+    INPUT --> EXTRACT --> CLEAN --> CHUNK --> EMBED --> STORE
+</div>
+<h3>Chunking strategy</h3>
+<ul>
+<li><strong>structural</strong> (heading-based) &gt; <strong>semantic</strong> &gt; <strong>fixed-size</strong></li>
+<li>target: ۵۰۰ token per chunk، overlap ۵۰</li>
+<li>metadata per chunk: <code>{source, page, heading_path, doc_id}</code></li>
+</ul>
+<h3>Crawling از URL</h3>
+<ul>
+<li>BFS با max depth 2، max pages 500</li>
+<li>robots.txt احترام</li>
+<li>rate limit ۱ req/s per domain</li>
+<li>exclude: login, cart, account, signin</li>
+</ul>
+<h3>Update strategy</h3>
+<ul>
+<li>Manual: دکمه Re-index</li>
+<li>Scheduled: هفتگی auto re-crawl</li>
+<li>Diff: hash content → فقط chunkهای تغییرکرده re-embed</li>
+</ul>
+<hr />
+<h2 id="sec-6">6. Prompt Templates (کلیدی)</h2>
+<h3>6.1 System prompt — Auto-Reply</h3>
+<pre><code class="language-text">شما دستیار هوش مصنوعی شرکت {workspace_name} هستید.
+زبان پاسخ: فارسی (فقط مگر کاربر زبان دیگری بنویسد).
+لحن: {workspace_tone} (default: حرفه‌ای و گرم)
+
+قوانین:
+1. فقط بر اساس &quot;اطلاعات شرکت&quot; پاسخ بدهید. اگر اطلاعات کافی نیست،
+   بگویید «از همکار انسانی می‌خواهم کمکتان کند.»
+2. هرگز قیمت/تاریخ/اطلاعات خاص از خودتان اختراع نکنید.
+3. لینک‌ها را به همان شکلی که در منبع هست بدهید.
+4. در پایان اگر مطمئن نیستید، confidence پایین بدهید.
+
+اطلاعات شرکت:
+{retrieved_chunks_with_citations}
+
+تاریخچه مکالمه (۱۰ پیام اخیر):
+{conversation_history}
+
+سؤال کاربر:
+{user_message}
+
+پاسخ خود را در JSON بدهید:
+{
+  &quot;text&quot;: &quot;...&quot;,
+  &quot;confidence&quot;: 0.0-1.0,
+  &quot;cited_chunks&quot;: [&quot;chunk_id_1&quot;, &quot;chunk_id_2&quot;],
+  &quot;needs_human&quot;: false
+}
+</code></pre>
+<h3>6.2 Copilot prompt</h3>
+<pre><code class="language-text">شما assistant اپراتور پشتیبانی هستید.
+سه پیشنهاد پاسخ تولید کنید: کوتاه، دوستانه، تفصیلی.
+به فارسی، RTL، حرفه‌ای ولی صمیمی.
+
+سیاست شرکت:
+{workspace_policy}
+
+اطلاعات مرتبط:
+{retrieved_chunks}
+
+تاریخچه:
+{conversation_history}
+
+آخرین پیام مشتری:
+{last_message}
+
+خروجی JSON:
+{ &quot;suggestions&quot;: [{&quot;style&quot;:&quot;brief&quot;,&quot;text&quot;:&quot;...&quot;}, ...] }
+</code></pre>
+<h3>6.3 Summarizer prompt</h3>
+<pre><code class="language-text">این مکالمه را در ۳-۵ خط خلاصه کنید:
+- مشتری چه می‌خواست
+- چه پاسخی داده شده
+- وضعیت فعلی
+- اقدام بعدی لازم (اگر هست)
+
+مکالمه:
+{conversation_full}
+</code></pre>
+<hr />
+<h2 id="sec-7">7. Caching Strategy</h2>
+<h3>7.1 سطوح cache</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>سطح</th>
+<th>چه</th>
+<th>TTL</th>
+<th>invalidation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1 — Embedding</td>
+<td>متن → vector</td>
+<td>۳۰ روز</td>
+<td>hash content</td>
+</tr>
+<tr>
+<td>L2 — Retrieval</td>
+<td>(query_hash, kb_id) → top_k chunks</td>
+<td>۲۴ ساعت</td>
+<td>KB update event</td>
+</tr>
+<tr>
+<td>L3 — Answer</td>
+<td>(query_hash, kb_version) → response</td>
+<td>۱ ساعت</td>
+<td>manual flush</td>
+</tr>
+<tr>
+<td>L4 — Intent</td>
+<td>message_hash → class</td>
+<td>۲۴ ساعت</td>
+<td>TTL only</td>
+</tr>
+</tbody>
+</table></div>
+<h3>7.2 معیار cache hit</h3>
+<p>هدف: <strong>≥۳۰٪</strong> answer-cache hit بعد از ماه ۶ → کاهش ۳۰٪ هزینه LLM.</p>
+<hr />
+<h2 id="sec-8">8. Fallback Chain</h2>
+<pre><code>Primary: OpenAI GPT-4o-mini (EU proxy)
+   ↓ if 5xx/timeout 3 times در 60s
+Secondary: Claude 3.5 Haiku
+   ↓ if 5xx/timeout
+Tertiary: Local Aya-23 (GPU node EU)
+   ↓ if down
+Last resort: Static template &quot;همکار به‌زودی پاسخ می‌دهد&quot; + escalate
+</code></pre>
+<p>Circuit breaker per provider: 3 failure → open 60s → half-open.</p>
+<hr />
+<h2 id="sec-9">9. Evaluation Framework</h2>
+<h3>9.1 Datasets</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نام</th>
+<th>حجم</th>
+<th>محتوا</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gold-faq-fa</code></td>
+<td>500</td>
+<td>سؤال‌های FAQ فارسی + پاسخ منبع</td>
+</tr>
+<tr>
+<td><code>gold-complaints</code></td>
+<td>200</td>
+<td>شکایات با expected escalation</td>
+</tr>
+<tr>
+<td><code>gold-transactional</code></td>
+<td>150</td>
+<td>درخواست‌های action با expected tools</td>
+</tr>
+<tr>
+<td><code>gold-multilingual</code></td>
+<td>100</td>
+<td>EN/AR/FA mixed</td>
+</tr>
+</tbody>
+</table></div>
+<h3>9.2 Metrics</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>هدف ماه ۶</th>
+<th>روش</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Answer accuracy</strong></td>
+<td>≥ 0.80</td>
+<td>LLM-as-judge با GPT-4o</td>
+</tr>
+<tr>
+<td><strong>Hallucination rate</strong></td>
+<td>&lt; 0.05</td>
+<td>RAGAS faithfulness</td>
+</tr>
+<tr>
+<td><strong>Citation accuracy</strong></td>
+<td>≥ 0.90</td>
+<td>exact-match با retrieved chunks</td>
+</tr>
+<tr>
+<td><strong>Escalation precision</strong></td>
+<td>≥ 0.85</td>
+<td>اپراتور تأیید کند که باید escalate می‌شد</td>
+</tr>
+<tr>
+<td><strong>Latency P95</strong></td>
+<td>&lt; 2s</td>
+<td>Langfuse trace</td>
+</tr>
+<tr>
+<td><strong>Cost per resolved</strong></td>
+<td>&lt; $0.03</td>
+<td>total cost / resolved count</td>
+</tr>
+</tbody>
+</table></div>
+<h3>9.3 CI Gate</h3>
+<p>هر تغییر prompt یا مدل → اجرای ۳ dataset → اگر متریک هدف افت &gt; ۲٪ → block deploy.</p>
+<hr />
+<h2 id="sec-10">10. Cost Management</h2>
+<h3>10.1 محاسبه هزینه per workspace</h3>
+<pre><code>cost_total = (input_tokens × in_rate) + (output_tokens × out_rate)
+           + (embeddings × 0.02 / 1M)
+           + (reranks × 0.001)
+</code></pre>
+<h3>10.2 Budget enforcement</h3>
+<ul>
+<li>هر workspace credit AI ماهانه (بر اساس plan)</li>
+<li>وقتی ۸۰٪ مصرف شد → email + dashboard banner</li>
+<li>وقتی ۱۰۰٪ → fallback به template ها + offer upgrade</li>
+<li>override برای Enterprise با true unlimited</li>
+</ul>
+<h3>10.3 بهینه‌سازی هزینه</h3>
+<ul>
+<li><strong>Aggressive caching</strong> (L3 answer cache)</li>
+<li><strong>Prompt compression</strong> (system prompt را در provider با Prompt Caching می‌گذاریم)</li>
+<li><strong>Smaller embedding</strong> — text-embedding-3-small کافی است (1536d)، نیازی به -large نیست</li>
+<li><strong>Local fallback</strong> — برای intent classification و sentiment</li>
+<li><strong>Streaming + early stop</strong> — اگر کاربر تایپ بعدی شروع کرد، cancel</li>
+</ul>
+<hr />
+<h2 id="sec-11">11. Persian-Specific Considerations</h2>
+<ul>
+<li><strong>RTL/Punctuation:</strong> خروجی همیشه با علائم فارسی (<code>،</code>, <code>؛</code>, <code>؟</code>)</li>
+<li><strong>اعداد:</strong> خروجی با ارقام فارسی مگر در کد/شناسه</li>
+<li><strong>تاریخ:</strong> شمسی default، میلادی اگر کاربر استفاده کرد</li>
+<li><strong>Half-space (نیم‌فاصله):</strong> خروجی صحیح، normalize ورودی</li>
+<li><strong>Mixed FA/EN:</strong> mention‌های انگلیسی (نام محصول) حفظ شوند</li>
+<li><strong>Tokenizer:</strong> GPT tokenizer برای فارسی بد است (۲–۳ برابر token مصرف می‌کند) → روی این budget کنیم</li>
+</ul>
+<hr />
+<h2 id="sec-12">12. Privacy &amp; Compliance</h2>
+<ul>
+<li>داده‌ی tenant <strong>ایزوله</strong> — هر embedding با <code>workspace_id</code> می‌خورد، RLS اعمال می‌شود</li>
+<li><strong>Opt-out training:</strong> هیچ داده‌ای به OpenAI/Anthropic برای training داده نمی‌شود (API zero-retention)</li>
+<li><strong>PII masking</strong> قبل از LLM call</li>
+<li><strong>Right to be forgotten:</strong> delete contact → cascade delete messages + AI interactions</li>
+<li><strong>Audit:</strong> هر AI call با <code>correlation_id</code> در audit_log</li>
+</ul>
+<hr />
+<h2 id="sec-13">13. مرحله Roadmap AI</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>فاز</th>
+<th>قابلیت</th>
+<th>زمان</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MVP</td>
+<td>Auto-Reply, Copilot, KB، summarize، sentiment</td>
+<td>M0–M3</td>
+</tr>
+<tr>
+<td>Post-MVP</td>
+<td>Tool-use (WooCommerce, زرین‌پال)، function calling پیشرفته</td>
+<td>M4–M6</td>
+</tr>
+<tr>
+<td>Mid</td>
+<td>Voice (STT/TTS)، multilingual auto-detect، active learning از feedback</td>
+<td>M6–M9</td>
+</tr>
+<tr>
+<td>Long</td>
+<td>Fine-tuned مدل فارسی اختصاصی، Persona builder</td>
+<td>M9+</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-14">14. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — جای AI Service در معماری</li>
+<li><a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> — Stack: Python + FastAPI + LangChain</li>
+<li><a href="04-DATABASE-SCHEMA.html"><code>04-DATABASE-SCHEMA.md</code></a> — جداول KB و ai_interactions</li>
+<li><a href="05-API-SPEC.html"><code>05-API-SPEC.md</code></a> — endpoint های AI</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="05-API-SPEC.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۵ — API</div>
+      </a>
+      <a class="next" href="07-PROJECT-STRUCTURE.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۷ — ساختار پروژه</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

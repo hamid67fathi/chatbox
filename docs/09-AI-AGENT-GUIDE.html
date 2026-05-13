@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۹ · راهنمای AI Agent — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — راهنمای AI Agent">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html" class="active"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">Mandatory first reads (order)</a></li>
+      <li><a href="#sec-2">English — operational rules (machine-oriented)</a></li>
+      <li><a href="#sec-3">قواعد ویژهٔ توسعهٔ «فقط با AI»</a></li>
+      <li><a href="#sec-4">نقش ↔ مسیر خواندن سند</a></li>
+      <li><a href="#sec-5">قالب پیشنهادی برای توضیح PR (کپی در بدنه PR)</a></li>
+      <li><a href="#sec-6">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۹ — راهنمای AI Agent</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🤖</span> AI Agent Execution Guide — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="09-AI-AGENT-GUIDE.md">09-AI-AGENT-GUIDE.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.1 · مه 2026<br />
+<strong>Audience:</strong> Coding agents (Cursor, Claude, GPT, etc.) + human reviewer<br />
+<strong>Primary role owner (doc):</strong> Engineering</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">Mandatory first reads (order)</h2>
+<ol>
+<li><a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES.md</code></a> — role contract + YAML enum  </li>
+<li><a href="16-DEVELOPMENT-STATUS.html"><code>16-DEVELOPMENT-STATUS.md</code></a> — وضعیت مراحل <code>P…</code> در <code>roadmap_machine.md</code> (قبل از شروع کار، اینجا را بخوانید)  </li>
+<li><a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a> — what is MVP vs Phase 2  </li>
+<li>Task-specific: <code>05-API-SPEC.md</code> / <code>04-DATABASE-SCHEMA.md</code> / <code>06-AI-ARCHITECTURE.md</code> as applicable  </li>
+</ol>
+<p><strong>Canonical spec language:</strong> Markdown (<code>.md</code>) in <code>/docs</code>. HTML is a human view; on conflict, follow <code>.md</code> unless PR states otherwise.</p>
+<hr />
+<h2 id="sec-2">English — operational rules (machine-oriented)</h2>
+<pre><code class="language-yaml">agent_rules:
+  before_coding:
+    - Confirm PRIMARY_ROLE for this task (ask human if missing).
+    - Refuse to mix PRODUCT scope changes with ENGINEERING implementation in one PR unless EXCEPTION approved.
+    - Assume shell commands target Ubuntu 22.04/24.04 LTS unless the task states otherwise.
+  while_coding:
+    - Match repo conventions in 07-PROJECT-STRUCTURE when repo exists.
+    - Add or update tests for ENGINEERING tasks; add eval fixtures for AI_ML tasks.
+    - Never commit secrets; use .env.example only.
+  documentation:
+    - Architecture-impacting decisions require a new file under docs/adr/ (see 13).
+    - Update MD first; regenerate paired HTML with: python docs/scripts/build_doc_html.py &lt;STEM&gt;
+    - After starting or finishing a roadmap_machine phase (P0.x, P1.x, ...), update docs/16-DEVELOPMENT-STATUS.md in the same PR or a follow-up PR.
+  rtl_and_locale:
+    - All user-facing Persian strings must be RTL-safe; avoid hard-coded LTR CSS in shared components.
+</code></pre>
+<hr />
+<h2 id="sec-3">قواعد ویژهٔ توسعهٔ «فقط با AI»</h2>
+<ol>
+<li><strong>از کاربر بخواهید نقش را صریح کند</strong> اگر Issue/PR بدون <code>PRIMARY_ROLE</code> بود.  </li>
+<li><strong>حداکثر اندازهٔ PR:</strong> ترجیحاً &lt; ۴۰۰ خط net تغییر؛ اگر بیشتر شد، در توضیح PR دلیل تجمیع را بنویسید.  </li>
+<li><strong>تست:</strong> هر feature ENGINEERING باید حداقل یک تست خودکار (unit یا integration سبک) داشته باشد؛ استثنا با برچسب <code>TEST_DEFERRED</code> + دلیل + issue پیگیری.  </li>
+<li><strong>AI safety:</strong> تغییر در prompt یا pipeline بدون اشاره به <code>06-AI-ARCHITECTURE.md</code> و بدون فکر به PII/redaction ممنوع است.</li>
+</ol>
+<hr />
+<h2 id="sec-4">نقش ↔ مسیر خواندن سند</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>اگر PRIMARY_ROLE شما…</th>
+<th>بخوانید</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ENGINEERING (backend)</td>
+<td>02, 04, 05, 07</td>
+</tr>
+<tr>
+<td>ENGINEERING (frontend)</td>
+<td>01 (AC), 05 (WS contract), 07</td>
+</tr>
+<tr>
+<td>AI_ML</td>
+<td>06, 04 (جداول KB/embedding), 11 (privacy)</td>
+</tr>
+<tr>
+<td>SECURITY</td>
+<td>11, 05 (rate limits), 02 (network boundary)</td>
+</tr>
+<tr>
+<td>DEVOPS</td>
+<td>12, 14, 03, 02</td>
+</tr>
+<tr>
+<td>PRODUCT</td>
+<td>01, 08, 10</td>
+</tr>
+<tr>
+<td>GTM_MARKETING</td>
+<td>10, 01 (personas)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-5">قالب پیشنهادی برای توضیح PR (کپی در بدنه PR)</h2>
+<pre><code class="language-markdown">PRIMARY_ROLE: ENGINEERING
+RELATED_DOCS: 05-API-SPEC.md § Conversations
+MVP_LABEL: MVP
+TEST: vitest apps/api/...
+ROLLBACK: migration down / feature flag KEY
+</code></pre>
+<hr />
+<h2 id="sec-6">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> — روال فازبندی، نام Agentها، پرامپت‌های آماده</li>
+<li><a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES.md</code></a></li>
+<li><a href="13-ARCHITECTURE-DECISION-RECORDS.html"><code>13-ARCHITECTURE-DECISION-RECORDS.md</code></a></li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="08-ROADMAP.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۸ — Roadmap</div>
+      </a>
+      <a class="next" href="10-GTM-PRICING-MARKETING.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۰ — GTM و قیمت‌گذاری</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

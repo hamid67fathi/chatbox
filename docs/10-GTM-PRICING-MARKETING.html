@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۰ · GTM و قیمت‌گذاری — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — GTM و قیمت‌گذاری">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html" class="active"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">خلاصهٔ استراتژی (فارسی)</a></li>
+      <li><a href="#sec-2">Machine-readable (English)</a></li>
+      <li><a href="#sec-3">بسته‌بندی پیشنهادی (ریال / ماه) — قابل بازنگری توسط Product</a></li>
+      <li><a href="#sec-4">پیام‌های کلیدی (فارسی — برای لندینگ)</a></li>
+      <li><a href="#sec-5">قیف بازاریابی و اندازه‌گیری</a></li>
+      <li><a href="#sec-6">نقش‌ها و حدود مسئولیت</a></li>
+      <li><a href="#sec-7">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۰ — GTM و قیمت‌گذاری</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">📣</span> GTM, Pricing &amp; Marketing — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="10-GTM-PRICING-MARKETING.md">10-GTM-PRICING-MARKETING.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> GTM / Marketing — بدون تغییر یک‌طرفهٔ منطق auth/billing در کد</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">خلاصهٔ استراتژی (فارسی)</h2>
+<p><strong>ICP فاز ۱:</strong> کسب‌وکارهای آنلاین کوچک–متوسط ایران با حجم مکالمه متوسط و نیاز به پاسخ سریع قبل از خرید. <strong>پیام اصلی:</strong> «پشتیبانی ۲۴/۷ با AI؛ فقط موارد حساس به شما می‌رسد.» کانال‌های اول: SEO فارسی، محتوای آموزشی کوتاه، همکاری با آژانس‌های ووکامرس/فروشگاه‌ساز.</p>
+<hr />
+<h2 id="sec-2">Machine-readable (English)</h2>
+<pre><code class="language-yaml">gtm_doc_id: 10-GTM-PRICING-MARKETING
+icp_primary: iranian_smb_ecommerce
+channels_mvp:
+  - seo_fa_longtail
+  - wordpress_woocommerce_communities
+  - founder_led_linkedin_fa
+pricing_model: hybrid_seat_plus_tier
+plans:
+  free:
+    limits: { agents: 1, monthly_conversations: 200, ai_credits: &quot;low&quot; }
+  pro:
+    limits: { agents: 5, monthly_conversations: 5000, ai_credits: &quot;medium&quot; }
+  business:
+    limits: { agents: 25, monthly_conversations: 25000, ai_credits: &quot;high&quot; }
+activation_definition: widget_installed_and_first_visitor_message_within_7_days
+north_star_metric: paid_workspaces_with_mrr_gt_zero
+</code></pre>
+<blockquote>
+<p><strong>توجه:</strong> اعداد پلن نهایی محصول در PRD و کد billing باید هم‌تراز شوند؛ این جدول <strong>پیشنهاد اولیه</strong> است.</p>
+</blockquote>
+<hr />
+<h2 id="sec-3">بسته‌بندی پیشنهادی (ریال / ماه) — قابل بازنگری توسط Product</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>پلن</th>
+<th>مخاطب</th>
+<th>جایگاه قیمت (تومان ماه)</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free</td>
+<td>آزمایش و نصب ویجت</td>
+<td>۰</td>
+<td>محدودیت سخت AI برای کنترل هزینه</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td>فروشگاه‌های کوچک</td>
+<td>۲۹۹٬۰۰۰ – ۴۹۹٬۰۰۰</td>
+<td>تناسب با پرسونای «نازنین»</td>
+</tr>
+<tr>
+<td>Business</td>
+<td>تیم پشتیبانی</td>
+<td>۱٫۵M – ۳M</td>
+<td>نزدیک پرسونای «امیر»</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Annual discount پیشنهادی:</strong> ۱۵٪ تخفیف سالانه برای بهبود cash flow.</p>
+<hr />
+<h2 id="sec-4">پیام‌های کلیدی (فارسی — برای لندینگ)</h2>
+<ol>
+<li><strong>AI-Native:</strong> از اول برای پاسخ خودکار و Copilot ساخته شده، نه افزونهٔ جدا.  </li>
+<li><strong>فارسی و RTL واقعی:</strong> نه ترجمهٔ انگلیسی.  </li>
+<li><strong>تلگرام و درگاه محلی:</strong> همسو با عادت پرداخت و ارتباط ایران.</li>
+</ol>
+<hr />
+<h2 id="sec-5">قیف بازاریابی و اندازه‌گیری</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>مرحله</th>
+<th>معیار پیشنهادی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>آگاهی</td>
+<td>بازدید لندینگ، جستجوی برند</td>
+</tr>
+<tr>
+<td>علاقه</td>
+<td>ثبت‌نام workspace</td>
+</tr>
+<tr>
+<td>فعال‌سازی</td>
+<td>ویجت زنده + اولین مکالمه</td>
+</tr>
+<tr>
+<td>درآمد</td>
+<td>اولین پرداخت موفق</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-6">نقش‌ها و حدود مسئولیت</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نقش</th>
+<th>در این سند</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GTM / Marketing</td>
+<td>مالک messaging، کانال، جدول پلن پیشنهادی</td>
+</tr>
+<tr>
+<td>Product</td>
+<td>تأیید نهایی محدودیت‌ها و هم‌ترازی با PRD</td>
+</tr>
+<tr>
+<td>Engineering</td>
+<td>پیاده‌سازی درگاه و محدودیت‌ها — خارج از متن این سند جزئیات فنی</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-7">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="01-PRD.html"><code>01-PRD.md</code></a> — Persona و MVP scope  </li>
+<li><a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a> — فاز تحویل  </li>
+<li><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a> — متن حریم خصوصی و retention</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="09-AI-AGENT-GUIDE.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۹ — راهنمای AI Agent</div>
+      </a>
+      <a class="next" href="11-SECURITY-PRIVACY.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۱ — امنیت و حریم خصوصی</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

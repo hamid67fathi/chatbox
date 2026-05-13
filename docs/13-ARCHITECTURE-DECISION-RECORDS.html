@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۳ · ADR — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — ADR">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html" class="active"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">چرا ADR؟</a></li>
+      <li><a href="#sec-2">English — ADR policy (machine-readable)</a></li>
+      <li><a href="#sec-3">قالب فایل ADR (کپی کنید برای ADR جدید)</a></li>
+      <li><a href="#sec-4">وضعیت</a></li>
+      <li><a href="#sec-5">زمینه</a></li>
+      <li><a href="#sec-6">تصمیم</a></li>
+      <li><a href="#sec-7">گزینه‌ها</a></li>
+      <li><a href="#sec-8">پیامدها</a></li>
+      <li><a href="#sec-9">پیوندها</a></li>
+      <li><a href="#sec-10">فهرست ADRها</a></li>
+      <li><a href="#sec-11">مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۳ — ADR</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">📝</span> Architecture Decision Records (ADR) — Chat-Box</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="13-ARCHITECTURE-DECISION-RECORDS.md">13-ARCHITECTURE-DECISION-RECORDS.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> Engineering</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">چرا ADR؟</h2>
+<p>تصمیم‌های معماری که <strong>به‌سادگی برگردانده نمی‌شوند</strong> (زبان runtime، message bus، ORM،…) باید در قالب یک فایل کوتاه، تاریخ‌دار و قابل جستجو ثبت شوند تا AI و انسان بعداً بدانند <strong>چرا</strong> این انتخاب شده است.</p>
+<hr />
+<h2 id="sec-2">English — ADR policy (machine-readable)</h2>
+<pre><code class="language-yaml">adr_policy:
+  location: docs/adr/
+  filename_pattern: &quot;ADR-{number:05d}-{slug}.md&quot;
+  required_when:
+    - new_microservice_boundary
+    - new_external_data_processor
+    - breaking_api_change
+    - security_model_change
+  lifecycle: accepted | superseded | deprecated
+  link_from_pr: true
+</code></pre>
+<hr />
+<h2 id="sec-3">قالب فایل ADR (کپی کنید برای ADR جدید)</h2>
+<pre><code class="language-markdown"># ADR-XXXX: عنوان کوتاه تصمیم
+
+## وضعیت
+
+پیشنهادی | پذیرفته‌شده | جایگزین‌شده توسط ADR-YYYY
+
+## زمینه
+
+مشکل چیست؟
+
+## تصمیم
+
+چه انتخابی کردیم؟
+
+## گزینه‌ها
+
+- گزینه A — مزایا / معایب
+- گزینه B — مزایا / معایب
+
+## پیامدها
+
+مثبت، منفی، risks
+
+## پیوندها
+
+PR، issues، اسناد مرتبط
+</code></pre>
+<hr />
+<h2 id="sec-4">فهرست ADRها</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>شماره</th>
+<th>عنوان</th>
+<th>وضعیت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./adr/ADR-00001-use-adrs-for-significant-decisions.md">00001</a></td>
+<td>استفاده از ADR برای تصمیم‌های مهم</td>
+<td>پذیرفته‌شده</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-5">مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES.md</code></a>  </li>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a>  </li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="12-OPERATIONS-SUPPORT.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۱۲ — عملیات و پشتیبانی</div>
+      </a>
+      <a class="next" href="14-INFRASTRUCTURE.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۴ — زیرساخت و سرورها</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

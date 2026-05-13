@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۶ · وضعیت مراحل توسعه — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — وضعیت مراحل توسعه">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html" class="active"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">Machine-readable (برای Agent)</a></li>
+      <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
+      <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
+      <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۶ — وضعیت مراحل توسعه</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">📊</span> وضعیت اجرای مراحل توسعه (ردیاب)</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="16-DEVELOPMENT-STATUS.md">16-DEVELOPMENT-STATUS.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+<strong>مالک سند (نقش):</strong> Engineering (به‌روزرسانی همراه با PR هر مرحله)<br />
+<strong>هم‌راستا با:</strong> <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> (بسته‌های پرامپت)، <a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a>، <a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a></p>
+</blockquote>
+<p>این فایل <strong>تنها جدول وضعیت</strong> برای مراحل تعریف‌شده در <code>roadmap_machine.md</code> است. بعد از اتمام یا شروع هر مرحله، <strong>همین جدول را در همان PR یا PR بلافاصله بعدی</strong> به‌روز کنید تا تیم و Agent بعدی بدانند کجای مسیر هستید.</p>
+<hr />
+<h2 id="sec-1">Machine-readable (برای Agent)</h2>
+<pre><code class="language-yaml">doc_id: 16-DEVELOPMENT-STATUS
+version: 1.0.0
+tracker_for: roadmap_machine_phases
+status_enum:
+  - not_started    # شروع نشده
+  - in_progress    # در حال انجام
+  - blocked        # مسدود — در ستون یادداشت دلیل را بنویسید
+  - done           # انجام شد — در ستون PR لینک merge را بگذارید
+rule: &gt;
+  When a phase from roadmap_machine is completed or started, update this table
+  in the same PR as the code/docs change, or in a follow-up PR within 24h.
+</code></pre>
+<hr />
+<h2 id="sec-2">قرارداد ستون «وضعیت»</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>مقدار در جدول (فارسی)</th>
+<th>معادل enum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>شروع نشده</td>
+<td><code>not_started</code></td>
+</tr>
+<tr>
+<td>در حال انجام</td>
+<td><code>in_progress</code></td>
+</tr>
+<tr>
+<td>مسدود</td>
+<td><code>blocked</code></td>
+</tr>
+<tr>
+<td>انجام شد</td>
+<td><code>done</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-3">جدول وضعیت (مراحل P0 → P3)</h2>
+<blockquote>
+<p><strong>الان:</strong> ردیف <strong>P0.1</strong> پس از merge این تغییرات به‌روز شده؛ بقیه را با پیشرفت ریپو پر کنید.</p>
+</blockquote>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>کد</th>
+<th>عنوان کوتاه</th>
+<th>Agent (مرجع)</th>
+<th>وضعیت</th>
+<th>تاریخ به‌روزرسانی</th>
+<th>PR / شاخه</th>
+<th>یادداشت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0.1</td>
+<td>قواعد PR و branch</td>
+<td>AGT-GOV-01</td>
+<td>انجام شد</td>
+<td>2026-05-12</td>
+<td>—</td>
+<td><code>.github/PULL_REQUEST_TEMPLATE.md</code>، <code>CONTRIBUTING.md</code>، <code>docs/BRANCHING.md</code></td>
+</tr>
+<tr>
+<td>P0.2</td>
+<td>Monorepo + API خالی + compose</td>
+<td>AGT-DEVX-01</td>
+<td>انجام شد</td>
+<td>2026-05-12</td>
+<td>—</td>
+<td><code>apps/api</code>، <code>packages/config</code>، <code>docker-compose.yml</code>، <code>pnpm-workspace</code> + turbo</td>
+</tr>
+<tr>
+<td>P0.3</td>
+<td>README محلی + <code>.env.example</code></td>
+<td>AGT-INF-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P0.4</td>
+<td>CI سبز (lint/typecheck)</td>
+<td>AGT-QA-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.1</td>
+<td>Schema + migration + RLS پایه</td>
+<td>AGT-DB-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.2</td>
+<td>REST مکالمه/پیام حداقلی</td>
+<td>AGT-API-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.3</td>
+<td>WebSocket + Redis adapter</td>
+<td>AGT-RT-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.4</td>
+<td>ویجت vanilla</td>
+<td>AGT-WGT-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.5</td>
+<td>داشبورد inbox ساده</td>
+<td>AGT-FE-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P1.6</td>
+<td>تست یک happy path</td>
+<td>AGT-QA-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.1</td>
+<td>جداول KB در DB</td>
+<td>AGT-DB-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.2</td>
+<td>سرویس AI + RAG حداقلی</td>
+<td>AGT-AI-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.3</td>
+<td>اتصال API به AI</td>
+<td>AGT-API-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.4</td>
+<td>UI وضعیت AI / escalation</td>
+<td>AGT-FE-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.5</td>
+<td>مرور امنیتی PR</td>
+<td>AGT-SEC-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P2.6</td>
+<td>fixture / eval سبک</td>
+<td>AGT-QA-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P3.1</td>
+<td>Billing webhook حداقلی</td>
+<td>AGT-API-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P3.2</td>
+<td>Runbook + بکاپ spec</td>
+<td>AGT-INF-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P3.3</td>
+<td>پروفایل observability dev</td>
+<td>AGT-DEVX-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P3.4</td>
+<td>متن لندینگ قیمت</td>
+<td>AGT-GTM-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>P3.5</td>
+<td>چک‌لیست pre-prod</td>
+<td>AGT-SEC-01</td>
+<td>شروع نشده</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-4">چک‌لیست‌های دیگر کجا هستند؟</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نوع</th>
+<th>محل</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>خروجی دقیق هر بستهٔ AI</td>
+<td>بخش <strong>«خروجی مورد انتظار»</strong> زیر هر <code>P…</code> در <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a></td>
+</tr>
+<tr>
+<td>قبل از باز کردن PR</td>
+<td><a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a> — «چک‌لیست یک‌صفحه‌ای»</td>
+</tr>
+<tr>
+<td>امنیت MVP</td>
+<td><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a></td>
+</tr>
+<tr>
+<td>نصب سرور Ubuntu (اینترنت آزاد)</td>
+<td><a href="./SERVER-DEV-FIRST-INSTALL-FA.md"><code>SERVER-DEV-FIRST-INSTALL-FA.md</code></a></td>
+</tr>
+<tr>
+<td>قبل از اولین production</td>
+<td><a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a> بخش ۱۳</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><strong>پایان سند.</strong> با اتمام هر مرحله، این جدول را به‌روز نگه دارید.</p>
+
+    <nav class="doc-nav">
+      <a class="prev" href="15-DEVELOPMENT-GUIDE-FA.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۱۵ — راهنمای توسعه فارسی</div>
+      </a>
+      <a class="next" href="index.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">خانه</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

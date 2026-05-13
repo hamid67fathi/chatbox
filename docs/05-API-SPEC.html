@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۵ · API — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — API">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html" class="active"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">1. اصول کلی API</a></li>
+      <li><a href="#sec-2">2. احراز هویت</a></li>
+      <li><a href="#sec-3">3. خطاها (Error Format)</a></li>
+      <li><a href="#sec-4">4. Pagination</a></li>
+      <li><a href="#sec-5">5. Workspaces</a></li>
+      <li><a href="#sec-6">6. Conversations</a></li>
+      <li><a href="#sec-7">7. Contacts</a></li>
+      <li><a href="#sec-8">8. Knowledge Base</a></li>
+      <li><a href="#sec-9">9. Canned Responses</a></li>
+      <li><a href="#sec-10">10. Integrations — Telegram</a></li>
+      <li><a href="#sec-11">11. Webhooks (outbound)</a></li>
+      <li><a href="#sec-12">12. Analytics</a></li>
+      <li><a href="#sec-13">13. Billing</a></li>
+      <li><a href="#sec-14">14. WebSocket API</a></li>
+      <li><a href="#sec-15">15. Widget API (Public, Visitor-facing)</a></li>
+      <li><a href="#sec-16">16. Admin API (Internal)</a></li>
+      <li><a href="#sec-17">17. Rate Limits پیش‌فرض</a></li>
+      <li><a href="#sec-18">18. SDKها (آینده)</a></li>
+      <li><a href="#sec-19">19. OpenAPI</a></li>
+      <li><a href="#sec-20">20. Versioning Policy</a></li>
+      <li><a href="#sec-21">21. مرجع‌های مرتبط</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۵ — API</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">🔌</span> سند API Specification</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="05-API-SPEC.md">05-API-SPEC.md</a></span>
+
+    </div>
+
+<blockquote>
+<p>Chat-Box — REST + WebSocket + Webhook API<br />
+ورژن 1.0 · مه 2026</p>
+</blockquote>
+<hr />
+<h2 id="sec-1">1. اصول کلی API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>اصل</th>
+<th>توضیح</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>REST برای CRUD، WebSocket برای real-time</strong></td>
+<td>جدا نگه داشتن load</td>
+</tr>
+<tr>
+<td><strong>OpenAPI 3.1 خودکار از Zod schemas</strong></td>
+<td>تولید SDK یک کلیک</td>
+</tr>
+<tr>
+<td><strong>JSON-only</strong> (به‌جز file upload)</td>
+<td>سادگی + مشتری چندزبانه</td>
+</tr>
+<tr>
+<td><strong>Versioning در URL:</strong> <code>/v1/...</code></td>
+<td>breaking change → نسخه جدید</td>
+</tr>
+<tr>
+<td><strong>Cursor-based pagination</strong> برای collection</td>
+<td>scale برای میلیون‌ها row</td>
+</tr>
+<tr>
+<td><strong>HTTP status استاندارد</strong></td>
+<td>بدون wrapping <code>{success: true}</code></td>
+</tr>
+<tr>
+<td><strong>Snake_case در body، kebab-case در URL</strong></td>
+<td>همانند Stripe/Slack</td>
+</tr>
+<tr>
+<td><strong>HTTPS only، TLS 1.3</strong></td>
+<td>redirect خودکار</td>
+</tr>
+<tr>
+<td><strong>Rate limiting سراسری</strong></td>
+<td>per-token و per-IP</td>
+</tr>
+<tr>
+<td><strong>Idempotency-Key</strong> برای POST مالی</td>
+<td>جلوگیری از double-charge</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Base URLs</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Env</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production</td>
+<td><code>https://api.chat-box.ir/v1</code></td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>https://api.stg.chat-box.ir/v1</code></td>
+</tr>
+<tr>
+<td>WebSocket Production</td>
+<td><code>wss://ws.chat-box.ir</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-2">2. احراز هویت</h2>
+<h3>2.1 انواع توکن</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>نوع</th>
+<th>کاربرد</th>
+<th>عمر</th>
+<th>شکل</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Access Token</strong> (JWT)</td>
+<td>درخواست‌های Dashboard/Mobile</td>
+<td>۱۵ دقیقه</td>
+<td><code>eyJ...</code></td>
+</tr>
+<tr>
+<td><strong>Refresh Token</strong></td>
+<td>تمدید Access</td>
+<td>۷ روز با rotation</td>
+<td>opaque</td>
+</tr>
+<tr>
+<td><strong>API Key</strong></td>
+<td>server-to-server</td>
+<td>بدون expiry تا revoke</td>
+<td><code>cb_live_...</code></td>
+</tr>
+<tr>
+<td><strong>Widget Token</strong></td>
+<td>احراز visitor</td>
+<td>۲۴ ساعت</td>
+<td>JWT امضا شده</td>
+</tr>
+</tbody>
+</table></div>
+<h3>2.2 هدرها</h3>
+<pre><code class="language-http">Authorization: Bearer &lt;access_token&gt;
+X-Workspace-Id: &lt;workspace_uuid&gt;      # اجباری برای endpointهای tenant-scoped
+X-Request-Id: &lt;uuid&gt;                   # برای tracing
+Idempotency-Key: &lt;uuid&gt;                # برای POST مهم
+</code></pre>
+<h3>2.3 جریان لاگین</h3>
+<pre><code>POST /v1/auth/login        → access + refresh
+POST /v1/auth/refresh      → access جدید
+POST /v1/auth/logout       → invalidate session
+POST /v1/auth/otp/request  → ارسال OTP
+POST /v1/auth/otp/verify   → access + refresh
+</code></pre>
+<hr />
+<h2 id="sec-3">3. خطاها (Error Format)</h2>
+<p>تمام خطاها در یک شکل واحد:</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;validation_error&quot;,
+    &quot;message&quot;: &quot;نام workspace نمی‌تواند خالی باشد.&quot;,
+    &quot;details&quot;: {
+      &quot;field&quot;: &quot;name&quot;
+    },
+    &quot;request_id&quot;: &quot;req_01HX9...&quot;
+  }
+}
+</code></pre>
+<h3>Status codes استاندارد</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>معنی</th>
+<th>مثال</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>validation_error</code></td>
+<td>فرمت نامعتبر</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>unauthenticated</code></td>
+<td>توکن منقضی/نامعتبر</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>forbidden</code></td>
+<td>دسترسی ندارد</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>not_found</code></td>
+<td>resource موجود نیست</td>
+</tr>
+<tr>
+<td>409</td>
+<td><code>conflict</code></td>
+<td>duplicate یا state غلط</td>
+</tr>
+<tr>
+<td>422</td>
+<td><code>unprocessable</code></td>
+<td>منطق business</td>
+</tr>
+<tr>
+<td>429</td>
+<td><code>rate_limited</code></td>
+<td>بیش از حد مجاز</td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>internal_error</code></td>
+<td>خطای سرور</td>
+</tr>
+<tr>
+<td>503</td>
+<td><code>service_unavailable</code></td>
+<td>maintenance</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Rate Limit Headers</h3>
+<pre><code class="language-http">X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 87
+X-RateLimit-Reset: 1747000000
+Retry-After: 30                       # وقتی 429
+</code></pre>
+<hr />
+<h2 id="sec-4">4. Pagination</h2>
+<h3>Cursor-based (پیش‌فرض)</h3>
+<pre><code class="language-http">GET /v1/conversations?limit=50&amp;cursor=eyJpZCI6...
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: [ /* ... */ ],
+  &quot;page&quot;: {
+    &quot;limit&quot;: 50,
+    &quot;next_cursor&quot;: &quot;eyJpZCI6...&quot;,
+    &quot;has_more&quot;: true
+  }
+}
+</code></pre>
+<h3>Offset-based (فقط جاهای آماری)</h3>
+<pre><code class="language-http">GET /v1/analytics/conversations?page=2&amp;per_page=20
+</code></pre>
+<hr />
+<h2 id="sec-5">5. Workspaces</h2>
+<h3>5.1 ساخت workspace</h3>
+<pre><code class="language-http">POST /v1/workspaces
+Content-Type: application/json
+
+{
+  &quot;name&quot;: &quot;فروشگاه نازنین&quot;,
+  &quot;slug&quot;: &quot;nazaninshop&quot;,
+  &quot;locale&quot;: &quot;fa-IR&quot;,
+  &quot;timezone&quot;: &quot;Asia/Tehran&quot;
+}
+</code></pre>
+<p><strong>Response 201:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;ws_01HX...&quot;,
+  &quot;slug&quot;: &quot;nazaninshop&quot;,
+  &quot;name&quot;: &quot;فروشگاه نازنین&quot;,
+  &quot;plan&quot;: &quot;free&quot;,
+  &quot;trial_ends_at&quot;: null,
+  &quot;created_at&quot;: &quot;2026-05-11T08:00:00Z&quot;
+}
+</code></pre>
+<h3>5.2 لیست workspaces کاربر</h3>
+<pre><code class="language-http">GET /v1/workspaces
+</code></pre>
+<h3>5.3 جزئیات</h3>
+<pre><code class="language-http">GET /v1/workspaces/:id
+</code></pre>
+<h3>5.4 بروزرسانی</h3>
+<pre><code class="language-http">PATCH /v1/workspaces/:id
+</code></pre>
+<h3>5.5 دعوت عضو</h3>
+<pre><code class="language-http">POST /v1/workspaces/:id/members
+{
+  &quot;email&quot;: &quot;ali@example.ir&quot;,
+  &quot;role&quot;: &quot;agent&quot;
+}
+</code></pre>
+<h3>5.6 لیست اعضا</h3>
+<pre><code class="language-http">GET /v1/workspaces/:id/members
+</code></pre>
+<hr />
+<h2 id="sec-6">6. Conversations</h2>
+<h3>6.1 لیست (Inbox)</h3>
+<pre><code class="language-http">GET /v1/conversations?status=open&amp;assigned_to=me&amp;channel=widget&amp;limit=50
+</code></pre>
+<p><strong>Query params:</strong><br />
+- <code>status</code> — open, pending, resolved, closed, spam<br />
+- <code>assigned_to</code> — me | unassigned | <user_id><br />
+- <code>channel</code> — widget | telegram | email | api<br />
+- <code>tag</code> — repeat برای چند تگ<br />
+- <code>priority</code> — 0..3<br />
+- <code>q</code> — جستجوی FTS<br />
+- <code>cursor</code>, <code>limit</code></p>
+<h3>6.2 جزئیات (شامل پیام‌ها)</h3>
+<pre><code class="language-http">GET /v1/conversations/:id
+</code></pre>
+<h3>6.3 پیام‌های مکالمه (paginated)</h3>
+<pre><code class="language-http">GET /v1/conversations/:id/messages?cursor=...&amp;limit=50
+</code></pre>
+<h3>6.4 شروع مکالمه (server-side)</h3>
+<pre><code class="language-http">POST /v1/conversations
+{
+  &quot;contact_id&quot;: &quot;ct_01HX...&quot;,
+  &quot;channel&quot;: &quot;api&quot;,
+  &quot;first_message&quot;: {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;body&quot;: &quot;سلام، در مورد سفارش...&quot;
+  }
+}
+</code></pre>
+<h3>6.5 ارسال پیام</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/messages
+{
+  &quot;type&quot;: &quot;text&quot;,
+  &quot;body&quot;: &quot;بله، می‌توانم کمک کنم.&quot;,
+  &quot;reply_to_id&quot;: &quot;msg_...&quot;
+}
+</code></pre>
+<h3>6.6 Assign اپراتور</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/assign
+{ &quot;agent_id&quot;: &quot;usr_...&quot; }     # یا &quot;auto&quot;: true
+</code></pre>
+<h3>6.7 تغییر وضعیت</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/status
+{ &quot;status&quot;: &quot;resolved&quot; }
+</code></pre>
+<h3>6.8 افزودن tag/note</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/tags          { &quot;tags&quot;: [&quot;vip&quot;, &quot;refund&quot;] }
+POST /v1/conversations/:id/notes         { &quot;body&quot;: &quot;مشتری ناراضی است.&quot; }
+</code></pre>
+<h3>6.9 درخواست AI پاسخ (دستی)</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/ai/suggest
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;suggestions&quot;: [
+    { &quot;text&quot;: &quot;...&quot;, &quot;confidence&quot;: 0.82, &quot;model&quot;: &quot;gpt-4o-mini&quot; },
+    { &quot;text&quot;: &quot;...&quot;, &quot;confidence&quot;: 0.75 }
+  ]
+}
+</code></pre>
+<h3>6.10 خلاصه‌سازی</h3>
+<pre><code class="language-http">POST /v1/conversations/:id/ai/summarize
+</code></pre>
+<hr />
+<h2 id="sec-7">7. Contacts</h2>
+<pre><code class="language-http">GET    /v1/contacts?q=ali&amp;tag=vip&amp;limit=50
+GET    /v1/contacts/:id
+POST   /v1/contacts
+PATCH  /v1/contacts/:id
+DELETE /v1/contacts/:id                  # soft delete
+GET    /v1/contacts/:id/conversations
+</code></pre>
+<h3>Upsert با external_id</h3>
+<pre><code class="language-http">PUT /v1/contacts/by-external-id/:external_id
+{
+  &quot;full_name&quot;: &quot;علی رضایی&quot;,
+  &quot;email&quot;: &quot;ali@example.ir&quot;,
+  &quot;metadata&quot;: { &quot;plan&quot;: &quot;gold&quot; }
+}
+</code></pre>
+<hr />
+<h2 id="sec-8">8. Knowledge Base</h2>
+<h3>8.1 ساخت KB</h3>
+<pre><code class="language-http">POST /v1/knowledge-bases
+{ &quot;name&quot;: &quot;FAQ محصول&quot;, &quot;embedding_model&quot;: &quot;text-embedding-3-small&quot; }
+</code></pre>
+<h3>8.2 افزودن سند از URL</h3>
+<pre><code class="language-http">POST /v1/knowledge-bases/:kb_id/documents
+{
+  &quot;source_type&quot;: &quot;url&quot;,
+  &quot;source_url&quot;: &quot;https://nazaninshop.ir/faq&quot;,
+  &quot;crawl_depth&quot;: 2,
+  &quot;max_pages&quot;: 50
+}
+</code></pre>
+<p><strong>Response 202:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;doc_01HX...&quot;,
+  &quot;status&quot;: &quot;processing&quot;,
+  &quot;job_id&quot;: &quot;job_...&quot;
+}
+</code></pre>
+<h3>8.3 آپلود فایل</h3>
+<pre><code class="language-http">POST /v1/knowledge-bases/:kb_id/documents
+Content-Type: multipart/form-data
+
+file=@FAQ.pdf
+metadata={&quot;category&quot;:&quot;refund&quot;}
+</code></pre>
+<h3>8.4 وضعیت ingest</h3>
+<pre><code class="language-http">GET /v1/knowledge-bases/:kb_id/documents/:doc_id
+</code></pre>
+<h3>8.5 جستجوی KB (manual)</h3>
+<pre><code class="language-http">POST /v1/knowledge-bases/:kb_id/search
+{ &quot;query&quot;: &quot;چطور سفارشم رو لغو کنم؟&quot;, &quot;top_k&quot;: 5 }
+</code></pre>
+<hr />
+<h2 id="sec-9">9. Canned Responses</h2>
+<pre><code class="language-http">GET    /v1/canned-responses
+POST   /v1/canned-responses               { shortcut, title, body, variables }
+PATCH  /v1/canned-responses/:id
+DELETE /v1/canned-responses/:id
+</code></pre>
+<hr />
+<h2 id="sec-10">10. Integrations — Telegram</h2>
+<h3>10.1 اتصال بات</h3>
+<pre><code class="language-http">POST /v1/integrations/telegram
+{ &quot;bot_token&quot;: &quot;1234:ABC...&quot; }
+</code></pre>
+<p><strong>Response:</strong> اطلاعات بات + webhook URL تنظیم شده.</p>
+<h3>10.2 لیست integrations</h3>
+<pre><code class="language-http">GET /v1/integrations
+</code></pre>
+<h3>10.3 حذف</h3>
+<pre><code class="language-http">DELETE /v1/integrations/:id
+</code></pre>
+<hr />
+<h2 id="sec-11">11. Webhooks (outbound)</h2>
+<pre><code class="language-http">GET    /v1/webhooks
+POST   /v1/webhooks                       { url, events[], secret? }
+PATCH  /v1/webhooks/:id
+DELETE /v1/webhooks/:id
+POST   /v1/webhooks/:id/test              # test delivery
+</code></pre>
+<h3>Event types</h3>
+<pre><code>conversation.created
+conversation.assigned
+conversation.status_changed
+conversation.closed
+message.created
+message.ai_replied
+contact.created
+contact.updated
+ai.escalated
+</code></pre>
+<h3>Payload نمونه</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;evt_01HX...&quot;,
+  &quot;type&quot;: &quot;message.created&quot;,
+  &quot;workspace_id&quot;: &quot;ws_01HX...&quot;,
+  &quot;created_at&quot;: &quot;2026-05-11T08:00:00Z&quot;,
+  &quot;data&quot;: {
+    &quot;message&quot;: { /* ... */ },
+    &quot;conversation&quot;: { /* ... */ }
+  }
+}
+</code></pre>
+<h3>Signing</h3>
+<p>هدر <code>X-Chatbox-Signature: t=&lt;unix&gt;,v1=&lt;hmac_sha256&gt;</code> — verify با secret.</p>
+<hr />
+<h2 id="sec-12">12. Analytics</h2>
+<pre><code class="language-http">GET /v1/analytics/overview?from=2026-05-01&amp;to=2026-05-11
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;conversations&quot;: { &quot;total&quot;: 1240, &quot;new&quot;: 320, &quot;resolved&quot;: 280 },
+  &quot;messages&quot;: { &quot;total&quot;: 14820, &quot;by_sender&quot;: { &quot;agent&quot;: 5600, &quot;ai&quot;: 7400, &quot;contact&quot;: 1820 } },
+  &quot;ai&quot;: { &quot;resolution_rate&quot;: 0.62, &quot;cost_usd&quot;: 12.40, &quot;tokens&quot;: 1450000 },
+  &quot;response_time&quot;: { &quot;first_p50_sec&quot;: 18, &quot;first_p95_sec&quot;: 120 },
+  &quot;csat&quot;: { &quot;avg&quot;: 4.2, &quot;responses&quot;: 87 }
+}
+</code></pre>
+<pre><code class="language-http">GET /v1/analytics/conversations?group_by=day
+GET /v1/analytics/agents
+GET /v1/analytics/ai
+</code></pre>
+<hr />
+<h2 id="sec-13">13. Billing</h2>
+<pre><code class="language-http">GET  /v1/billing/subscription
+POST /v1/billing/subscription/upgrade     { &quot;plan&quot;: &quot;pro&quot; }
+GET  /v1/billing/invoices
+GET  /v1/billing/invoices/:id/pdf         # redirect 302
+POST /v1/billing/payment-init             { invoice_id }
+POST /v1/billing/payment-callback         # internal (Zarinpal webhook)
+GET  /v1/billing/usage                    # AI tokens, storage, ...
+</code></pre>
+<hr />
+<h2 id="sec-14">14. WebSocket API</h2>
+<h3>14.1 اتصال</h3>
+<pre><code>wss://ws.chat-box.ir/v1
+?token=&lt;access_token&gt;
+&amp;workspace_id=&lt;ws_id&gt;
+</code></pre>
+<p>پروتکل: <strong>Socket.IO 4</strong> (با fallback HTTP long-polling).</p>
+<h3>14.2 Rooms</h3>
+<ul>
+<li><code>workspace:&lt;ws_id&gt;</code> — اپراتورها برای دریافت inbox-wide events</li>
+<li><code>conversation:&lt;conv_id&gt;</code> — همه‌ی دیدگاه‌بان‌ها (visitor + agent + observer)</li>
+<li><code>user:&lt;user_id&gt;</code> — DM به یک اپراتور خاص</li>
+</ul>
+<h3>14.3 Events — Client → Server</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+<th>منظور</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message:send</code></td>
+<td><code>{ conv_id, type, body, attachments? }</code></td>
+<td>ارسال پیام</td>
+</tr>
+<tr>
+<td><code>message:read</code></td>
+<td><code>{ conv_id, message_id }</code></td>
+<td>علامت خوانده شد</td>
+</tr>
+<tr>
+<td><code>typing:start</code></td>
+<td><code>{ conv_id }</code></td>
+<td>شروع تایپ</td>
+</tr>
+<tr>
+<td><code>typing:stop</code></td>
+<td><code>{ conv_id }</code></td>
+<td>توقف تایپ</td>
+</tr>
+<tr>
+<td><code>presence:online</code></td>
+<td><code>{}</code></td>
+<td>اپراتور آنلاین شد</td>
+</tr>
+<tr>
+<td><code>presence:away</code></td>
+<td><code>{}</code></td>
+<td>اپراتور رفت</td>
+</tr>
+<tr>
+<td><code>conv:join</code></td>
+<td><code>{ conv_id }</code></td>
+<td>join room</td>
+</tr>
+<tr>
+<td><code>conv:leave</code></td>
+<td><code>{ conv_id }</code></td>
+<td>leave room</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.4 Events — Server → Client</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+<th>منظور</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message:new</code></td>
+<td><code>{ message, conversation }</code></td>
+<td>پیام جدید</td>
+</tr>
+<tr>
+<td><code>message:updated</code></td>
+<td><code>{ message }</code></td>
+<td>edit/delete</td>
+</tr>
+<tr>
+<td><code>message:read</code></td>
+<td><code>{ conv_id, message_id, by }</code></td>
+<td>read receipt</td>
+</tr>
+<tr>
+<td><code>typing</code></td>
+<td><code>{ conv_id, sender, isTyping }</code></td>
+<td>typing indicator</td>
+</tr>
+<tr>
+<td><code>conv:assigned</code></td>
+<td><code>{ conv_id, agent_id }</code></td>
+<td>تخصیص</td>
+</tr>
+<tr>
+<td><code>conv:status_changed</code></td>
+<td><code>{ conv_id, status }</code></td>
+<td>تغییر وضعیت</td>
+</tr>
+<tr>
+<td><code>conv:new</code></td>
+<td><code>{ conversation }</code></td>
+<td>inbox: مکالمه جدید</td>
+</tr>
+<tr>
+<td><code>ai:suggestion</code></td>
+<td><code>{ conv_id, suggestion }</code></td>
+<td>Copilot</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>{ code, message }</code></td>
+<td>خطا</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.5 ACK pattern</h3>
+<pre><code class="language-js">socket.emit('message:send', { conv_id, body }, (ack) =&gt; {
+  // ack = { ok: true, message_id: '...' } یا { ok: false, error: {...} }
+});
+</code></pre>
+<h3>14.6 Reconnect</h3>
+<ul>
+<li>exponential backoff (1s, 2s, 4s, ...)</li>
+<li>Last-Event-Id برای catch-up پیام‌های از دست رفته از REST: <code>GET /v1/conversations/:id/messages?since=&lt;msg_id&gt;</code></li>
+</ul>
+<hr />
+<h2 id="sec-15">15. Widget API (Public, Visitor-facing)</h2>
+<h3>15.1 Init</h3>
+<pre><code class="language-http">GET https://widget.chat-box.ir/v1/init?workspace_slug=nazaninshop
+</code></pre>
+<p>Response شامل: settings (color, position, greeting, prechat fields).</p>
+<h3>15.2 ساخت/Resume session بازدیدکننده</h3>
+<pre><code class="language-http">POST /widget/v1/sessions
+{
+  &quot;workspace_slug&quot;: &quot;nazaninshop&quot;,
+  &quot;visitor_id&quot;: &quot;&lt;localStorage uuid یا null&gt;&quot;,
+  &quot;page_url&quot;: &quot;https://nazaninshop.ir/cart&quot;,
+  &quot;metadata&quot;: { &quot;utm_source&quot;: &quot;instagram&quot; }
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;visitor_token&quot;: &quot;&lt;JWT&gt;&quot;,
+  &quot;conversation_id&quot;: &quot;...&quot;,
+  &quot;ws_endpoint&quot;: &quot;wss://ws.chat-box.ir&quot;
+}
+</code></pre>
+<h3>15.3 ارسال پیام (HTTP fallback)</h3>
+<pre><code class="language-http">POST /widget/v1/conversations/:id/messages
+Authorization: Bearer &lt;visitor_token&gt;
+</code></pre>
+<h3>15.4 Upload فایل</h3>
+<pre><code class="language-http">POST /widget/v1/uploads
+Content-Type: multipart/form-data
+</code></pre>
+<hr />
+<h2 id="sec-16">16. Admin API (Internal)</h2>
+<blockquote>
+<p>دسترسی فقط با role <code>super_admin</code>، endpoint زیر <code>/admin/v1/...</code>.</p>
+</blockquote>
+<pre><code class="language-http">GET    /admin/v1/workspaces
+POST   /admin/v1/workspaces/:id/suspend
+POST   /admin/v1/workspaces/:id/refund
+GET    /admin/v1/metrics                 # platform-wide
+POST   /admin/v1/feature-flags
+</code></pre>
+<hr />
+<h2 id="sec-17">17. Rate Limits پیش‌فرض</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>دسته</th>
+<th>محدودیت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anonymous (Widget init)</td>
+<td>۶۰ req/min/IP</td>
+</tr>
+<tr>
+<td>Authenticated (per token)</td>
+<td>۶۰۰ req/min</td>
+</tr>
+<tr>
+<td><code>POST /messages</code> (per workspace)</td>
+<td>۵۰۰۰ msg/min</td>
+</tr>
+<tr>
+<td>WebSocket new connections</td>
+<td>۲۰۰/min/IP</td>
+</tr>
+<tr>
+<td>AI suggest endpoint</td>
+<td>۶۰ req/min/workspace</td>
+</tr>
+<tr>
+<td>File upload</td>
+<td>۳۰ req/min/workspace</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-18">18. SDKها (آینده)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>زبان</th>
+<th>پکیج</th>
+<th>اولویت</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TypeScript/Node</td>
+<td><code>@chatbox/sdk</code></td>
+<td>فاز ۱</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>chatbox-sdk</code></td>
+<td>فاز ۲</td>
+</tr>
+<tr>
+<td>PHP (WooCommerce)</td>
+<td><code>chatbox-php</code></td>
+<td>فاز ۲</td>
+</tr>
+<tr>
+<td>WordPress Plugin</td>
+<td><code>chatbox-wp</code></td>
+<td>فاز ۲</td>
+</tr>
+</tbody>
+</table></div>
+<p>تولید خودکار از OpenAPI با <code>openapi-generator</code>.</p>
+<hr />
+<h2 id="sec-19">19. OpenAPI</h2>
+<ul>
+<li><code>https://api.chat-box.ir/v1/openapi.json</code> — اسپک کامل</li>
+<li><code>https://api.chat-box.ir/v1/docs</code> — Scalar/Redoc UI</li>
+</ul>
+<hr />
+<h2 id="sec-20">20. Versioning Policy</h2>
+<ul>
+<li>نسخه فقط در URL تغییر می‌کند (<code>/v1</code>, <code>/v2</code>)</li>
+<li>breaking change → نسخه جدید، حداقل ۱۸۰ روز overlap</li>
+<li>additive change (فیلد جدید nullable) → نیاز به نسخه‌بندی ندارد</li>
+<li>deprecation header: <code>Deprecation: true</code> + <code>Sunset: &lt;date&gt;</code></li>
+</ul>
+<hr />
+<h2 id="sec-21">21. مرجع‌های مرتبط</h2>
+<ul>
+<li><a href="02-ARCHITECTURE.html"><code>02-ARCHITECTURE.md</code></a> — کجا این API ها deploy می‌شوند</li>
+<li><a href="04-DATABASE-SCHEMA.html"><code>04-DATABASE-SCHEMA.md</code></a> — model داده‌ای پشت endpoint ها</li>
+<li><a href="06-AI-ARCHITECTURE.html"><code>06-AI-ARCHITECTURE.md</code></a> — جزئیات endpoint های AI</li>
+</ul>
+
+    <nav class="doc-nav">
+      <a class="prev" href="04-DATABASE-SCHEMA.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۴ — Schema دیتابیس</div>
+      </a>
+      <a class="next" href="06-AI-ARCHITECTURE.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۶ — معماری AI</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

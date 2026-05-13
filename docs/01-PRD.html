@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۰۱ · PRD — Chat-Box</title>
+<meta name="description" content="سند نیازمندی‌های محصول Chat-Box — Persona، User Stories، MVP scope">
+<link rel="stylesheet" href="_shared.css">
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+    </nav>
+
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#vision">۱. چشم‌انداز محصول</a></li>
+      <li><a href="#personas">۲. مخاطبان هدف</a></li>
+      <li><a href="#principles">۳. اصول طراحی</a></li>
+      <li><a href="#mvp">۴. محدوده MVP</a></li>
+      <li><a href="#stories">۵. User Stories</a></li>
+      <li><a href="#nfr">۶. الزامات NFR</a></li>
+      <li><a href="#risks">۷. ریسک‌ها</a></li>
+      <li><a href="#metrics">۸. معیارهای موفقیت</a></li>
+      <li><a href="#deps">۹. وابستگی‌های خارجی</a></li>
+      <li><a href="#signoff">۱۰. تأییدیه</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۰۱ — PRD</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+    <h1><span class="emoji">📋</span> سند نیازمندی‌های محصول (PRD)</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">Audience: Product · Eng · AI Agent</span>
+    </div>
+
+    <blockquote>
+      <p><strong>Chat-Box</strong> — پلتفرم AI-Native لایو چت برای بازار ایران</p>
+    </blockquote>
+
+    <h2 id="vision">۱. چشم‌انداز محصول (Vision)</h2>
+
+    <p>Chat-Box یک پلتفرم SaaS لایو چت است که از روز اول حول <strong>AI Agent بومی</strong> ساخته شده. برخلاف رقبا که AI را به‌عنوان add-on می‌فروشند، در Chat-Box هر مکالمه ابتدا توسط AI پاسخ داده می‌شود و فقط مکالمات پیچیده به اپراتور انسانی escalate می‌شوند.</p>
+
+    <blockquote>
+      <p><strong>One-liner:</strong> «هر کسب‌وکار ایرانی یک تیم پشتیبانی هوشمند ۲۴/۷ با هزینه ۱/۱۰ تیم انسانی.»</p>
+    </blockquote>
+
+    <h3>اهداف کسب‌وکار</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>افق</th><th>هدف</th></tr></thead>
+        <tbody>
+          <tr><td>ماه ۳</td><td>لانچ MVP عمومی، ۵۰ workspace فعال، ۱۰ مشتری پولی</td></tr>
+          <tr><td>ماه ۶</td><td>۵۰۰ workspace فعال، ۸۰ پولی، MRR ۸۰M تومان</td></tr>
+          <tr><td>ماه ۱۲</td><td>۳,۰۰۰ workspace، ۵۰۰ پولی، MRR ۲۵۰M تومان</td></tr>
+          <tr><td>ماه ۲۴</td><td>توسعه به افغانستان/عراق، MRR ۸۰۰M تومان</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="personas">۲. مخاطبان هدف (Personas)</h2>
+
+    <h3>🟢 Persona 1: «نازنین» — صاحب فروشگاه آنلاین <em>(ICP اصلی)</em></h3>
+    <ul>
+      <li>۳۲ ساله، صاحب فروشگاه ووکامرس با ۲۰ سفارش روزانه</li>
+      <li>خودش پشتیبانی می‌کند، شب‌ها از واتساپ/تلگرام جواب می‌دهد</li>
+      <li><strong>درد:</strong> نمی‌رسد به سؤالات قبل از خرید پاسخ دهد → از دست رفتن فروش</li>
+      <li><strong>انتظار:</strong> AI شبیه خودش جواب بدهد، فقط در موارد خاص بیدارش کند</li>
+      <li><strong>بودجه:</strong> ۲۰۰–۸۰۰ هزار تومان در ماه</li>
+    </ul>
+
+    <h3>🟡 Persona 2: «امیر» — مدیر پشتیبانی SaaS</h3>
+    <ul>
+      <li>۲۸ ساله، تیم ۵ نفره پشتیبانی یک SaaS B2B دارد</li>
+      <li>روزانه ۳۰۰ تیکت دریافت می‌کند، ۶۰٪ سؤالات تکراری</li>
+      <li><strong>درد:</strong> ۶۰٪ زمان تیم صرف سؤالات FAQ می‌شود</li>
+      <li><strong>انتظار:</strong> AI سؤالات سطح ۱ را پاسخ دهد، تیکت‌های سخت به انسان</li>
+      <li><strong>بودجه:</strong> ۲–۵ میلیون تومان در ماه</li>
+    </ul>
+
+    <h3>🔵 Persona 3: «دکتر رضایی» — کلینیک پزشکی</h3>
+    <ul>
+      <li>مطب با ۴ پزشک، ۲ منشی</li>
+      <li><strong>درد:</strong> ۸۰٪ تماس‌ها برای نوبت‌گیری و سؤال ساعت ویزیت است</li>
+      <li><strong>انتظار:</strong> بات نوبت بدهد، فقط موارد اورژانس را به منشی پاس بدهد</li>
+      <li><strong>بودجه:</strong> ۱–۳ میلیون تومان در ماه</li>
+    </ul>
+
+    <h3>🔴 Persona 4: «اپراتور پشتیبانی» — کاربر داخلی محصول</h3>
+    <ul>
+      <li>۲۴ ساله، کارمند پشتیبانی، روزی ۸ ساعت با محصول کار می‌کند</li>
+      <li><strong>درد:</strong> پنل‌های موجود کند هستند، typing تأخیر دارد، جستجوی تاریخچه ضعیف است</li>
+      <li><strong>انتظار:</strong> UI سریع، AI Copilot که پیشنهاد پاسخ بدهد، shortcut keyboard</li>
+    </ul>
+
+    <h2 id="principles">۳. اصول طراحی محصول</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:50px">#</th><th>اصل</th><th>چرا</th></tr></thead>
+        <tbody>
+          <tr><td>۱</td><td><strong>AI-First, Human-Fallback</strong></td><td>هر مکالمه ابتدا AI، فقط در صورت نیاز انسان</td></tr>
+          <tr><td>۲</td><td><strong>RTL بومی نه ترجمه</strong></td><td>تمام UI/UX از پایه برای فارسی طراحی شود</td></tr>
+          <tr><td>۳</td><td><strong>Latency &lt; ۲۰۰ms</strong></td><td>پیام باید زیر ۲۰۰ میلی‌ثانیه delivery شود</td></tr>
+          <tr><td>۴</td><td><strong>Mobile-First Dashboard</strong></td><td>۷۰٪ اپراتورهای ایرانی موبایل استفاده می‌کنند</td></tr>
+          <tr><td>۵</td><td><strong>Iran-Sovereign Data</strong></td><td>داده در سرور ایران، Backup خارج</td></tr>
+          <tr><td>۶</td><td><strong>Self-Serve First</strong></td><td>تا پلن Enterprise، هیچ‌کس نباید با ما تماس بگیرد</td></tr>
+          <tr><td>۷</td><td><strong>API + Webhook از روز اول</strong></td><td>حتی در MVP، یکپارچه‌سازی ممکن باشد</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="mvp">۴. محدوده MVP <small>(Day 1 → Day 90)</small></h2>
+
+    <h3>✅ شامل MVP</h3>
+
+    <h4>Core Chat</h4>
+    <ul>
+      <li>چت ریل‌تایم WebSocket با delivery گارانتی</li>
+      <li>Typing indicator + Read receipts</li>
+      <li>فایل (تصویر، PDF، صوت تا ۱۰MB)</li>
+      <li>تاریخچه نامحدود قابل جستجو</li>
+      <li>Emoji + reaction</li>
+      <li>پاسخ به پیام (reply/quote)</li>
+    </ul>
+
+    <h4>Widget</h4>
+    <ul>
+      <li>ویجت JS Vanilla &lt; ۳۰KB (gzipped)</li>
+      <li>RTL + LTR auto-detect</li>
+      <li>تنظیم رنگ، آواتار، متن خوشامد، position</li>
+      <li>Pre-chat form (نام، ایمیل، تلفن)</li>
+      <li>Trigger بر اساس صفحه / زمان / behavior</li>
+      <li>Mobile-responsive</li>
+    </ul>
+
+    <h4>Dashboard اپراتور (Web)</h4>
+    <ul>
+      <li>Inbox مشترک با sorting و filter</li>
+      <li>Assignment manual + auto (round-robin)</li>
+      <li>جستجوی full-text در مکالمات</li>
+      <li>Tag, Note, Priority</li>
+      <li>Canned responses (با variable مثل <code>{name}</code>)</li>
+      <li>Status اپراتور: Online / Away / Offline</li>
+      <li>Keyboard shortcuts</li>
+    </ul>
+
+    <h4>🤖 AI Layer <em>(تمایز اصلی)</em></h4>
+    <ul>
+      <li><strong>AI Auto-Reply:</strong> بات اولیه که از Knowledge Base پاسخ می‌دهد</li>
+      <li><strong>Knowledge Base Builder:</strong> آپلود سند/URL → ساخت RAG</li>
+      <li><strong>AI Copilot:</strong> پیشنهاد پاسخ به اپراتور حین مکالمه</li>
+      <li><strong>Auto-Summarize:</strong> خلاصه مکالمه طولانی برای handoff</li>
+      <li><strong>Sentiment Detection:</strong> علامت‌گذاری مکالمات منفی</li>
+      <li><strong>Smart Routing:</strong> هدایت مکالمه به دپارتمان مناسب بر اساس intent</li>
+    </ul>
+
+    <h4>Multi-tenant + Auth</h4>
+    <ul>
+      <li>ثبت‌نام با ایمیل/شماره موبایل (OTP)</li>
+      <li>Workspace (هر کسب‌وکار)</li>
+      <li>دعوت اعضای تیم</li>
+      <li>نقش: Admin, Agent, Viewer</li>
+      <li>2FA</li>
+    </ul>
+
+    <h4>Billing</h4>
+    <ul>
+      <li>درگاه پرداخت زرین‌پال</li>
+      <li>اشتراک ماهانه و سالانه</li>
+      <li>پلن رایگان + ۲ پلن پولی</li>
+      <li>فاکتور رسمی PDF</li>
+      <li>دوره trial ۱۴ روزه برای پلن پولی</li>
+    </ul>
+
+    <h4>Telegram Integration <em>(تنها کانال در MVP)</em></h4>
+    <ul>
+      <li>اتصال بات تلگرام به Workspace</li>
+      <li>دریافت پیام تلگرام در Inbox</li>
+      <li>پاسخ از Dashboard</li>
+      <li>AI پاسخگو در تلگرام هم باشد</li>
+    </ul>
+
+    <h4>Mobile App اپراتور (React Native)</h4>
+    <ul>
+      <li>Push notification</li>
+      <li>دیدن و پاسخ به مکالمات</li>
+      <li>AI Copilot روی موبایل</li>
+    </ul>
+
+    <h4>Analytics (Basic)</h4>
+    <ul>
+      <li>تعداد مکالمات، میانگین زمان پاسخ، CSAT</li>
+      <li>گزارش روزانه/هفتگی ایمیل</li>
+      <li><strong>AI Resolution Rate</strong> (چه درصد مکالمات بدون انسان حل شد)</li>
+    </ul>
+
+    <h4>Admin Panel ما (Internal)</h4>
+    <ul>
+      <li>لیست workspace ها، metrics</li>
+      <li>قابلیت suspend/refund</li>
+      <li>لاگ سیستم</li>
+    </ul>
+
+    <h3>❌ خارج از MVP (Post-launch)</h3>
+    <div class="callout warn">
+      <div class="callout-title">⏭️ آیتم‌های پس از MVP</div>
+      <div>WhatsApp Business API · Instagram DM · Email channel · Video/Audio call (WebRTC) · Co-browsing · Knowledge Base عمومی · Workflow Builder بصری · Marketplace integrations · White-label · SSO / SAML · On-Premise</div>
+    </div>
+
+    <h2 id="stories">۵. User Stories کلیدی (نمونه)</h2>
+
+    <h3>US-001 — بازدیدکننده چت می‌کند</h3>
+<pre><code>As a بازدیدکننده سایت,
+I want تا روی آیکن چت کلیک کنم و سؤالم را بپرسم,
+So that بتوانم بدون تماس تلفنی پاسخ بگیرم.
+
+Acceptance Criteria:
+- ویجت زیر ۲۰۰ms لود شود
+- نام و ایمیل قبل از چت پرسیده شود (در صورت تنظیم)
+- پیام اول من ظرف ۵ ثانیه پاسخ AI داشته باشد
+- در صورت off-topic، AI به اپراتور انسانی escalate کند
+- تاریخچه چت ذخیره شود و در بازگشت ادامه‌پذیر باشد</code></pre>
+
+    <h3>US-002 — اپراتور با AI Copilot کار می‌کند</h3>
+<pre><code>As an اپراتور,
+I want هنگام تایپ پاسخ پیشنهاد AI داشته باشم,
+So that سریع‌تر و یکنواخت‌تر جواب بدهم.
+
+Acceptance Criteria:
+- با Tab پیشنهاد را قبول کنم
+- پیشنهاد بر اساس Knowledge Base و تاریخچه‌ی همین مشتری باشد
+- زمان پیشنهاد زیر ۸۰۰ms باشد
+- پیشنهاد به فارسی صحیح و RTL ارائه شود</code></pre>
+
+    <h3>US-003 — Admin Knowledge Base را تنظیم می‌کند</h3>
+<pre><code>As an Admin,
+I want URL سایتم یا فایل PDF بدهم تا AI ازشان یاد بگیرد,
+So that AI بدون آموزش دستی، اطلاعات محصول من را بداند.
+
+Acceptance Criteria:
+- URL crawl شود، تا ۵۰۰ صفحه
+- PDF/Word تا ۲۰MB پشتیبانی شود
+- ساخت RAG ظرف ۵ دقیقه برای ۱۰۰ سند
+- Preview بدهد چه چیزی یاد گرفته
+- قابلیت override پاسخ AI با Q&amp;A دستی</code></pre>
+
+    <h3>US-004 — Owner پلن را upgrade می‌کند</h3>
+<pre><code>As یک Workspace Owner,
+I want با کارت ایرانی پلن خود را upgrade کنم,
+So that بدون VPN و کارت ارزی استفاده کنم.
+
+Acceptance Criteria:
+- درگاه زرین‌پال داخل ایران
+- فاکتور رسمی PDF با شماره مالیاتی
+- در صورت عدم پرداخت ماه بعد، ۷ روز grace period
+- email/sms یادآور قبل از انقضا</code></pre>
+
+    <h2 id="nfr">۶. الزامات غیرکارکردی (NFR)</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>دسته</th><th>الزام</th><th>مقدار هدف</th></tr></thead>
+        <tbody>
+          <tr><td>Performance</td><td>Widget load time</td><td><code>&lt; 200ms</code> (p95)</td></tr>
+          <tr><td>Performance</td><td>Message latency (E2E)</td><td><code>&lt; 200ms</code> (p95)</td></tr>
+          <tr><td>Performance</td><td>AI Response time</td><td><code>&lt; 2s</code> (p95)</td></tr>
+          <tr><td>Performance</td><td>Dashboard initial load</td><td><code>&lt; 1.5s</code></td></tr>
+          <tr><td>Scale</td><td>Concurrent WebSocket</td><td>۵۰,۰۰۰+</td></tr>
+          <tr><td>Scale</td><td>Workspaces per cluster</td><td>۱۰,۰۰۰+</td></tr>
+          <tr><td>Reliability</td><td>Uptime SLA</td><td>۹۹.۹٪</td></tr>
+          <tr><td>Reliability</td><td>Data durability</td><td>۹۹.۹۹۹۹۹۹۹۹٪ (۸ nines)</td></tr>
+          <tr><td>Security</td><td>Encryption at rest</td><td>AES-256</td></tr>
+          <tr><td>Security</td><td>TLS</td><td>۱.۳</td></tr>
+          <tr><td>Security</td><td>Password</td><td>bcrypt cost ≥ ۱۲</td></tr>
+          <tr><td>Compliance</td><td>Data residency</td><td>Iran (primary), EU (DR)</td></tr>
+          <tr><td>i18n</td><td>Languages</td><td>FA (default), EN, AR</td></tr>
+          <tr><td>Accessibility</td><td>WCAG</td><td>2.1 AA</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="risks">۷. ریسک‌ها و محدودیت‌ها</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ریسک</th><th>شدت</th><th>احتمال</th><th>استراتژی کاهش</th></tr></thead>
+        <tbody>
+          <tr><td>API هوش مصنوعی دسترسی محدود از ایران</td><td>بالا</td><td>بالا</td><td>استفاده از proxy، fallback به مدل local، Caching سنگین</td></tr>
+          <tr><td>فیلترینگ WebSocket یا پروتکل</td><td>بالا</td><td>متوسط</td><td>استفاده از پورت ۴۴۳ + HTTPS، Polling fallback</td></tr>
+          <tr><td>نوسان ارز روی هزینه AI</td><td>بالا</td><td>بالا</td><td>Caching تهاجمی، مدل سبک‌تر برای queries ساده، AI Credits</td></tr>
+          <tr><td>رقبا (رایچت) کپی سریع</td><td>متوسط</td><td>بالا</td><td>سرعت اجرا، تمرکز روی AI as moat</td></tr>
+          <tr><td>جذب توسعه‌دهنده باتجربه</td><td>متوسط</td><td>متوسط</td><td>استفاده از AI Agent برای کاهش نیاز به نیروی انسانی</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="metrics">۸. معیارهای موفقیت (Success Metrics)</h2>
+
+    <h3>North Star Metric</h3>
+
+    <div class="callout success">
+      <div class="callout-title">⭐ Weekly Active Workspaces (WAW)</div>
+      <div>تعداد workspaceهایی که حداقل ۵ مکالمه در هفته داشتند.</div>
+    </div>
+
+    <h3>KPI های اصلی</h3>
+    <ul>
+      <li><strong>AI Resolution Rate</strong> ≥ ۶۰٪ در ماه ۶ (هدف ۸۰٪ در ماه ۱۲)</li>
+      <li><strong>Free → Paid Conversion</strong> ≥ ۸٪ در ماه ۶</li>
+      <li><strong>Monthly Churn</strong> &lt; ۵٪ در ماه ۶</li>
+      <li><strong>NPS</strong> ≥ ۴۰ در ماه ۶</li>
+    </ul>
+
+    <h2 id="deps">۹. وابستگی‌های خارجی</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>وابستگی</th><th>اهمیت</th><th>جایگزین</th></tr></thead>
+        <tbody>
+          <tr><td>OpenAI API (GPT-4o-mini)</td><td>بحرانی</td><td>Claude Haiku، مدل local (Aya, PersianMind)</td></tr>
+          <tr><td>Cohere Rerank / Embed</td><td>مهم</td><td>OpenAI embeddings، مدل bge-m3 local</td></tr>
+          <tr><td>زرین‌پال</td><td>بحرانی</td><td>آیدی‌پی، پی.آی‌آر</td></tr>
+          <tr><td>سرور ابری ایران (آروان)</td><td>بحرانی</td><td>پارس‌پک، ابرآسیاتک</td></tr>
+          <tr><td>تلگرام Bot API</td><td>بحرانی</td><td>بات‌های ایتا/روبیکا (آینده)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="signoff">۱۰. تأییدیه و امضا</h2>
+
+    <p>این PRD مرجع رسمی محصول است. هر تغییر باید با PR در همین فایل ثبت شود.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>نقش</th><th>نام</th><th>تاریخ</th></tr></thead>
+        <tbody>
+          <tr><td>CTO / Product</td><td>—</td><td>—</td></tr>
+          <tr><td>AI Agent Lead</td><td>Claude</td><td>1405-02-21</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="doc-nav">
+      <a class="prev" href="00-GOVERNANCE-ROLES.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۰۰ — حکمرانی و نقش‌ها</div>
+      </a>
+      <a class="next" href="02-ARCHITECTURE.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۰۲ — معماری سیستم</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>

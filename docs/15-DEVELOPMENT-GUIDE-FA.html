@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>۱۵ · راهنمای توسعه فارسی — Chat-Box</title>
+<meta name="description" content="مستندات Chat-Box — راهنمای توسعه فارسی">
+<link rel="stylesheet" href="_shared.css">
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" defer></script>
+<script src="_shared.js" defer></script>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+    <a class="brand" href="index.html">
+      <span class="brand-logo">CB</span>
+      <span>Chat-Box Docs</span>
+    </a>
+
+    <h2>شروع</h2>
+    <nav>
+      <a href="index.html"><span class="num">🏠</span> خانه</a>
+    </nav>
+
+    <h2>حکمرانی</h2>
+    <nav>
+      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+    </nav>
+
+    <h2>مستندات اصلی</h2>
+    <nav>
+      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+      <a href="15-DEVELOPMENT-GUIDE-FA.html" class="active"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+      <a href="16-DEVELOPMENT-STATUS.html"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+    </nav>
+    <h2>فهرست این صفحه</h2>
+    <ul class="toc-list">
+      <li><a href="#sec-1">نقشهٔ کلی مسیر (مرور ۳۰ ثانیه‌ای)</a></li>
+      <li><a href="#sec-2">مرحله ۰ — قبل از دست زدن به کد</a></li>
+      <li><a href="#sec-3">مرحله ۱ — سیستم‌عامل (میزکار توسعه یا سرور dev)</a></li>
+      <li><a href="#sec-4">مرحله ۲ — امنیت پایه روی Ubuntu Server (در صورت استفاده)</a></li>
+      <li><a href="#sec-5">مرحله ۳ — Git و SSH</a></li>
+      <li><a href="#sec-6">مرحله ۴ — Node.js 20 LTS و pnpm</a></li>
+      <li><a href="#sec-7">مرحله ۵ — Docker</a></li>
+      <li><a href="#sec-8">مرحله ۶ — Python 3.12 (برای سرویس AI وقتی به ریپو اضافه شد)</a></li>
+      <li><a href="#sec-9">مرحله ۷ — IDE و افزونه‌ها</a></li>
+      <li><a href="#sec-10">مرحله ۸ — کلون ریپو و نصب وابستگی monorepo</a></li>
+      <li><a href="#sec-11">مرحله ۹ — فایل محیط `.env`</a></li>
+      <li><a href="#sec-12">مرحله ۱۰ — بالا آوردن Postgres و Redis (محلی)</a></li>
+      <li><a href="#sec-13">مرحله ۱۱ — اجرای API در حالت توسعه</a></li>
+      <li><a href="#sec-14">مرحله ۱۲ — اجرای داشبورد و ویجت (وقتی apps اضافه شدند)</a></li>
+      <li><a href="#sec-15">مرحله ۱۳ — تست واحد و یکپارچگی</a></li>
+      <li><a href="#sec-16">مرحله ۱۴ — تست E2E (Playwright وقتی اضافه شد)</a></li>
+      <li><a href="#sec-17">مرحله ۱۵ — Lint و فرمت و typecheck قبل از PR</a></li>
+      <li><a href="#sec-18">مرحله ۱۶ — ساخت branch و PR</a></li>
+      <li><a href="#sec-19">مرحله ۱۷ — CI سبز و Code Review</a></li>
+      <li><a href="#sec-20">مرحله ۱۸ — merge و همگام‌سازی محلی</a></li>
+      <li><a href="#sec-21">مرحله ۱۹ — استقرار (staging / production)</a></li>
+      <li><a href="#sec-22">مرحله ۲۰ — بعد از استقرار</a></li>
+      <li><a href="#sec-23">عیب‌یابی رایج</a></li>
+      <li><a href="#sec-24">چک‌لیست یک‌صفحه‌ای (چاپ ذهنی قبل از PR)</a></li>
+      <li><a href="#sec-25">مرجع‌های سریع اسناد</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">
+        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+        <a href="index.html">Docs</a>
+        <span class="sep">/</span>
+        <span>۱۵ — راهنمای توسعه فارسی</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+      </div>
+    </div>
+
+<h1><span class="emoji">📘</span> راهنمای کامل توسعهٔ فنی Chat-Box (مسیر گام‌به‌گام)</h1>
+
+    <div class="doc-meta">
+      <span class="pill">ورژن ۱.۰</span>
+      <span class="pill">مه ۲۰۲۶</span>
+      <span class="pill">Status: Active</span>
+      <span class="pill">نسخهٔ فارسی — همراه <a href="15-DEVELOPMENT-GUIDE-FA.md">15-DEVELOPMENT-GUIDE-FA.md</a></span>
+
+    </div>
+
+<blockquote>
+<p><strong>نسخه:</strong> 1.4 · مه 2026<br />
+<strong>مخاطب:</strong> توسعه‌دهندهٔ انسان یا Agent که از <strong>صفر تا PR و تست و استقرار</strong> جلو می‌رود.<br />
+<strong>میزبان استاندارد:</strong> <strong>Ubuntu Desktop یا Server 22.04 یا 24.04 LTS</strong> — تمام دستورات و مسیرهای این سند برای bash روی اوبونتو نوشته شده‌اند؛ توسعه و لانچ در پروژه طبق همین فرض است. <strong>WSL2 با توزیع Ubuntu</strong> همان bash و <code>apt</code> را دارد؛ برای Docker بخش <strong>۱.۴</strong> را بخوانید.<br />
+<strong>هم‌راستا با:</strong> <a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a>، <a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a>، <a href="07-PROJECT-STRUCTURE.html"><code>07-PROJECT-STRUCTURE.md</code></a>، <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a>، <a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a>.</p>
+</blockquote>
+<p>این سند <strong>نقشهٔ راه فنی یکپارچه</strong> است: از نصب سیستم‌عامل و ابزارها تا اجرای پروژه، تست، CI و آماده‌سازی برای محیط بالاتر. جزئیات قرارداد API/DB در اسناد شماره‌دار دیگر است؛ اینجا <strong>ترتیب کار</strong> و <strong>دستورهای عملی</strong> آمده است.</p>
+<hr />
+<h2 id="sec-1">نقشهٔ کلی مسیر (مرور ۳۰ ثانیه‌ای)</h2>
+<div class="mermaid">
+flowchart LR
+  A[OS و امنیت پایه] --> B[ابزارها Git Node pnpm Docker Python]
+  B --> C[کلون ریپو و pnpm install]
+  C --> D[Docker Compose دیتابیس]
+  D --> E[اجرای API و داشبورد]
+  E --> F[تست و lint و PR]
+  F --> G[CI و merge]
+  G --> H[استقرار طبق سند ۱۴]
+</div>
+<hr />
+<h2 id="sec-2">مرحله ۰ — قبل از دست زدن به کد</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>کار</th>
+<th>توضیح</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>خواندن حکمرانی</td>
+<td><a href="00-GOVERNANCE-ROLES.html"><code>00-GOVERNANCE-ROLES.md</code></a> — نقش PR و <code>PRIMARY_ROLE</code></td>
+</tr>
+<tr>
+<td>خواندن راهنمای Agent</td>
+<td><a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE.md</code></a></td>
+</tr>
+<tr>
+<td>بستهٔ پرامپتها</td>
+<td><a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> — اگر با AI می‌سازید</td>
+</tr>
+<tr>
+<td>ردیاب وضعیت مراحل</td>
+<td><a href="16-DEVELOPMENT-STATUS.html"><code>16-DEVELOPMENT-STATUS.md</code></a> — بعد از هر مرحلهٔ <code>P…</code> این جدول را به‌روز کنید</td>
+</tr>
+<tr>
+<td>سرور Ubuntu روی اینترنت (نصب از صفر)</td>
+<td><a href="./SERVER-DEV-FIRST-INSTALL-FA.md"><code>SERVER-DEV-FIRST-INSTALL-FA.md</code></a></td>
+</tr>
+<tr>
+<td>حساب GitHub</td>
+<td>دسترسی push به ریپو؛ برای CI، Actions فعال باشد</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-3">مرحله ۱ — سیستم‌عامل (میزکار توسعه یا سرور dev)</h2>
+<h3>۱.۱ انتخاب OS</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>محیط</th>
+<th>پیشنهاد</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>میزکار توسعه (لپ‌تاپ یا VM)</td>
+<td><strong>Ubuntu Desktop 22.04 یا 24.04 LTS</strong></td>
+</tr>
+<tr>
+<td>سرور dev داخلی تیم</td>
+<td><strong>Ubuntu Server همان نسخه‌های LTS</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3>۱.۲ پس از نصب</h3>
+<ul>
+<li>فعال‌سازی <strong>رمزنگاری دیسک</strong> در نصب اوبونتو (گزینهٔ LUKS در installer).  </li>
+<li>تنظیم <strong>زمان و منطقهٔ زمانی</strong> صحیح.  </li>
+<li>روی سرور: به‌روزرسانی پایه و نصب <code>chrony</code> یا اطمینان از sync زمانی (<code>systemd-timesyncd</code>).</li>
+</ul>
+<h3>۱.۳ کاربر توسعه</h3>
+<ul>
+<li>کاربر غیر root با <code>sudo</code>؛ روی سرور SSH فقط با <strong>کلید</strong> نه رمز.</li>
+</ul>
+<h3>۱.۴ WSL2 روی Windows (Ubuntu داخل WSL)</h3>
+<ul>
+<li>کد را داخل <strong>فایل‌سیستم لینوکس</strong> نگه دارید (مثلاً <code>~/projects/chat-box</code>)، نه مسیر <code>/mnt/c/...</code> تا I/O و <code>pnpm</code>/<code>node_modules</code> سریع‌تر و پایدارتر باشد.</li>
+<li><strong>Docker</strong> یکی از این دو مسیر:</li>
+<li><strong>Docker Desktop</strong> روی Windows: در Settings → Resources → WSL integration، توزیع Ubuntu شما را فعال کنید؛ سپس در همان ترمینال WSL دستور <code>docker</code> و <code>docker compose</code> باید کار کند.</li>
+<li>یا <strong>Docker Engine داخل خود WSL</strong> طبق <a href="https://docs.docker.com/engine/install/ubuntu/">راهنمای رسمی Docker برای Ubuntu</a> (بدون Docker Desktop).</li>
+<li>اگر پورت <strong>۵۴۳۲</strong> یا <strong>۶۳۷۹</strong> روی ویندوز یا سرویس دیگری اشغال است، قبل از <code>docker compose up</code> در <code>docker-compose.yml</code> پورت میزبان را عوض کنید و <code>DATABASE_URL</code> / <code>REDIS_URL</code> در <code>.env</code> را با همان پورت هماهنگ کنید.</li>
+</ul>
+<hr />
+<h2 id="sec-4">مرحله ۲ — امنیت پایه روی Ubuntu Server (در صورت استفاده)</h2>
+<p>طبق <a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a> بخش ۴.۱:</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt upgrade -y
+sudo apt install -y chrony ufw fail2ban
+sudo systemctl enable --now chrony
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw enable
+</code></pre>
+<blockquote>
+<p>پورتهای بعدی (۸۰، ۴۴۳، …) وقتی سرویس نصب شد اضافه شوند.</p>
+</blockquote>
+<hr />
+<h2 id="sec-5">مرحله ۳ — Git و SSH</h2>
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y git openssh-client
+</code></pre>
+<h3>کلید SSH برای GitHub</h3>
+<pre><code class="language-bash">ssh-keygen -t ed25519 -C &quot;your_email@example.com&quot;
+# محتوای ~/.ssh/id_ed25519.pub را در GitHub → Settings → SSH keys اضافه کنید
+ssh -T git@github.com
+</code></pre>
+<hr />
+<h2 id="sec-6">مرحله ۴ — Node.js 20 LTS و pnpm</h2>
+<h3>پیشنهاد: نصب از طریق مدیر نسخه (fnm یا nvm)</h3>
+<p><strong>fnm (پیشنهاد — نصب از <a href="https://github.com/Schniz/fnm">مستند رسمی fnm</a> برای Linux):</strong></p>
+<pre><code class="language-bash">fnm install 20
+fnm use 20
+node -v   # باید v20.x شود
+</code></pre>
+<p><strong>pnpm 9:</strong></p>
+<pre><code class="language-bash">corepack enable
+corepack prepare pnpm@9 --activate
+pnpm -v
+</code></pre>
+<hr />
+<h2 id="sec-7">مرحله ۵ — Docker</h2>
+<p>نصب <strong>Docker CE</strong> و پلاگین <strong>Compose</strong> طبق <a href="https://docs.docker.com/engine/install/ubuntu/">راهنمای رسمی Docker برای Ubuntu</a>. سپس کاربر توسعه را به گروه <code>docker</code> اضافه کنید و یک بار session را تازه کنید:</p>
+<pre><code class="language-bash">sudo usermod -aG docker &quot;$USER&quot;
+# سپس logout/login یا newgrp docker
+docker --version
+docker compose version
+</code></pre>
+<h3>تست</h3>
+<pre><code class="language-bash">docker run --rm hello-world
+</code></pre>
+<blockquote>
+<p>روی <strong>نودهای Kubernetes production</strong> معمولاً Docker Engine نصب نمی‌شود؛ فقط <code>containerd</code>. این مرحله برای <strong>dev</strong> است (<a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a>).</p>
+</blockquote>
+<hr />
+<h2 id="sec-8">مرحله ۶ — Python 3.12 (برای سرویس AI وقتی به ریپو اضافه شد)</h2>
+<h3>pyenv (اختیاری ولی تمیز)</h3>
+<pre><code class="language-bash"># پس از نصب pyenv طبق مستندش:
+pyenv install 3.12.7
+pyenv local 3.12.7
+python -V
+</code></pre>
+<h3>یا نصب سیستمی Ubuntu</h3>
+<pre><code class="language-bash">sudo apt install -y python3.12 python3.12-venv python3-pip
+</code></pre>
+<hr />
+<h2 id="sec-9">مرحله ۷ — IDE و افزونه‌ها</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ابزار</th>
+<th>توضیح</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cursor</strong> یا <strong>VS Code</strong></td>
+<td>باز کردن پوشهٔ ریشهٔ <code>chat-box</code></td>
+</tr>
+<tr>
+<td>افزونه‌ها</td>
+<td>ESLint/Biome (هرکدام پروژه انتخاب کرد)، Docker، Markdown، GitLens</td>
+</tr>
+<tr>
+<td>تنظیمات</td>
+<td><code>format on save</code> مطابق <code>biome.json</code> وقتی در ریپو اضافه شد</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-10">مرحله ۸ — کلون ریپو و نصب وابستگی monorepo</h2>
+<pre><code class="language-bash">git clone git@github.com:&lt;ORG&gt;/chat-box.git
+cd chat-box
+pnpm install
+</code></pre>
+<p>اگر هنوز <code>pnpm-workspace</code> وجود ندارد، ابتدا بستهٔ <strong><code>P0.2</code></strong> در <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> را با AI یا دستی انجام دهید.</p>
+<pre><code class="language-bash">pnpm exec turbo run build --filter=...
+# یا اسکریپت‌های تعریف‌شده در root package.json
+</code></pre>
+<hr />
+<h2 id="sec-11">مرحله ۹ — فایل محیط <code>.env</code></h2>
+<ol>
+<li>از <strong><code>.env.example</code></strong> در ریشه یا <code>apps/api</code> کپی بگیرید:<br />
+<code>cp .env.example .env</code> (مسیر دقیق وقتی در ریپو وجود دارد).  </li>
+<li>مقادیر <strong>بدون commit</strong> را پر کنید: <code>DATABASE_URL</code>، <code>REDIS_URL</code>، کلیدهای تست.  </li>
+<li>هرگز <code>.env</code> را به git اضافه نکنید.</li>
+</ol>
+<hr />
+<h2 id="sec-12">مرحله ۱۰ — بالا آوردن Postgres و Redis (محلی)</h2>
+<p>در ریشهٔ پروژه (بعد از اضافه شدن <code>docker-compose.yml</code>):</p>
+<pre><code class="language-bash">docker compose up -d
+docker compose ps
+</code></pre>
+<p>اتصال سریع Postgres (در صورت نگاشت پورت پیش‌فرض):</p>
+<pre><code class="language-bash"># مثال اگر postgres روی localhost:5432 باشد
+psql &quot;$DATABASE_URL&quot; -c &quot;SELECT 1&quot;
+</code></pre>
+<hr />
+<h2 id="sec-13">مرحله ۱۱ — اجرای API در حالت توسعه</h2>
+<pre><code class="language-bash">pnpm --filter api dev
+# یا معادل تعریف‌شده در package.json
+</code></pre>
+<p>تست سلامت:</p>
+<pre><code class="language-bash">curl -s http://127.0.0.1:3001/health
+</code></pre>
+<blockquote>
+<p>شمارهٔ پورت را با <code>.env</code> و README ریپو هماهنگ کنید.</p>
+</blockquote>
+<hr />
+<h2 id="sec-14">مرحله ۱۲ — اجرای داشبورد و ویجت (وقتی apps اضافه شدند)</h2>
+<pre><code class="language-bash">pnpm --filter dashboard dev
+pnpm --filter widget build
+</code></pre>
+<p>برای ویجت، فایل دمو اگر وجود دارد (مثلاً <code>apps/widget/demo.html</code>) را در مرورگر باز کنید و به API/WS محلی وصل کنید.</p>
+<hr />
+<h2 id="sec-15">مرحله ۱۳ — تست واحد و یکپارچگی</h2>
+<pre><code class="language-bash">pnpm test
+# یا
+pnpm exec turbo run test
+</code></pre>
+<ul>
+<li>تست‌های مرتبط با تغییر خود را <strong>حداقل</strong> اجرا کنید.  </li>
+<li>برای DB: در صورت وجود، از container تست یا <code>docker compose</code> پروفایل جدا استفاده کنید.</li>
+</ul>
+<hr />
+<h2 id="sec-16">مرحله ۱۴ — تست E2E (Playwright وقتی اضافه شد)</h2>
+<pre><code class="language-bash">pnpm exec playwright install
+pnpm --filter e2e test
+</code></pre>
+<p>قبل از اولین اجرا: متغیر <code>BASE_URL</code> یا معادل در <code>.env</code> تست را مطابق README تنظیم کنید.</p>
+<hr />
+<h2 id="sec-17">مرحله ۱۵ — Lint و فرمت و typecheck قبل از PR</h2>
+<pre><code class="language-bash">pnpm lint
+pnpm typecheck
+</code></pre>
+<p>طبق <a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a> معمولاً <strong>Biome</strong> جایگزین ESLint+Prettier است.</p>
+<hr />
+<h2 id="sec-18">مرحله ۱۶ — ساخت branch و PR</h2>
+<pre><code class="language-bash">git checkout -b feat/&lt;ticket&gt;-short-description
+git add -A
+git commit -m &quot;feat(api): concise message&quot;
+git push -u origin feat/&lt;ticket&gt;-short-description
+</code></pre>
+<p>در GitHub <strong>Pull Request</strong> بسازید و در بدنه حتماً بنویسید (<a href="09-AI-AGENT-GUIDE.html"><code>09-AI-AGENT-GUIDE.md</code></a>):</p>
+<pre><code class="language-text">PRIMARY_ROLE: ENGINEERING
+RELATED_DOCS: 05-API-SPEC.md
+MVP_LABEL: MVP
+TEST: pnpm test --filter api
+ROLLBACK: migration down / revert commit
+</code></pre>
+<hr />
+<h2 id="sec-19">مرحله ۱۷ — CI سبز و Code Review</h2>
+<ol>
+<li>تا <strong>سبز شدن</strong> workflow در GitHub صبر کنید.  </li>
+<li>حداقل یک <strong>review</strong> انسانی (یا Agent review طبق <code>roadmap_machine</code>).  </li>
+<li>تغییرات <strong>اسناد کاننیکال</strong> (<code>docs/*.md</code>) را اگر لازم است در همان PR به‌روز کنید.  </li>
+<li>برای MDهایی که HTML دارند:<br />
+<code>python docs/scripts/build_doc_html.py &lt;STEM&gt;</code></li>
+</ol>
+<hr />
+<h2 id="sec-20">مرحله ۱۸ — merge و همگام‌سازی محلی</h2>
+<pre><code class="language-bash">git checkout main
+git pull
+pnpm install
+</code></pre>
+<hr />
+<h2 id="sec-21">مرحله ۱۹ — استقرار (staging / production)</h2>
+<p>این مرحله <strong>فقط خلاصه</strong> است؛ جزئیات در <a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a> و <a href="12-OPERATIONS-SUPPORT.html"><code>12-OPERATIONS-SUPPORT.md</code></a>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>گام</th>
+<th>کار</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>۱</td>
+<td>ساخت image با تگ <code>GIT_SHA</code> در CI</td>
+</tr>
+<tr>
+<td>۲</td>
+<td>push به registry قابل دسترس از سرور</td>
+</tr>
+<tr>
+<td>۳</td>
+<td>deploy با Helm/Argo یا اسکریپت میزبان</td>
+</tr>
+<tr>
+<td>۴</td>
+<td>اجرای migration قبل یا همزمان با rollout</td>
+</tr>
+<tr>
+<td>۵</td>
+<td>smoke test روی <code>/health</code> و یک مسیر بحرانی</td>
+</tr>
+<tr>
+<td>۶</td>
+<td>پایش لاگ و dashboard (Grafana/Loki)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-22">مرحله ۲۰ — بعد از استقرار</h2>
+<ul>
+<li>بررسی <strong>خطاها</strong> در Sentry (اگر فعال است).  </li>
+<li>تأیید <strong>backup</strong> اولیه زمان‌بندی شده.  </li>
+<li>ثبت نسخه در CHANGELOG یا release notes.</li>
+</ul>
+<hr />
+<h2 id="sec-23">عیب‌یابی رایج</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>علامت</th>
+<th>احتمال</th>
+<th>اقدام</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ECONNREFUSED</code> به Postgres</td>
+<td>سرویس compose بالا نیست</td>
+<td><code>docker compose up -d</code> و بررسی پورت</td>
+</tr>
+<tr>
+<td><code>pnpm: command not found</code></td>
+<td>Node/corepack</td>
+<td><code>corepack enable</code> و نصب pnpm</td>
+</tr>
+<tr>
+<td>WebSocket قطع</td>
+<td>پروکسی یا فایروال</td>
+<td>مسیر <code>/socket.io</code> و TLS پشت LB</td>
+</tr>
+<tr>
+<td>migration خطا</td>
+<td>نسخهٔ Postgres</td>
+<td>با نسخهٔ <code>docker-compose</code> هماهنگ کنید</td>
+</tr>
+<tr>
+<td>خطای permission Docker</td>
+<td>کاربر خارج از گروه docker</td>
+<td><code>sudo usermod -aG docker $USER</code> و logout</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="sec-24">چک‌لیست یک‌صفحه‌ای (چاپ ذهنی قبل از PR)</h2>
+<ul>
+<li>[ ] <code>pnpm lint</code> و <code>pnpm typecheck</code> سبز  </li>
+<li>[ ] تست مرتبط سبز  </li>
+<li>[ ] <code>.env</code> commit نشده  </li>
+<li>[ ] <code>PRIMARY_ROLE</code> در PR  </li>
+<li>[ ] اسناد <code>05</code>/<code>04</code>/<code>06</code> در صورت تغییر قرارداد به‌روز شده‌اند  </li>
+</ul>
+<hr />
+<h2 id="sec-25">مرجع‌های سریع اسناد</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>موضوع</th>
+<th>سند</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tech stack</td>
+<td><a href="03-TECH-STACK.html"><code>03-TECH-STACK.md</code></a></td>
+</tr>
+<tr>
+<td>ساختار ریپو</td>
+<td><a href="07-PROJECT-STRUCTURE.html"><code>07-PROJECT-STRUCTURE.md</code></a></td>
+</tr>
+<tr>
+<td>API</td>
+<td><a href="05-API-SPEC.html"><code>05-API-SPEC.md</code></a></td>
+</tr>
+<tr>
+<td>DB</td>
+<td><a href="04-DATABASE-SCHEMA.html"><code>04-DATABASE-SCHEMA.md</code></a></td>
+</tr>
+<tr>
+<td>AI</td>
+<td><a href="06-AI-ARCHITECTURE.html"><code>06-AI-ARCHITECTURE.md</code></a></td>
+</tr>
+<tr>
+<td>زیرساخت سرور</td>
+<td><a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a></td>
+</tr>
+<tr>
+<td>بستهٔ پرامپت AI</td>
+<td><a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a></td>
+</tr>
+<tr>
+<td>ردیاب وضعیت مراحل</td>
+<td><a href="16-DEVELOPMENT-STATUS.html"><code>16-DEVELOPMENT-STATUS.md</code></a></td>
+</tr>
+<tr>
+<td>نصب سرور Ubuntu از صفر</td>
+<td><a href="./SERVER-DEV-FIRST-INSTALL-FA.md"><code>SERVER-DEV-FIRST-INSTALL-FA.md</code></a></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>پایان سند.</strong> با تغییر فرآیند تیم، این فایل را نسخه‌دار کنید و در PR به‌روز کنید.</p>
+
+    <nav class="doc-nav">
+      <a class="prev" href="14-INFRASTRUCTURE.html">
+        <div class="label">← سند قبلی</div>
+        <div class="title">۱۴ — زیرساخت و سرورها</div>
+      </a>
+      <a class="next" href="16-DEVELOPMENT-STATUS.html">
+        <div class="label">سند بعدی →</div>
+        <div class="title">۱۶ — وضعیت مراحل توسعه</div>
+      </a>
+    </nav>
+  </main>
+</div>
+</body>
+</html>
