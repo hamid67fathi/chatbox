@@ -39,7 +39,7 @@ rule: >
 
 ## جدول وضعیت (مراحل P0 → P3)
 
-> **الان:** فاز 1 کامل شد (P1.6 تست happy path). فاز 2 آماده شروع.
+> **الان:** P2.1 (جداول KB) انجام شد؛ P2.2 (سرویس AI) آماده شروع.
 
 | کد | عنوان کوتاه | Agent (مرجع) | وضعیت | تاریخ به‌روزرسانی | PR / شاخه | یادداشت |
 |----|----------------|--------------|--------|-------------------|-----------|---------|
@@ -53,7 +53,7 @@ rule: >
 | P1.4 | ویجت vanilla | AGT-WGT-01 | انجام شد | 2026-05-13 | — | apps/widget (tsup IIFE 7.97 KB) + widget API route + demo.html + CORS |
 | P1.5 | داشبورد inbox ساده | AGT-FE-01 | انجام شد | 2026-05-13 | — | Next.js 14 App Router, RTL, conversation list + message thread + Socket.io real-time |
 | P1.6 | تست یک happy path | AGT-QA-01 | انجام شد | 2026-05-13 | — | vitest + supertest, 8 tests (health→widget session), CI with Postgres+Redis services |
-| P2.1 | جداول KB در DB | AGT-DB-01 | شروع نشده | — | — | — |
+| P2.1 | جداول KB در DB | AGT-DB-01 | انجام شد | 2026-05-13 | — | knowledge_bases, kb_documents, kb_chunks (pgvector), ai_interactions + RLS + HNSW index |
 | P2.2 | سرویس AI + RAG حداقلی | AGT-AI-01 | شروع نشده | — | — | — |
 | P2.3 | اتصال API به AI | AGT-API-01 | شروع نشده | — | — | — |
 | P2.4 | UI وضعیت AI / escalation | AGT-FE-01 | شروع نشده | — | — | — |

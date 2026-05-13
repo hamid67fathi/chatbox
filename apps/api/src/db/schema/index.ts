@@ -6,4 +6,8 @@ export * from "./contacts.js";
 export * from "./conversations.js";
 export * from "./messages.js";
 export * from "./canned-responses.js";
+export * from "./knowledge-bases.js";
+export * from "./kb-documents.js";
+export * from "./kb-chunks.js";
+export * from "./ai-interactions.js";
 export * from "./relations.js";

@@ -58,3 +58,17 @@ export const messageStatusEnum = pgEnum("message_status", [
 	"read",
 	"failed",
 ]);
+
+export const kbDocStatusEnum = pgEnum("kb_doc_status", [
+	"uploaded",
+	"processing",
+	"indexed",
+	"failed",
+]);
+
+export const aiInteractionTypeEnum = pgEnum("ai_interaction_type", [
+	"auto_reply",
+	"suggestion",
+	"classification",
+	"summary",
+]);

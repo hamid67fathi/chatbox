@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import { aiInteractions } from "./ai-interactions.js";
 import { cannedResponses } from "./canned-responses.js";
 import { contacts } from "./contacts.js";
 import {
@@ -6,6 +7,9 @@ import {
 	conversationTags,
 	conversations,
 } from "./conversations.js";
+import { kbChunks } from "./kb-chunks.js";
+import { kbDocuments } from "./kb-documents.js";
+import { knowledgeBases } from "./knowledge-bases.js";
 import { messages } from "./messages.js";
 import { users } from "./users.js";
 import { workspaceMembers } from "./workspace-members.js";
@@ -16,6 +20,8 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 	contacts: many(contacts),
 	conversations: many(conversations),
 	cannedResponses: many(cannedResponses),
+	knowledgeBases: many(knowledgeBases),
+	aiInteractions: many(aiInteractions),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -117,3 +123,52 @@ export const cannedResponsesRelations = relations(
 		}),
 	}),
 );
+
+export const knowledgeBasesRelations = relations(
+	knowledgeBases,
+	({ one, many }) => ({
+		workspace: one(workspaces, {
+			fields: [knowledgeBases.workspaceId],
+			references: [workspaces.id],
+		}),
+		documents: many(kbDocuments),
+	}),
+);
+
+export const kbDocumentsRelations = relations(kbDocuments, ({ one, many }) => ({
+	workspace: one(workspaces, {
+		fields: [kbDocuments.workspaceId],
+		references: [workspaces.id],
+	}),
+	knowledgeBase: one(knowledgeBases, {
+		fields: [kbDocuments.kbId],
+		references: [knowledgeBases.id],
+	}),
+	chunks: many(kbChunks),
+}));
+
+export const kbChunksRelations = relations(kbChunks, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [kbChunks.workspaceId],
+		references: [workspaces.id],
+	}),
+	document: one(kbDocuments, {
+		fields: [kbChunks.documentId],
+		references: [kbDocuments.id],
+	}),
+}));
+
+export const aiInteractionsRelations = relations(aiInteractions, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [aiInteractions.workspaceId],
+		references: [workspaces.id],
+	}),
+	conversation: one(conversations, {
+		fields: [aiInteractions.conversationId],
+		references: [conversations.id],
+	}),
+	message: one(messages, {
+		fields: [aiInteractions.messageId],
+		references: [messages.id],
+	}),
+}));
