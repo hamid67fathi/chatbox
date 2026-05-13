@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatBox — تست چت</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Vazirmatn', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      direction: rtl;
+    }
+    .page-header {
+      text-align: center;
+      color: white;
+      margin-bottom: 24px;
+    }
+    .page-header h1 { font-size: 28px; margin-bottom: 8px; }
+    .page-header p { opacity: 0.85; font-size: 15px; }
+    .chat-container {
+      width: 400px;
+      height: 580px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: #2563eb;
+      color: white;
+      padding: 18px 20px;
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header .status {
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+    .chat-header .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      margin-left: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8fafc;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      position: relative;
+    }
+    .msg .time {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 4px;
+      display: block;
+    }
+    .msg .badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    .msg.contact {
+      align-self: flex-end;
+      background: #2563eb;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.agent {
+      align-self: flex-start;
+      background: white;
+      color: #1e293b;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.agent .badge { background: #dbeafe; color: #1d4ed8; }
+    .msg.ai {
+      align-self: flex-start;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.ai .badge { background: #dcfce7; color: #15803d; }
+    .msg.system {
+      align-self: center;
+      background: #fefce8;
+      color: #854d0e;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .typing {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #94a3b8;
+      display: none;
+    }
+    .typing.visible { display: block; }
+    .input-area {
+      display: flex;
+      padding: 14px;
+      border-top: 1px solid #e2e8f0;
+      gap: 10px;
+      background: white;
+    }
+    .input-area input {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      direction: rtl;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .input-area input:focus { border-color: #2563eb; }
+    .input-area button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .input-area button:hover { background: #1d4ed8; }
+    .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .info-bar {
+      margin-top: 16px;
+      color: white;
+      font-size: 12px;
+      opacity: 0.7;
+      text-align: center;
+    }
+    .info-bar a { color: white; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>💬 ChatBox</h1>
+    <p>صفحه تست چت — پیام بفرستید و پاسخ AI را ببینید</p>
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <span>پشتیبانی ChatBox</span>
+      <span class="status"><span class="dot"></span> آنلاین</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="typing" id="typing">در حال نوشتن...</div>
+    <div class="input-area">
+      <input id="input" placeholder="پیام بنویسید..." autocomplete="off" />
+      <button id="send">ارسال</button>
+    </div>
+  </div>
+
+  <div class="info-bar" id="info-bar">در حال اتصال...</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const API = window.location.origin;
+    const SLUG = 'demo';
+
+    let workspaceId = '';
+    let conversationId = '';
+    let contactId = '';
+    let socket = null;
+
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const typingEl = document.getElementById('typing');
+    const infoBar = document.getElementById('info-bar');
+
+    function formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function addMessage(msg) {
+      const div = document.createElement('div');
+      const type = msg.senderType || msg.sender_type || 'agent';
+      div.className = 'msg ' + type;
+
+      let badge = '';
+      if (type === 'ai') badge = '<span class="badge">🤖 AI</span><br>';
+      else if (type === 'agent') badge = '<span class="badge">👤 اپراتور</span><br>';
+
+      const body = (msg.body || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const time = formatTime(msg.createdAt || msg.created_at || new Date().toISOString());
+
+      div.innerHTML = (type !== 'contact' ? badge : '') + body + '<span class="time">' + time + '</span>';
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function init() {
+      try {
+        const res = await fetch(API + '/widget/v1/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspace_slug: SLUG })
+        });
+        const data = await res.json();
+        workspaceId = data.workspace_id;
+        conversationId = data.conversation_id;
+        contactId = data.contact_id;
+
+        infoBar.textContent = 'متصل شد — conversation: ' + conversationId.slice(0, 8) + '...';
+
+        const msgRes = await fetch(API + '/v1/conversations/' + conversationId + '/messages?limit=50', {
+          headers: { 'X-Workspace-Id': workspaceId }
+        });
+        if (msgRes.ok) {
+          const msgData = await msgRes.json();
+          (msgData.data || []).forEach(m => addMessage(m));
+        }
+
+        socket = io(API, { query: { workspace_id: workspaceId, token: 'visitor' } });
+        socket.on('connect', () => {
+          socket.emit('conv:join', { conv_id: conversationId });
+        });
+        socket.on('message:new', (data) => {
+          const m = data.message || data;
+          if ((m.senderType || m.sender_type) !== 'contact') {
+            addMessage(m);
+          }
+        });
+        socket.on('typing', (data) => {
+          typingEl.classList.toggle('visible', data.isTyping || data.is_typing);
+        });
+      } catch (err) {
+        infoBar.textContent = 'خطا در اتصال: ' + err.message;
+        console.error(err);
+      }
+    }
+
+    async function send() {
+      const body = inputEl.value.trim();
+      if (!body) return;
+      inputEl.value = '';
+      sendBtn.disabled = true;
+
+      addMessage({ body, senderType: 'contact', createdAt: new Date().toISOString() });
+
+      try {
+        await fetch(API + '/v1/conversations/' + conversationId + '/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Workspace-Id': workspaceId
+          },
+          body: JSON.stringify({
+            body,
+            sender_type: 'contact',
+            sender_contact_id: contactId
+          })
+        });
+      } catch (err) {
+        console.error('Send failed:', err);
+      }
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -25,6 +25,14 @@ export function buildApp() {
 	});
 
 	const __dirname = dirname(fileURLToPath(import.meta.url));
+
+	const publicRoot = resolve(__dirname, "../public");
+	app.register(fastifyStatic, {
+		root: publicRoot,
+		prefix: "/",
+		decorateReply: false,
+	});
+
 	const widgetRoot = resolve(__dirname, "../../widget");
 	app.register(fastifyStatic, {
 		root: widgetRoot,
