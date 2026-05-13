@@ -375,7 +375,7 @@ Acceptance: test runs in CI with documented env.
 
 ### خروجی مورد انتظار
 
-- [ ] یک مسیر اتوماتیک سبز
+- [x] یک مسیر اتوماتیک سبز
 
 ---
 
