@@ -279,7 +279,7 @@ Acceptance: curl examples in PR description; OpenAPI stub optional.
 
 ### خروجی مورد انتظار
 
-- [ ] endpointهای حداقلی + خطای استاندارد
+- [x] endpointهای حداقلی + خطای استاندارد
 
 ---
 

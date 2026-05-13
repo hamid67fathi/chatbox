@@ -6,3 +6,4 @@ export * from "./contacts.js";
 export * from "./conversations.js";
 export * from "./messages.js";
 export * from "./canned-responses.js";
+export * from "./relations.js";
