@@ -7,7 +7,9 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from .cache import intent_cache, make_key
 from .config import settings
+from .persian_normalize import normalize_persian
 from .pii import redact
 
 _client = None
@@ -210,10 +212,36 @@ async def classify_intent_llm(question: str) -> IntentResult:
         return classify_intent_heuristic(question)
 
 
-async def classify_intent(question: str) -> IntentResult:
+async def _classify_impl(question: str) -> IntentResult:
     if settings.use_openai:
         try:
             return await classify_intent_llm(question)
         except Exception:
             return classify_intent_heuristic(question)
     return classify_intent_heuristic(question)
+
+
+async def classify_intent(question: str) -> IntentResult:
+    normalized = normalize_persian(question)
+    if not normalized:
+        return IntentResult(Intent.CHITCHAT, 0.5)
+
+    cache_key = make_key("intent", normalized)
+    cached = intent_cache.get(cache_key)
+    if cached is not None:
+        data = cached if isinstance(cached, dict) else {}
+        intent_val = str(data.get("intent", "faq"))
+        conf = float(data.get("confidence", 0.75))
+        intent = (
+            Intent(intent_val)
+            if intent_val in {i.value for i in Intent}
+            else Intent.FAQ
+        )
+        return IntentResult(intent, conf)
+
+    result = await _classify_impl(normalized)
+    intent_cache.set(
+        cache_key,
+        {"intent": result.intent.value, "confidence": result.confidence},
+    )
+    return result

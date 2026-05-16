@@ -113,7 +113,11 @@ async def route_and_answer(
 
     # FAQ → RAG
     chunks = await retrieve_chunks(workspace_id, question, top_k)
-    result = await generate_reply(question, chunks)
+    result = await generate_reply(
+        question,
+        chunks,
+        workspace_id=workspace_id,
+    )
     handoff = result["handoff"]
     if not chunks and intent_result.confidence < 0.6:
         handoff = True

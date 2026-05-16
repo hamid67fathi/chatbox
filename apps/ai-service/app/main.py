@@ -7,12 +7,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .chunker import chunk_text
-from .config import settings
 from .copilot import generate_copilot_suggestions, stream_copilot_suggestions
 from .sentiment import analyze_sentiment
 from .summarizer import summarize_conversation
 from .db import close_pool, get_pool
 from .embeddings import embed_texts
+from .cache import answer_cache, embedding_cache, intent_cache, retrieval_cache
+from .config import settings
 from .router import route_and_answer
 
 
@@ -30,7 +31,22 @@ app = FastAPI(title="Chat-Box AI Service", version="0.1.0", lifespan=lifespan)
 
 @app.get("/health")
 async def health():
-    return {"ok": True, "openai": settings.use_openai}
+    return {
+        "ok": True,
+        "openai": settings.use_openai,
+        "cohere_rerank": settings.use_cohere,
+        "anthropic_fallback": settings.use_anthropic,
+        "rag": {
+            "retrieve_k": settings.ai_retrieve_k,
+            "top_k": settings.ai_top_k,
+        },
+        "cache": {
+            "embedding": embedding_cache.stats(),
+            "retrieval": retrieval_cache.stats(),
+            "answer": answer_cache.stats(),
+            "intent": intent_cache.stats(),
+        },
+    }
 
 
 # ── Ingest (chunk + embed + store) ───────────────────

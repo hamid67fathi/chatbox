@@ -2,6 +2,8 @@
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from .persian_normalize import normalize_persian
+
 _splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
     chunk_overlap=50,
@@ -10,4 +12,10 @@ _splitter = RecursiveCharacterTextSplitter(
 
 
 def chunk_text(text: str) -> list[str]:
-    return _splitter.split_text(text)
+    raw = _splitter.split_text(text)
+    out: list[str] = []
+    for chunk in raw:
+        normalized = normalize_persian(chunk)
+        if normalized:
+            out.append(normalized)
+    return out

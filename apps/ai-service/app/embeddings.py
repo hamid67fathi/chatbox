@@ -1,11 +1,14 @@
-"""Embedding service — uses OpenAI if key is set, otherwise returns stub vectors."""
+"""Embedding service with optional OpenAI and embedding cache."""
 
 import hashlib
+import json
 import struct
 
 import numpy as np
 
+from .cache import embedding_cache, make_key
 from .config import settings
+from .persian_normalize import normalize_persian
 
 DIMS = 1536
 
@@ -30,16 +33,44 @@ def stub_embed(text: str) -> list[float]:
     return vec.tolist()
 
 
-async def embed_texts(texts: list[str]) -> list[list[float]]:
-    if not settings.use_openai:
-        return [stub_embed(t) for t in texts]
+async def embed_texts(texts: list[str], *, use_cache: bool = True) -> list[list[float]]:
+    if not texts:
+        return []
 
-    client = _get_client()
-    response = client.embeddings.create(
-        model=settings.openai_embedding_model,
-        input=texts,
-    )
-    return [item.embedding for item in response.data]
+    normalized = [normalize_persian(t) for t in texts]
+    out: list[list[float] | None] = [None] * len(texts)
+    to_fetch: list[tuple[int, str]] = []
+
+    if use_cache:
+        for i, n in enumerate(normalized):
+            key = make_key("emb", n)
+            hit = embedding_cache.get(key)
+            if hit is not None:
+                out[i] = json.loads(hit) if isinstance(hit, str) else hit
+            else:
+                to_fetch.append((i, texts[i]))
+    else:
+        to_fetch = list(enumerate(texts))
+
+    if to_fetch:
+        raw_texts = [texts[i] for i, _ in to_fetch]
+        if not settings.use_openai:
+            vectors = [stub_embed(t) for t in raw_texts]
+        else:
+            client = _get_client()
+            response = client.embeddings.create(
+                model=settings.openai_embedding_model,
+                input=raw_texts,
+            )
+            vectors = [item.embedding for item in response.data]
+
+        for (idx, _), vec in zip(to_fetch, vectors):
+            out[idx] = vec
+            if use_cache:
+                key = make_key("emb", normalized[idx])
+                embedding_cache.set(key, json.dumps(vec))
+
+    return [v if v is not None else stub_embed(texts[i]) for i, v in enumerate(out)]
 
 
 async def embed_single(text: str) -> list[float]:

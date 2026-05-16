@@ -109,7 +109,7 @@ rule: >
 | P7.1 | Intent Classifier + Router | کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation | انجام شد | 2026-05-16 | /v1/ask + /v1/classify، heuristic + LLM |
 | P7.2 | Copilot (پیشنهاد پاسخ) | /v1/copilot، ۳ پیشنهاد، SSE streaming، UI داشبورد | انجام شد | 2026-05-16 | دکمه ✨ در inbox، UI build 13 |
 | P7.3 | Summarizer و Sentiment | خلاصه مکالمه، امتیاز sentiment، mood indicator | انجام شد | 2026-05-16 | /v1/summarize، خلاصه در toolbar، mood در inbox |
-| P7.4 | بهبود RAG | Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback | شروع نشده | — | — |
+| P7.4 | بهبود RAG | Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback | انجام شد | 2026-05-16 | retrieve 20→rerank 5، OpenAI→Anthropic→template |
 | P7.5 | هزینه و مانیتورینگ AI | per-workspace credits، budget enforcement، Langfuse | شروع نشده | — | — |
 
 ### فاز ۸ — لندینگ پیج و Billing واقعی

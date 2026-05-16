@@ -1,70 +1,37 @@
-"""LLM completion — uses OpenAI if key is set, otherwise returns a stub response."""
+"""LLM completion — delegates to multi-provider fallback chain."""
 
-from .config import settings
-from .pii import redact
+from __future__ import annotations
 
-_client = None
+import json
 
-
-def _get_client():
-    global _client
-    if _client is None:
-        from openai import OpenAI
-
-        _client = OpenAI(api_key=settings.openai_api_key)
-    return _client
-
-
-SYSTEM_PROMPT = """شما دستیار هوشمند پشتیبانی هستید. بر اساس اطلاعات زیر به سوال کاربر پاسخ دهید.
-اگر مطمئن نیستید، بگویید «نیاز به بررسی بیشتر دارم» و handoff=true برگردانید.
-فقط به فارسی پاسخ دهید."""
+from .cache import answer_cache, make_key
+from .llm_chain import generate_reply_with_fallback
+from .persian_normalize import normalize_persian
 
 
 async def generate_reply(
     question: str,
     context_chunks: list[dict],
+    *,
+    workspace_id: str | None = None,
+    use_cache: bool = True,
 ) -> dict:
-    context = "\n---\n".join(c["content"] for c in context_chunks)
-    safe_question = redact(question)
-    safe_context = redact(context)
-
-    if not settings.use_openai:
-        has_context = len(context_chunks) > 0
-        confidence = 0.85 if has_context else 0.3
-        return {
-            "reply": f"[STUB] پاسخ به: {safe_question[:80]}",
-            "confidence": confidence,
-            "handoff": confidence < settings.ai_confidence_threshold,
-            "model": "stub",
-            "input_tokens": 0,
-            "output_tokens": 0,
-        }
-
-    client = _get_client()
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"اطلاعات:\n{safe_context}\n\nسوال: {safe_question}"},
-    ]
-
-    response = client.chat.completions.create(
-        model=settings.openai_chat_model,
-        messages=messages,
-        temperature=0.3,
-        max_tokens=500,
+    normalized_q = normalize_persian(question)
+    chunk_sig = ",".join(c.get("chunk_id", "") for c in context_chunks)
+    cache_key = (
+        make_key(workspace_id or "global", normalized_q, chunk_sig)
+        if workspace_id
+        else None
     )
 
-    reply = response.choices[0].message.content or ""
-    usage = response.usage
+    if use_cache and cache_key:
+        hit = answer_cache.get(cache_key)
+        if hit is not None:
+            return json.loads(hit) if isinstance(hit, str) else hit
 
-    confidence = 0.85 if context_chunks else 0.5
-    if "نیاز به بررسی" in reply or "نمی‌دانم" in reply:
-        confidence = 0.3
+    result = await generate_reply_with_fallback(question, context_chunks)
 
-    return {
-        "reply": reply,
-        "confidence": confidence,
-        "handoff": confidence < settings.ai_confidence_threshold,
-        "model": settings.openai_chat_model,
-        "input_tokens": usage.prompt_tokens if usage else 0,
-        "output_tokens": usage.completion_tokens if usage else 0,
-    }
+    if use_cache and cache_key and not result.get("handoff"):
+        answer_cache.set(cache_key, json.dumps(result, ensure_ascii=False))
+
+    return result

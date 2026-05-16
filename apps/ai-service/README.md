@@ -96,7 +96,19 @@ curl -X POST http://localhost:8000/v1/embed \
   -d '{"texts": ["متن اول", "متن دوم"]}'
 ```
 
+## RAG pipeline (P7.4)
+
+1. **Persian normalization** — Arabic ی/ک, digits, ZWNJ on ingest and queries
+2. **Retrieve** — `AI_RETRIEVE_K` vector candidates (default 20)
+3. **Rerank** — Cohere `rerank-multilingual-v3.0` when `COHERE_API_KEY` is set; else vector order
+4. **Generate** — OpenAI → Anthropic (`ANTHROPIC_API_KEY`) → template stub
+5. **Cache** — in-memory TTL: embedding (1h), retrieval (10m), answer (5m), intent (10m)
+
+`GET /health` reports provider flags and cache sizes.
+
 ## Modes
 
 - **With OpenAI**: Set `OPENAI_API_KEY` in `.env` for real embeddings and LLM responses
+- **Optional Cohere**: `COHERE_API_KEY` for reranking
+- **Optional Anthropic**: `ANTHROPIC_API_KEY` as LLM fallback
 - **Stub mode**: Leave `OPENAI_API_KEY` empty — uses deterministic pseudo-random embeddings and stub responses (for dev/testing)
