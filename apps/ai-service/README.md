@@ -14,8 +14,18 @@ cp .env.example .env
 
 ## Run
 
+**حتماً از پوشه `apps/ai-service` اجرا کنید** (نه از ریشه monorepo):
+
 ```bash
+cd apps/ai-service
+source .venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+یا:
+
+```bash
+./apps/ai-service/dev.sh
 ```
 
 ## Endpoints
