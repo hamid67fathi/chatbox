@@ -21,7 +21,11 @@ import { workspaceRoutes } from "./routes/workspaces.js";
 export function buildApp() {
 	const app = Fastify({ logger: false });
 
-	app.register(cors, { origin: true, credentials: true });
+	app.register(cors, {
+		origin: true,
+		credentials: true,
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+	});
 	app.register(cookie);
 	app.register(helmet, { contentSecurityPolicy: false });
 	app.register(rateLimit, {

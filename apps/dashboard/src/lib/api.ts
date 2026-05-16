@@ -40,7 +40,20 @@ function authHeaders(workspaceId: string): Record<string, string> {
 }
 
 async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
-	let res = await fetch(url, init);
+	let res: Response;
+	try {
+		res = await fetch(url, init);
+	} catch {
+		return new Response(
+			JSON.stringify({
+				error: {
+					code: "network_error",
+					message: `Cannot reach API at ${API_URL}. Is the API server running on port 3001?`,
+				},
+			}),
+			{ status: 503, headers: { "Content-Type": "application/json" } },
+		);
+	}
 
 	if (res.status === 401) {
 		const newToken = await refreshAccessToken();
