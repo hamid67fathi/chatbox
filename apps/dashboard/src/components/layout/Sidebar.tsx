@@ -8,8 +8,8 @@ import { usePathname } from "next/navigation";
 const navItems = [
 	{ href: "/", label: "صندوق ورودی", icon: Inbox },
 	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
-	{ href: "/settings", label: "تنظیمات", icon: Settings, disabled: true },
-	{ href: "/team", label: "تیم", icon: Users, disabled: true },
+	{ href: "/settings", label: "تنظیمات", icon: Settings },
+	{ href: "/team", label: "تیم", icon: Users },
 	{ href: "/knowledge", label: "پایگاه دانش", icon: MessageSquare, disabled: true },
 ];
 

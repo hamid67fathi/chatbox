@@ -10,6 +10,7 @@ export interface AuthData {
 		id: string;
 		email: string;
 		full_name?: string;
+		locale?: string;
 		workspaces?: { id: string; role: string }[];
 	};
 }

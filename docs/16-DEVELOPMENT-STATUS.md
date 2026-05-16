@@ -90,7 +90,7 @@ rule: >
 | P5.2 | Inbox کامل | جستجو، فیلتر، مرتب‌سازی، pagination، typing indicator، read receipts | انجام شد | 2026-05-16 | infinite scroll، typing، ✓/✓✓ read receipts |
 | P5.3 | مدیریت مکالمه | Assignment، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote | انجام شد | 2026-05-16 | toolbar وضعیت/تخصیص/اولویت/تگ/یادداشت + reply |
 | P5.4 | پاسخ‌های آماده | CRUD canned responses، جستجوی /shortcut، متغیرها | انجام شد | 2026-05-16 | API CRUD + صفحه /canned + picker در composer |
-| P5.5 | تنظیمات و مدیریت تیم | Settings، invite اعضا، تغییر role، workspace management | شروع نشده | — | — |
+| P5.5 | تنظیمات و مدیریت تیم | Settings، invite اعضا، تغییر role، workspace management | انجام شد | 2026-05-16 | /settings + /team، invite با رمز موقت |
 | P5.6 | Knowledge Base UI | آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index | شروع نشده | — | — |
 
 ### فاز ۶ — ویجت و تجربه چت

@@ -1,10 +1,15 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
+import { randomBytes } from "node:crypto";
 import { db } from "../db/index.js";
-import { workspaceMembers, workspaces } from "../db/schema/index.js";
+import { users, workspaceMembers, workspaces } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
-import { conflict, notFound, validationError } from "../lib/errors.js";
+import { hashPassword } from "../lib/auth.js";
+import { forbidden, conflict, notFound, validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVITE_ROLES = new Set(["admin", "agent", "viewer"]);
 
 export async function workspaceRoutes(app: FastifyInstance) {
 	app.post<{
@@ -115,8 +120,165 @@ export async function workspaceRoutes(app: FastifyInstance) {
 					status: m.status,
 					email: m.user?.email ?? null,
 					fullName: m.user?.fullName ?? null,
+					joinedAt: m.joinedAt,
 				})),
 			};
+		},
+	);
+
+	app.post<{
+		Params: { id: string };
+		Body: { email: string; role: string; full_name?: string; password?: string };
+	}>(
+		"/v1/workspaces/:id/members/invite",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request, reply) => {
+			const wsId = request.params.id;
+			const inviter = (request as AuthenticatedRequest).user;
+			const { email, role, full_name, password } = request.body ?? {};
+
+			if (!email || !EMAIL_RE.test(email)) {
+				throw validationError("A valid email is required.", "email");
+			}
+			if (!role || !INVITE_ROLES.has(role)) {
+				throw validationError(
+					"role must be admin, agent, or viewer.",
+					"role",
+				);
+			}
+
+			const normalizedEmail = email.toLowerCase();
+
+			let targetUser = await db.query.users.findFirst({
+				where: eq(users.email, normalizedEmail),
+			});
+
+			let temporaryPassword: string | undefined;
+			if (!targetUser) {
+				temporaryPassword =
+					password?.trim() ||
+					randomBytes(9).toString("base64url").slice(0, 12);
+				const hashed = await hashPassword(temporaryPassword);
+				[targetUser] = await db
+					.insert(users)
+					.values({
+						email: normalizedEmail,
+						passwordHash: hashed,
+						fullName: full_name?.trim() || null,
+						emailVerified: false,
+					})
+					.returning();
+			}
+
+			const existingMember = await db.query.workspaceMembers.findFirst({
+				where: and(
+					eq(workspaceMembers.workspaceId, wsId),
+					eq(workspaceMembers.userId, targetUser.id),
+				),
+			});
+			if (existingMember) {
+				throw conflict("User is already a member of this workspace.");
+			}
+
+			await db.insert(workspaceMembers).values({
+				workspaceId: wsId,
+				userId: targetUser.id,
+				role: role as "agent",
+				status: "active",
+				invitedBy: inviter.id,
+				joinedAt: new Date(),
+			});
+
+			return reply.status(201).send({
+				member: {
+					userId: targetUser.id,
+					email: targetUser.email,
+					fullName: targetUser.fullName,
+					role,
+					status: "active",
+				},
+				...(temporaryPassword
+					? { temporary_password: temporaryPassword, user_created: true }
+					: { user_created: false }),
+			});
+		},
+	);
+
+	app.patch<{
+		Params: { id: string; userId: string };
+		Body: { role?: string };
+	}>(
+		"/v1/workspaces/:id/members/:userId",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request) => {
+			const wsId = request.params.id;
+			const targetUserId = request.params.userId;
+			const { role } = request.body ?? {};
+
+			if (!role || !INVITE_ROLES.has(role)) {
+				throw validationError(
+					"role must be admin, agent, or viewer.",
+					"role",
+				);
+			}
+
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, wsId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			if (ws.ownerUserId === targetUserId) {
+				throw forbidden("Cannot change the workspace owner's role.");
+			}
+
+			const [updated] = await db
+				.update(workspaceMembers)
+				.set({ role: role as "agent" })
+				.where(
+					and(
+						eq(workspaceMembers.workspaceId, wsId),
+						eq(workspaceMembers.userId, targetUserId),
+					),
+				)
+				.returning();
+
+			if (!updated) throw notFound("Member not found.");
+			return { ok: true, role: updated.role };
+		},
+	);
+
+	app.delete<{ Params: { id: string; userId: string } }>(
+		"/v1/workspaces/:id/members/:userId",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request) => {
+			const wsId = request.params.id;
+			const targetUserId = request.params.userId;
+			const actor = (request as AuthenticatedRequest).user;
+
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, wsId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			if (ws.ownerUserId === targetUserId) {
+				throw forbidden("Cannot remove the workspace owner.");
+			}
+			if (targetUserId === actor.id) {
+				throw forbidden("You cannot remove yourself. Ask another admin.");
+			}
+
+			const [removed] = await db
+				.delete(workspaceMembers)
+				.where(
+					and(
+						eq(workspaceMembers.workspaceId, wsId),
+						eq(workspaceMembers.userId, targetUserId),
+					),
+				)
+				.returning();
+
+			if (!removed) throw notFound("Member not found.");
+			return { ok: true };
 		},
 	);
 }

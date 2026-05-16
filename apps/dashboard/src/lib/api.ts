@@ -45,8 +45,19 @@ export interface ConversationDetail extends Conversation {
 export interface WorkspaceMember {
 	userId: string;
 	role: string;
+	status?: string;
 	email: string | null;
 	fullName: string | null;
+	joinedAt?: string | null;
+}
+
+export interface WorkspaceDetail {
+	id: string;
+	name: string;
+	slug: string;
+	plan: string;
+	locale: string;
+	timezone: string;
 }
 
 export interface Message {
@@ -226,6 +237,107 @@ export async function fetchWorkspaceMembers(
 	if (!res.ok) return [];
 	const json = await res.json();
 	return json.data ?? [];
+}
+
+export async function fetchWorkspaceDetail(
+	workspaceId: string,
+): Promise<WorkspaceDetail | null> {
+	const res = await authFetch(`${API_URL}/v1/workspaces/${workspaceId}`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
+export async function updateWorkspace(
+	workspaceId: string,
+	data: { name?: string; locale?: string; timezone?: string },
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/workspaces/${workspaceId}`, {
+		method: "PATCH",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify(data),
+	});
+	return res.ok;
+}
+
+export async function updateProfile(data: {
+	full_name?: string;
+	locale?: string;
+	current_password?: string;
+	new_password?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+	const token = getAccessToken();
+	const res = await authFetch(`${API_URL}/v1/auth/me`, {
+		method: "PATCH",
+		headers: {
+			"Content-Type": "application/json",
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
+		body: JSON.stringify(data),
+	});
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return { ok: false, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return { ok: true };
+}
+
+export async function inviteWorkspaceMember(
+	workspaceId: string,
+	data: { email: string; role: string; full_name?: string; password?: string },
+): Promise<{
+	ok: boolean;
+	temporaryPassword?: string;
+	error?: string;
+}> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/members/invite`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify(data),
+		},
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return { ok: false, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return {
+		ok: true,
+		temporaryPassword: body.temporary_password,
+	};
+}
+
+export async function updateMemberRole(
+	workspaceId: string,
+	userId: string,
+	role: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/members/${userId}`,
+		{
+			method: "PATCH",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify({ role }),
+		},
+	);
+	return res.ok;
+}
+
+export async function removeWorkspaceMember(
+	workspaceId: string,
+	userId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/members/${userId}`,
+		{
+			method: "DELETE",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	return res.ok;
 }
 
 export async function updateConversationStatus(

@@ -246,6 +246,89 @@ export async function authRoutes(app: FastifyInstance) {
 			});
 		},
 	);
+
+	app.patch<{
+		Body: {
+			full_name?: string;
+			locale?: string;
+			current_password?: string;
+			new_password?: string;
+		};
+	}>(
+		"/v1/auth/me",
+		{ preHandler: [requireAuth] },
+		async (request, reply) => {
+			const authUser = (request as AuthenticatedRequest).user;
+			const { full_name, locale, current_password, new_password } =
+				request.body ?? {};
+
+			const [existing] = await db
+				.select({
+					id: users.id,
+					email: users.email,
+					passwordHash: users.passwordHash,
+				})
+				.from(users)
+				.where(eq(users.id, authUser.id))
+				.limit(1);
+
+			if (!existing) throw unauthorized("User not found.");
+
+			const updates: Record<string, unknown> = { updatedAt: new Date() };
+			if (full_name !== undefined) updates.fullName = full_name.trim() || null;
+			if (locale !== undefined) updates.locale = locale.trim() || "fa-IR";
+
+			if (new_password) {
+				if (new_password.length < 8) {
+					throw validationError(
+						"New password must be at least 8 characters.",
+						"new_password",
+					);
+				}
+				if (!existing.passwordHash) {
+					throw validationError(
+						"Set a password via registration first.",
+						"new_password",
+					);
+				}
+				if (!current_password) {
+					throw validationError(
+						"current_password is required to change password.",
+						"current_password",
+					);
+				}
+				const ok = await comparePassword(current_password, existing.passwordHash);
+				if (!ok) {
+					throw validationError("Current password is incorrect.", "current_password");
+				}
+				updates.passwordHash = await hashPassword(new_password);
+			}
+
+			if (Object.keys(updates).length === 1) {
+				throw validationError("No valid fields to update.");
+			}
+
+			const [user] = await db
+				.update(users)
+				.set(updates)
+				.where(eq(users.id, authUser.id))
+				.returning({
+					id: users.id,
+					email: users.email,
+					fullName: users.fullName,
+					locale: users.locale,
+				});
+
+			return reply.send({
+				user: {
+					id: user.id,
+					email: user.email,
+					full_name: user.fullName,
+					locale: user.locale,
+				},
+			});
+		},
+	);
 }
 
 async function loadUserWorkspaces(userId: string) {
