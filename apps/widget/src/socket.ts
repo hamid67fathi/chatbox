@@ -9,11 +9,21 @@ type SocketLike = {
 
 type IOConnectFn = (url: string, opts: Record<string, unknown>) => SocketLike;
 
+function normalizeMessage(raw: Record<string, unknown>): Message {
+	return {
+		id: String(raw.id ?? ""),
+		body: String(raw.body ?? ""),
+		senderType: String(raw.senderType ?? raw.sender_type ?? "system"),
+		createdAt: String(
+			raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+		),
+	};
+}
+
 export class WidgetSocket {
 	private socket: SocketLike | null = null;
 	private onMessage: ((msg: Message) => void) | null = null;
 	private onTyping: ((data: { isTyping: boolean }) => void) | null = null;
-	private seenIds = new Set<string>();
 
 	connect(
 		apiUrl: string,
@@ -26,6 +36,11 @@ export class WidgetSocket {
 	) {
 		this.onMessage = callbacks.onMessage;
 		this.onTyping = callbacks.onTyping;
+
+		if (this.socket) {
+			this.socket.disconnect();
+			this.socket = null;
+		}
 
 		const ioConnect = (globalThis as unknown as { io?: IOConnectFn }).io;
 		if (!ioConnect) {
@@ -42,10 +57,10 @@ export class WidgetSocket {
 		});
 
 		this.socket.on("message:new", (data: unknown) => {
-			const d = data as { message: Message };
-			if (this.seenIds.has(d.message.id)) return;
-			this.seenIds.add(d.message.id);
-			this.onMessage?.(d.message);
+			const payload = data as { message?: Record<string, unknown> };
+			const raw = payload.message ?? (data as Record<string, unknown>);
+			if (!raw?.id) return;
+			this.onMessage?.(normalizeMessage(raw));
 		});
 
 		this.socket.on("typing", (data: unknown) => {

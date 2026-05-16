@@ -7,7 +7,6 @@ import {
 	fetchWidgetTheme,
 	sendMessageHttp,
 } from "./api.js";
-import { randomId } from "./id.js";
 import { WidgetSocket } from "./socket.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
 
@@ -40,6 +39,7 @@ export class ChatBoxWidget {
 	private conversationId = "";
 	private isOpen = false;
 	private welcomeShown = false;
+	private readonly renderedIds = new Set<string>();
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
@@ -157,7 +157,10 @@ export class ChatBoxWidget {
 				this.showWelcome();
 			} else {
 				this.welcomeEl.style.display = "none";
-				for (const msg of msgs) this.appendMessage(msg, false);
+				for (const msg of msgs) {
+					if (msg.id) this.renderedIds.add(msg.id);
+					this.appendMessage(msg, false);
+				}
 			}
 
 			this.ws.connect(
@@ -199,6 +202,10 @@ export class ChatBoxWidget {
 	}
 
 	private appendMessage(msg: Message, scroll = true) {
+		if (msg.id) {
+			if (this.renderedIds.has(msg.id)) return;
+			this.renderedIds.add(msg.id);
+		}
 		const el = document.createElement("div");
 		el.className = `cb-msg ${msg.senderType}`;
 		el.textContent = msg.body;
@@ -220,15 +227,9 @@ export class ChatBoxWidget {
 		this.inputEl.value = "";
 		this.sendBtn.disabled = true;
 
-		this.appendMessage({
-			id: randomId(),
-			body,
-			senderType: "contact",
-			createdAt: new Date().toISOString(),
-		});
-
 		try {
-			await sendMessageHttp(this.config, body);
+			const msg = await sendMessageHttp(this.config, body);
+			this.appendMessage(msg);
 		} catch (err) {
 			console.error("[ChatBox] Send failed:", err);
 		} finally {
