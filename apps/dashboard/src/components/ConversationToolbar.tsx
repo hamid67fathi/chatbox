@@ -9,6 +9,7 @@ import {
 	assignConversation,
 	fetchConversationDetail,
 	fetchWorkspaceMembers,
+	refreshConversationSummary,
 	updateConversationPriority,
 	updateConversationStatus,
 } from "@/lib/api";
@@ -47,16 +48,33 @@ export function ConversationToolbar({
 	const [noteInput, setNoteInput] = useState("");
 	const [notesOpen, setNotesOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [summaryLoading, setSummaryLoading] = useState(false);
 
 	const reload = useCallback(async () => {
 		const d = await fetchConversationDetail(workspaceId, conversationId);
 		if (d) setDetail(d);
+		return d;
 	}, [workspaceId, conversationId]);
 
 	useEffect(() => {
-		reload();
+		void (async () => {
+			const d = await reload();
+			if (d && !d.summary) {
+				setSummaryLoading(true);
+				const { summary } = await refreshConversationSummary(
+					workspaceId,
+					conversationId,
+				);
+				setSummaryLoading(false);
+				if (summary) {
+					setDetail((prev) => (prev ? { ...prev, summary } : prev));
+					onUpdated?.({ summary });
+				}
+			}
+		})();
 		fetchWorkspaceMembers(workspaceId).then(setMembers);
-	}, [reload, workspaceId]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- load once per conversation
+	}, [workspaceId, conversationId]);
 
 	async function run<T>(action: () => Promise<T>, patch?: Partial<ConversationDetail>) {
 		setSaving(true);
@@ -85,6 +103,44 @@ export function ConversationToolbar({
 
 	return (
 		<div className="shrink-0 border-b border-border bg-card">
+			{(detail.summary || summaryLoading) && (
+				<div className="border-b border-border bg-muted/30 px-4 py-2 text-sm">
+					<div className="mb-1 flex items-center justify-between gap-2">
+						<span className="text-xs font-medium text-muted-foreground">
+							خلاصه مکالمه
+						</span>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="h-7 text-xs"
+							disabled={summaryLoading}
+							onClick={() => {
+								setSummaryLoading(true);
+								void refreshConversationSummary(
+									workspaceId,
+									conversationId,
+								).then(({ summary }) => {
+									setSummaryLoading(false);
+									if (summary) {
+										setDetail((prev) =>
+											prev ? { ...prev, summary } : prev,
+										);
+										onUpdated?.({ summary });
+									}
+								});
+							}}
+						>
+							{summaryLoading ? "…" : "بروزرسانی"}
+						</Button>
+					</div>
+					<p className="whitespace-pre-wrap text-foreground leading-relaxed">
+						{summaryLoading && !detail.summary
+							? "در حال تهیه خلاصه…"
+							: detail.summary}
+					</p>
+				</div>
+			)}
 			<div className="flex flex-wrap items-center gap-2 px-4 py-3">
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-sm font-semibold">{visitorLabel}</p>

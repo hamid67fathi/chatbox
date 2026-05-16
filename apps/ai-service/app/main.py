@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from .chunker import chunk_text
 from .config import settings
 from .copilot import generate_copilot_suggestions, stream_copilot_suggestions
+from .sentiment import analyze_sentiment
+from .summarizer import summarize_conversation
 from .db import close_pool, get_pool
 from .embeddings import embed_texts
 from .router import route_and_answer
@@ -224,6 +226,53 @@ async def copilot_stream(req: CopilotRequest):
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+# ── Sentiment & Summary ─────────────────────────────
+
+
+class SentimentRequest(BaseModel):
+    text: str
+
+
+class SentimentResponse(BaseModel):
+    score: float
+
+
+@app.post("/v1/sentiment", response_model=SentimentResponse)
+async def sentiment(req: SentimentRequest):
+    if not req.text.strip():
+        raise HTTPException(400, "text is required")
+    score = await analyze_sentiment(req.text)
+    return SentimentResponse(score=score)
+
+
+class SummarizeRequest(BaseModel):
+    workspace_id: str
+    messages: list[CopilotMessage]
+    contact_name: str | None = None
+    conversation_id: str | None = None
+
+
+class SummarizeResponse(BaseModel):
+    summary: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+
+
+@app.post("/v1/summarize", response_model=SummarizeResponse)
+async def summarize(req: SummarizeRequest):
+    if not req.messages:
+        raise HTTPException(400, "messages is required")
+    payload = [m.model_dump() for m in req.messages]
+    result = await summarize_conversation(payload, req.contact_name)
+    return SummarizeResponse(
+        summary=result["summary"],
+        model=result["model"],
+        input_tokens=result["input_tokens"],
+        output_tokens=result["output_tokens"],
     )
 
 

@@ -7,6 +7,10 @@ import {
 	type contacts,
 } from "../db/schema/index.js";
 import { askAI } from "./ai-client.js";
+import {
+	triggerContactMessageSentiment,
+	triggerConversationSummary,
+} from "./conversation-insights.js";
 import { getIO } from "../ws/broadcast.js";
 
 export function broadcastNewConversation(
@@ -61,6 +65,16 @@ export async function deliverNewMessage(
 		.where(eq(messages.id, message.id))
 		.returning();
 	await broadcastNewMessage(delivered ?? message, conversationId, workspaceId);
+
+	const published = delivered ?? message;
+	if (published.senderType === "contact" && published.body?.trim()) {
+		triggerContactMessageSentiment(
+			workspaceId,
+			conversationId,
+			published.id,
+			published.body,
+		);
+	}
 }
 
 export async function broadcastNewMessage(
@@ -150,6 +164,8 @@ async function runAIReply(
 				conversation_id: conversationId,
 			});
 		} catch {}
+
+		triggerConversationSummary(workspaceId, conversationId, "handoff");
 		return;
 	}
 

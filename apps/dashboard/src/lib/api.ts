@@ -16,6 +16,9 @@ export interface Conversation {
 	createdAt: string;
 	aiHandled?: boolean;
 	needsHuman?: boolean;
+	sentimentScore?: string | number | null;
+	summary?: string | null;
+	metadata?: Record<string, unknown> | null;
 	tags?: string[];
 	contact?: {
 		id: string;
@@ -82,6 +85,7 @@ export interface Message {
 	readAt?: string | null;
 	deliveredAt?: string | null;
 	replyToId?: string | null;
+	sentimentScore?: number | null;
 }
 
 export interface ConversationsPage {
@@ -235,7 +239,40 @@ export function normalizeMessage(raw: Record<string, unknown>): Message {
 		readAt: (raw.readAt ?? raw.read_at ?? null) as string | null,
 		deliveredAt: (raw.deliveredAt ?? raw.delivered_at ?? null) as string | null,
 		replyToId: (raw.replyToId ?? raw.reply_to_id ?? null) as string | null,
+		sentimentScore: parseMessageSentiment(raw.reactions),
 	};
+}
+
+function parseMessageSentiment(reactions: unknown): number | null {
+	if (!reactions || typeof reactions !== "object") return null;
+	const s = (reactions as { sentiment?: unknown }).sentiment;
+	if (typeof s === "number") return s;
+	if (typeof s === "string") {
+		const n = Number.parseFloat(s);
+		return Number.isFinite(n) ? n : null;
+	}
+	return null;
+}
+
+export async function refreshConversationSummary(
+	workspaceId: string,
+	conversationId: string,
+): Promise<{ summary: string | null; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/summary`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return {
+			summary: null,
+			error: body?.error?.message ?? `HTTP ${res.status}`,
+		};
+	}
+	return { summary: body?.data?.summary ?? null };
 }
 
 export async function fetchConversationDetail(
@@ -261,6 +298,18 @@ export async function fetchConversationDetail(
 		contact: raw.contact,
 		tags: raw.tags ?? [],
 		notes: raw.notes ?? [],
+		aiHandled: raw.aiHandled ?? raw.ai_handled,
+		needsHuman: (raw.aiHandled ?? raw.ai_handled) === false,
+		sentimentScore: raw.sentimentScore ?? raw.sentiment_score ?? null,
+		summary:
+			(typeof raw.metadata === "object" &&
+				raw.metadata &&
+				(raw.metadata as { summary?: string }).summary) ||
+			null,
+		metadata:
+			typeof raw.metadata === "object" && raw.metadata
+				? (raw.metadata as Record<string, unknown>)
+				: null,
 	};
 }
 

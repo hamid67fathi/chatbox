@@ -16,6 +16,7 @@ import {
 } from "../lib/conversation-access.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import { refreshConversationSummary } from "../lib/conversation-insights.js";
 import { getIO } from "../ws/broadcast.js";
 
 export async function conversationRoutes(app: FastifyInstance) {
@@ -405,6 +406,40 @@ export async function conversationRoutes(app: FastifyInstance) {
 				body: note.body,
 				createdAt: note.createdAt,
 				author: { id: user.id, email: user.email, fullName: null },
+			};
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/summary",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const convId = request.params.id;
+			const user = (request as AuthenticatedRequest).user;
+
+			const row = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, convId),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!row) throw notFound("Conversation not found.");
+			await assertConversationAccess(row, wsId, user.id);
+
+			const summary = await refreshConversationSummary(
+				wsId,
+				convId,
+				"manual",
+				user.id,
+			);
+
+			return {
+				data: {
+					summary,
+					message: summary
+						? undefined
+						: "خلاصه‌سازی در دسترس نبود.",
+				},
 			};
 		},
 	);

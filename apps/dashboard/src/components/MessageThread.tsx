@@ -21,6 +21,7 @@ import {
 	resolveCannedByShortcut,
 } from "@/lib/canned";
 import { getSocket } from "@/lib/socket";
+import { sentimentMood } from "@/lib/sentiment-mood";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -278,6 +279,10 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 		<div className="flex min-h-0 flex-1 flex-col">
 			<div className="flex-1 space-y-3 overflow-y-auto p-4">
 				{messages.map((msg) => {
+					const contactMood =
+						msg.senderType === "contact"
+							? sentimentMood(msg.sentimentScore ?? null)
+							: null;
 					const quoted = msg.replyToId
 						? messages.find((m) => m.id === msg.replyToId)
 						: null;
@@ -331,6 +336,11 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 									minute: "2-digit",
 								})}
 							</span>
+							{msg.senderType === "contact" && contactMood && (
+								<span title={`احساس: ${contactMood.label}`}>
+									{contactMood.emoji}
+								</span>
+							)}
 							{(msg.senderType === "agent" || msg.senderType === "contact") && (
 								<MessageStatus msg={msg} />
 							)}

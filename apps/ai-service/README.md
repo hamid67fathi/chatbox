@@ -71,6 +71,17 @@ curl -X POST http://localhost:8000/v1/copilot \
 
 Stream (SSE): `POST /v1/copilot/stream` با همان body.
 
+### Sentiment & Summary
+```bash
+curl -X POST http://localhost:8000/v1/sentiment \
+  -H "Content-Type: application/json" \
+  -d '{"text": "از خدمات راضی نیستم"}'
+
+curl -X POST http://localhost:8000/v1/summarize \
+  -H "Content-Type: application/json" \
+  -d '{"workspace_id":"<UUID>","messages":[{"role":"contact","content":"سلام"}]}'
+```
+
 ### Classify only (debug)
 ```bash
 curl -X POST http://localhost:8000/v1/classify \

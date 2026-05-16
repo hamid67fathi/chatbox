@@ -1,6 +1,7 @@
 "use client";
 
 import type { Conversation } from "@/lib/api";
+import { parseSentimentScore, sentimentMood } from "@/lib/sentiment-mood";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
@@ -75,7 +76,9 @@ export function ConversationList({
 
 	return (
 		<ul className="flex-1 overflow-y-auto">
-			{conversations.map((conv) => (
+			{conversations.map((conv) => {
+				const mood = sentimentMood(parseSentimentScore(conv.sentimentScore));
+				return (
 				<li key={conv.id}>
 					<button
 						type="button"
@@ -87,6 +90,12 @@ export function ConversationList({
 					>
 						<div className="flex items-start justify-between gap-2">
 							<span className="truncate text-sm font-medium">
+								<span
+									className={cn("me-0.5", mood.className)}
+									title={`احساس: ${mood.label}`}
+								>
+									{mood.emoji}
+								</span>
 								{priorityLabel(conv.priority) && (
 									<span className="me-0.5 text-destructive" title="اولویت">
 										{priorityLabel(conv.priority)}
@@ -115,7 +124,8 @@ export function ConversationList({
 						</div>
 					</button>
 				</li>
-			))}
+			);
+			})}
 			{hasMore && (
 				<li ref={sentinelRef} className="py-3 text-center text-xs text-muted-foreground">
 					{loadingMore ? "در حال بارگذاری…" : "بارگذاری بیشتر…"}

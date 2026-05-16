@@ -23,11 +23,20 @@ interface Props {
 }
 
 function normalizeConversation(raw: Conversation): Conversation {
+	const meta =
+		raw.metadata && typeof raw.metadata === "object"
+			? raw.metadata
+			: null;
 	return {
 		...raw,
 		assignedAgentId:
 			raw.assignedAgentId ?? raw.assignedUserId ?? null,
 		lastAgentReplyAt: raw.lastAgentReplyAt ?? null,
+		needsHuman: raw.needsHuman ?? raw.aiHandled === false,
+		sentimentScore: raw.sentimentScore ?? null,
+		summary:
+			raw.summary ??
+			(typeof meta?.summary === "string" ? meta.summary : null),
 	};
 }
 
@@ -188,7 +197,29 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		const onNeedsHuman = (data: { conversation_id: string }) => {
 			setConversations((prev) =>
 				prev.map((c) =>
-					c.id === data.conversation_id ? { ...c, needsHuman: true } : c,
+					c.id === data.conversation_id
+						? { ...c, needsHuman: true, aiHandled: false }
+						: c,
+				),
+			);
+		};
+
+		const onInsightsUpdated = (data: {
+			conversation_id: string;
+			sentiment_score?: string | null;
+			summary?: string | null;
+		}) => {
+			setConversations((prev) =>
+				prev.map((c) =>
+					c.id === data.conversation_id
+						? {
+								...c,
+								...(data.sentiment_score != null
+									? { sentimentScore: data.sentiment_score }
+									: {}),
+								...(data.summary != null ? { summary: data.summary } : {}),
+							}
+						: c,
 				),
 			);
 		};
@@ -198,6 +229,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		socket.on("message:new", onMessageNew);
 		socket.on("conv:assigned", onConvAssigned);
 		socket.on("conv:needs_human", onNeedsHuman);
+		socket.on("conv:insights_updated", onInsightsUpdated);
 
 		if (socket.connected) onConnected();
 
@@ -207,6 +239,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 			socket.off("message:new", onMessageNew);
 			socket.off("conv:assigned", onConvAssigned);
 			socket.off("conv:needs_human", onNeedsHuman);
+			socket.off("conv:insights_updated", onInsightsUpdated);
 		};
 	}, [workspaceId, userId, workspaceRole, reloadConversations]);
 
