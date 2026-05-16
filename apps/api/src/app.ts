@@ -17,6 +17,7 @@ import { authRoutes } from "./routes/auth.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { cannedResponseRoutes } from "./routes/canned-responses.js";
+import { copilotRoutes } from "./routes/copilot.js";
 import { knowledgeRoutes } from "./routes/knowledge.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { messageRoutes } from "./routes/messages.js";
@@ -115,6 +116,7 @@ export function buildApp() {
 		instance.register(messageRoutes);
 		instance.register(uploadRoutes);
 		instance.register(cannedResponseRoutes);
+		instance.register(copilotRoutes);
 		instance.register(knowledgeRoutes);
 		instance.register(billingRoutes);
 	});

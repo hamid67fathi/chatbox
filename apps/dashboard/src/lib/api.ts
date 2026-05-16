@@ -762,4 +762,84 @@ export async function updateWidgetConfig(
 	return { ok: true };
 }
 
+export interface CopilotSuggestion {
+	style: string;
+	label: string;
+	text: string;
+}
+
+export type CopilotStreamEvent =
+	| { type: "meta"; model?: string }
+	| {
+			type: "suggestion";
+			index: number;
+			style: string;
+			label: string;
+			text: string;
+	  }
+	| { type: "done"; input_tokens?: number; output_tokens?: number }
+	| { type: "error"; message?: string };
+
+export async function streamCopilotSuggestions(
+	workspaceId: string,
+	conversationId: string,
+	onEvent: (event: CopilotStreamEvent) => void,
+	signal?: AbortSignal,
+): Promise<{ ok: boolean; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/copilot/stream`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				...authHeaders(workspaceId),
+			},
+			body: "{}",
+			signal,
+		},
+	);
+
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return {
+			ok: false,
+			error: body?.error?.message ?? `HTTP ${res.status}`,
+		};
+	}
+
+	if (!res.body) {
+		return { ok: false, error: "پاسخ خالی از سرور." };
+	}
+
+	const reader = res.body.getReader();
+	const decoder = new TextDecoder();
+	let buffer = "";
+
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+			const parts = buffer.split("\n\n");
+			buffer = parts.pop() ?? "";
+			for (const part of parts) {
+				for (const line of part.split("\n")) {
+					if (!line.startsWith("data: ")) continue;
+					try {
+						onEvent(JSON.parse(line.slice(6)) as CopilotStreamEvent);
+					} catch {
+						/* skip */
+					}
+				}
+			}
+		}
+		return { ok: true };
+	} catch (err) {
+		if ((err as Error).name === "AbortError") {
+			return { ok: false, error: "لغو شد." };
+		}
+		return { ok: false, error: (err as Error).message };
+	}
+}
+
 export { API_URL };

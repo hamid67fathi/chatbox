@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CannedResponsePicker } from "@/components/CannedResponsePicker";
 import type { CannedResponse, Message } from "@/lib/api";
+import { CopilotSuggestions } from "@/components/CopilotSuggestions";
 import { EmojiPicker } from "@/components/EmojiPicker";
 import { MessageBody } from "@/components/MessageBody";
 import { MessageStatus } from "@/components/MessageStatus";
@@ -52,6 +53,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 	const [cannedItems, setCannedItems] = useState<CannedResponse[]>([]);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadError, setUploadError] = useState("");
+	const [copilotOpen, setCopilotOpen] = useState(false);
 
 	const markAsRead = useCallback(
 		(messageId: string) => {
@@ -84,6 +86,10 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 	useEffect(() => {
 		fetchCannedResponses(workspaceId).then(setCannedItems);
 	}, [workspaceId]);
+
+	useEffect(() => {
+		setCopilotOpen(false);
+	}, [conversationId]);
 
 	useEffect(() => {
 		seenRef.current.clear();
@@ -355,6 +361,13 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 			{uploadError && (
 				<p className="px-4 pb-1 text-xs text-destructive">{uploadError}</p>
 			)}
+			<CopilotSuggestions
+				workspaceId={workspaceId}
+				conversationId={conversationId}
+				open={copilotOpen}
+				onClose={() => setCopilotOpen(false)}
+				onSelect={(suggestion) => setText(suggestion)}
+			/>
 			<form
 				className="relative flex gap-2 border-t border-border bg-card p-4"
 				onSubmit={(e) => {
@@ -376,6 +389,16 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 					disabled={sending}
 					onPick={(emoji) => setText((t) => t + emoji)}
 				/>
+				<Button
+					type="button"
+					variant="outline"
+					disabled={sending}
+					onClick={() => setCopilotOpen((v) => !v)}
+					title="پیشنهاد AI"
+					className={copilotOpen ? "border-primary text-primary" : ""}
+				>
+					✨
+				</Button>
 				<Button
 					type="button"
 					variant="outline"

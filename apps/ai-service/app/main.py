@@ -1,11 +1,14 @@
+import json
 import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .chunker import chunk_text
 from .config import settings
+from .copilot import generate_copilot_suggestions, stream_copilot_suggestions
 from .db import close_pool, get_pool
 from .embeddings import embed_texts
 from .router import route_and_answer
@@ -150,6 +153,77 @@ async def classify(req: ClassifyRequest):
         intent=intent_result.intent.value,
         confidence=intent_result.confidence,
         route=route.value,
+    )
+
+
+# ── Copilot (agent reply suggestions) ───────────────
+
+
+class CopilotMessage(BaseModel):
+    role: str
+    content: str
+
+
+class CopilotRequest(BaseModel):
+    workspace_id: str
+    messages: list[CopilotMessage]
+    contact_name: str | None = None
+    conversation_id: str | None = None
+
+
+class CopilotSuggestion(BaseModel):
+    style: str
+    label: str
+    text: str
+
+
+class CopilotResponse(BaseModel):
+    suggestions: list[CopilotSuggestion]
+    model: str
+    input_tokens: int
+    output_tokens: int
+
+
+@app.post("/v1/copilot", response_model=CopilotResponse)
+async def copilot(req: CopilotRequest):
+    if not req.messages:
+        raise HTTPException(400, "messages is required")
+    payload = [m.model_dump() for m in req.messages]
+    result = await generate_copilot_suggestions(
+        req.workspace_id,
+        payload,
+        req.contact_name,
+    )
+    return CopilotResponse(
+        suggestions=result["suggestions"],
+        model=result["model"],
+        input_tokens=result["input_tokens"],
+        output_tokens=result["output_tokens"],
+    )
+
+
+@app.post("/v1/copilot/stream")
+async def copilot_stream(req: CopilotRequest):
+    if not req.messages:
+        raise HTTPException(400, "messages is required")
+    payload = [m.model_dump() for m in req.messages]
+
+    async def event_generator():
+        async for event in stream_copilot_suggestions(
+            req.workspace_id,
+            payload,
+            req.contact_name,
+        ):
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

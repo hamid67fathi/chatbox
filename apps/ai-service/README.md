@@ -49,6 +49,18 @@ curl -X POST http://localhost:8000/v1/ask \
 
 Response includes `intent` (faq|transactional|complaint|chitchat|off_topic), `route` (rag|tool_use|escalation), and `handoff`.
 
+### Copilot (۳ پیشنهاد پاسخ برای اپراتور)
+```bash
+curl -X POST http://localhost:8000/v1/copilot \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workspace_id": "<WORKSPACE_UUID>",
+    "messages": [{"role": "contact", "content": "سلام، سفارشم کجاست؟"}]
+  }'
+```
+
+Stream (SSE): `POST /v1/copilot/stream` با همان body.
+
 ### Classify only (debug)
 ```bash
 curl -X POST http://localhost:8000/v1/classify \
