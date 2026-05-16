@@ -38,6 +38,7 @@ export function buildApp() {
 		contentSecurityPolicy: false,
 		crossOriginOpenerPolicy: false,
 		crossOriginEmbedderPolicy: false,
+		crossOriginResourcePolicy: { policy: "cross-origin" },
 		originAgentCluster: false,
 	});
 	app.register(rateLimit, {
@@ -53,6 +54,10 @@ export function buildApp() {
 		root: UPLOAD_ROOT,
 		prefix: "/uploads/",
 		decorateReply: false,
+		setHeaders(res) {
+			res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+			res.setHeader("Access-Control-Allow-Origin", "*");
+		},
 	});
 
 	app.get("/widget-demo/dist/index.global.js", async (_request, reply) => {

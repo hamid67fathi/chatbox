@@ -80,6 +80,7 @@ export async function messageRoutes(app: FastifyInstance) {
 		const convId = request.params.id;
 		const {
 			body,
+			type,
 			attachments,
 			sender_type,
 			sender_user_id,
