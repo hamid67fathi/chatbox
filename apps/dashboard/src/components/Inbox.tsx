@@ -1,12 +1,17 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import type { Conversation, ConversationFilters, Message } from "@/lib/api";
+import type {
+	Conversation,
+	ConversationDetail,
+	ConversationFilters,
+	Message,
+} from "@/lib/api";
 import { fetchConversations } from "@/lib/api";
+import { canAgentSeeConversation } from "@/lib/conversation-access";
 import { getSocket } from "@/lib/socket";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ConversationDetail } from "@/lib/api";
 import { ConversationList } from "./ConversationList";
 import { ConversationToolbar } from "./ConversationToolbar";
 import { MessageThread } from "./MessageThread";
@@ -14,6 +19,16 @@ import { MessageThread } from "./MessageThread";
 interface Props {
 	workspaceId: string;
 	userId: string;
+	workspaceRole: string;
+}
+
+function normalizeConversation(raw: Conversation): Conversation {
+	return {
+		...raw,
+		assignedAgentId:
+			raw.assignedAgentId ?? raw.assignedUserId ?? null,
+		lastAgentReplyAt: raw.lastAgentReplyAt ?? null,
+	};
 }
 
 const STATUS_OPTIONS = [
@@ -29,7 +44,7 @@ const CHANNEL_OPTIONS = [
 	{ value: "widget", label: "ویجت" },
 ];
 
-export function Inbox({ workspaceId, userId }: Props) {
+export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
@@ -50,7 +65,7 @@ export function Inbox({ workspaceId, userId }: Props) {
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
 		fetchConversations(workspaceId, apiFilters).then(({ data, error, page }) => {
-			setConversations(data);
+			setConversations(data.map(normalizeConversation));
 			setLoadError(error ?? null);
 			setHasMore(page?.has_more ?? false);
 			setNextCursor(page?.next_cursor ?? null);
@@ -69,7 +84,10 @@ export function Inbox({ workspaceId, userId }: Props) {
 				}
 				setConversations((prev) => {
 					const ids = new Set(prev.map((c) => c.id));
-					return [...prev, ...data.filter((c) => !ids.has(c.id))];
+					return [
+						...prev,
+						...data.map(normalizeConversation).filter((c) => !ids.has(c.id)),
+					];
 				});
 				setHasMore(page?.has_more ?? false);
 				setNextCursor(page?.next_cursor ?? null);
@@ -97,22 +115,50 @@ export function Inbox({ workspaceId, userId }: Props) {
 		};
 
 		const onConversationNew = (data: { conversation: Conversation }) => {
+			const conv = normalizeConversation(data.conversation);
+			if (!canAgentSeeConversation(conv, userId, workspaceRole)) return;
 			setConversations((prev) => {
-				if (prev.some((c) => c.id === data.conversation.id)) return prev;
-				return [data.conversation, ...prev];
+				if (prev.some((c) => c.id === conv.id)) return prev;
+				return [conv, ...prev];
 			});
 		};
 
-		const onMessageNew = (data: { message: Message }) => {
+		const onMessageNew = (data: {
+			message: Message;
+			conversation?: Partial<Conversation> & { id?: string };
+		}) => {
 			const convId = data.message.conversationId;
+			const meta = data.conversation;
 			setConversations((prev) => {
 				const idx = prev.findIndex((c) => c.id === convId);
+				if (meta?.assignedAgentId && meta.assignedAgentId !== userId) {
+					if (!canAgentSeeConversation(
+						{
+							assignedAgentId: meta.assignedAgentId,
+							lastAgentReplyAt: meta.lastAgentReplyAt ?? new Date().toISOString(),
+						},
+						userId,
+						workspaceRole,
+					)) {
+						if (idx === -1) return prev;
+						return prev.filter((c) => c.id !== convId);
+					}
+				}
 				if (idx === -1) {
 					reloadConversations();
 					return prev;
 				}
 				const next = [...prev];
-				next[idx] = { ...next[idx], lastMessageAt: data.message.createdAt };
+				next[idx] = {
+					...next[idx],
+					lastMessageAt: data.message.createdAt,
+					...(meta?.assignedAgentId !== undefined
+						? { assignedAgentId: meta.assignedAgentId }
+						: {}),
+					...(meta?.lastAgentReplyAt !== undefined
+						? { lastAgentReplyAt: meta.lastAgentReplyAt }
+						: {}),
+				};
 				next.sort(
 					(a, b) =>
 						new Date(b.lastMessageAt ?? b.createdAt).getTime() -
@@ -120,6 +166,23 @@ export function Inbox({ workspaceId, userId }: Props) {
 				);
 				return next;
 			});
+		};
+
+		const onConvAssigned = (data: { conv_id: string; agent_id: string }) => {
+			if (!canAgentSeeConversation(
+				{ assignedAgentId: data.agent_id, lastAgentReplyAt: new Date().toISOString() },
+				userId,
+				workspaceRole,
+			)) {
+				setConversations((prev) => prev.filter((c) => c.id !== data.conv_id));
+				setActiveId((id) => (id === data.conv_id ? null : id));
+			} else {
+				setConversations((prev) =>
+					prev.map((c) =>
+						c.id === data.conv_id ? { ...c, assignedAgentId: data.agent_id } : c,
+					),
+				);
+			}
 		};
 
 		const onNeedsHuman = (data: { conversation_id: string }) => {
@@ -133,6 +196,7 @@ export function Inbox({ workspaceId, userId }: Props) {
 		socket.on("connected", onConnected);
 		socket.on("conversation:new", onConversationNew);
 		socket.on("message:new", onMessageNew);
+		socket.on("conv:assigned", onConvAssigned);
 		socket.on("conv:needs_human", onNeedsHuman);
 
 		if (socket.connected) onConnected();
@@ -141,9 +205,10 @@ export function Inbox({ workspaceId, userId }: Props) {
 			socket.off("connected", onConnected);
 			socket.off("conversation:new", onConversationNew);
 			socket.off("message:new", onMessageNew);
+			socket.off("conv:assigned", onConvAssigned);
 			socket.off("conv:needs_human", onNeedsHuman);
 		};
-	}, [workspaceId, reloadConversations]);
+	}, [workspaceId, userId, workspaceRole, reloadConversations]);
 
 	const filteredConversations = useMemo(() => {
 		const q = search.trim().toLowerCase();

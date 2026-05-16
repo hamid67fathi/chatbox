@@ -2,6 +2,11 @@ import { and, eq, gt } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { conversations, messages } from "../db/schema/index.js";
+import type { AuthenticatedRequest } from "../lib/auth.js";
+import {
+	assertConversationAccess,
+	claimConversationForAgent,
+} from "../lib/conversation-access.js";
 import {
 	deliverNewMessage,
 	triggerAIReply,
@@ -25,6 +30,9 @@ export async function messageRoutes(app: FastifyInstance) {
 			),
 		});
 		if (!conv) throw notFound("Conversation not found.");
+
+		const user = (request as AuthenticatedRequest).user;
+		await assertConversationAccess(conv, wsId, user.id);
 
 		const conditions = [
 			eq(messages.conversationId, convId),
@@ -87,19 +95,29 @@ export async function messageRoutes(app: FastifyInstance) {
 		});
 		if (!conv) throw notFound("Conversation not found.");
 
+		const user = (request as AuthenticatedRequest).user;
+		await assertConversationAccess(conv, wsId, user.id);
+
+		const effectiveSender = (sender_type as "agent") ?? "agent";
+
 		const [msg] = await db
 			.insert(messages)
 			.values({
 				workspaceId: wsId,
 				conversationId: convId,
-				senderType: (sender_type as "agent") ?? "agent",
-				senderUserId: sender_user_id,
+				senderType: effectiveSender,
+				senderUserId:
+					effectiveSender === "agent" ? (sender_user_id ?? user.id) : sender_user_id,
 				senderContactId: sender_contact_id,
 				type: (type as "text") ?? "text",
 				body,
 				replyToId: reply_to_id,
 			})
 			.returning();
+
+		if (effectiveSender === "agent") {
+			await claimConversationForAgent(convId, wsId, user.id);
+		}
 
 		await deliverNewMessage(msg, convId, wsId);
 

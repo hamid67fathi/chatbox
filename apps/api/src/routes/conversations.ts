@@ -8,6 +8,12 @@ import {
 	messages,
 } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
+import {
+	agentInboxVisibilityCondition,
+	assertConversationAccess,
+	getWorkspaceRole,
+	isSupervisorRole,
+} from "../lib/conversation-access.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 import { getIO } from "../ws/broadcast.js";
@@ -24,10 +30,16 @@ export async function conversationRoutes(app: FastifyInstance) {
 		};
 	}>("/v1/conversations", async (request) => {
 		const wsId = getWorkspaceId(request);
+		const user = (request as AuthenticatedRequest).user;
+		const role = await getWorkspaceRole(wsId, user.id);
 		const limit = Math.min(Number(request.query.limit) || 30, 100);
 		const sortAt = sql`COALESCE(${conversations.lastMessageAt}, ${conversations.createdAt})`;
 
 		const conditions = [eq(conversations.workspaceId, wsId)];
+
+		if (role && !isSupervisorRole(role)) {
+			conditions.push(agentInboxVisibilityCondition(user.id));
+		}
 
 		if (request.query.cursor) {
 			conditions.push(lt(sortAt, new Date(request.query.cursor)));
@@ -102,6 +114,10 @@ export async function conversationRoutes(app: FastifyInstance) {
 				},
 			});
 			if (!row) throw notFound("Conversation not found.");
+
+			const user = (request as AuthenticatedRequest).user;
+			await assertConversationAccess(row, wsId, user.id);
+
 			const { tags, notes, ...conv } = row;
 			return {
 				...conv,
@@ -165,8 +181,18 @@ export async function conversationRoutes(app: FastifyInstance) {
 		"/v1/conversations/:id/status",
 		async (request) => {
 			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
 			const { status } = request.body ?? {};
 			if (!status) throw validationError("status is required.", "status");
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			await assertConversationAccess(existing, wsId, user.id);
 
 			const [updated] = await db
 				.update(conversations)
@@ -204,9 +230,19 @@ export async function conversationRoutes(app: FastifyInstance) {
 		"/v1/conversations/:id/assign",
 		async (request) => {
 			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
 			const { agent_id } = request.body ?? {};
 			if (agent_id === undefined)
 				throw validationError("agent_id is required (use null to unassign).", "agent_id");
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			await assertConversationAccess(existing, wsId, user.id);
 
 			const [updated] = await db
 				.update(conversations)
@@ -252,6 +288,8 @@ export async function conversationRoutes(app: FastifyInstance) {
 				),
 			});
 			if (!conv) throw notFound("Conversation not found.");
+			const user = (request as AuthenticatedRequest).user;
+			await assertConversationAccess(conv, wsId, user.id);
 
 			const values = tags.map((tag) => ({
 				conversationId: request.params.id,
@@ -268,10 +306,20 @@ export async function conversationRoutes(app: FastifyInstance) {
 		"/v1/conversations/:id/priority",
 		async (request) => {
 			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
 			const priority = Number(request.body?.priority);
 			if (Number.isNaN(priority) || priority < 0 || priority > 3) {
 				throw validationError("priority must be 0–3.", "priority");
 			}
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			await assertConversationAccess(existing, wsId, user.id);
 
 			const [updated] = await db
 				.update(conversations)
@@ -300,6 +348,8 @@ export async function conversationRoutes(app: FastifyInstance) {
 				),
 			});
 			if (!conv) throw notFound("Conversation not found.");
+			const user = (request as AuthenticatedRequest).user;
+			await assertConversationAccess(conv, wsId, user.id);
 
 			const notes = await db.query.conversationNotes.findMany({
 				where: eq(conversationNotes.conversationId, request.params.id),
@@ -339,6 +389,7 @@ export async function conversationRoutes(app: FastifyInstance) {
 				),
 			});
 			if (!conv) throw notFound("Conversation not found.");
+			await assertConversationAccess(conv, wsId, user.id);
 
 			const [note] = await db
 				.insert(conversationNotes)

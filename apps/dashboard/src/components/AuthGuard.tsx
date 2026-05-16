@@ -10,6 +10,7 @@ export interface AuthContext {
 	userId: string;
 	userEmail: string;
 	workspaceName: string;
+	workspaceRole: string;
 }
 
 interface Props {
@@ -56,6 +57,7 @@ export function AuthGuard({ children }: Props) {
 					userId: auth.user.id,
 					userEmail: auth.user.email,
 					workspaceName: primary?.name ?? "ورک‌اسپیس",
+					workspaceRole: primary?.role ?? "agent",
 				});
 				setReady(true);
 			} catch (err) {

@@ -76,7 +76,8 @@ rule: >
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
 | P4.1 | سیستم Auth سمت API | JWT (jose) + bcrypt + sessions/otp tables + register/login/refresh/logout + auth middleware | انجام شد | 2026-05-13 | auth lib, routes, migration |
-| P4.2 | RBAC و Workspace Isolation | استخراج workspace از JWT، role check، جلوگیری cross-workspace | انجام شد | 2026-05-13 | rbac.ts + requireWorkspace middleware |
+| P4.2 | RBAC و Workspace Isolation | استخراج workspace از JWT، role check، جلوگیری cross-workspace | انجام شد | 2026-05-13 | rbac.ts؛ inbox isolation: صف مشترک + تخصیص خودکار |
+| P4.2+ | سطوح دسترسی آینده (برنامه) | نقش‌های تفصیلی، صف تیم، دسترسی گزارش/تنظیمات per-permission | برنامه‌ریزی | — | owner/admin همه را می‌بینند؛ agent فقط صف باز + مکالمات خود |
 | P4.3 | Widget Visitor Token | visitor_token (JWT 24h)، ذخیره در ویجت، اعتبارسنجی Socket.IO | انجام شد | 2026-05-13 | signVisitorToken + requireVisitorToken |
 | P4.4 | Login/Signup داشبورد | صفحات login + signup، auth context، httpOnly cookie، redirect guard | انجام شد | 2026-05-13 | /login, /register, AuthGuard, auth-store |
 | P4.5 | امنیت تکمیلی | unauthorized/forbidden errors، فیلتر PII لاگ، CSRF، محدود CORS | انجام شد | 2026-05-13 | CORS credentials, cookie plugin, seed bcrypt password |

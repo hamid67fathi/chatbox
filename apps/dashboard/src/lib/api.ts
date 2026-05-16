@@ -12,6 +12,7 @@ export interface Conversation {
 	assignedUserId?: string | null;
 	priority?: number;
 	lastMessageAt: string | null;
+	lastAgentReplyAt?: string | null;
 	createdAt: string;
 	aiHandled?: boolean;
 	needsHuman?: boolean;

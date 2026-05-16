@@ -54,17 +54,32 @@ export async function deliverNewMessage(
 	workspaceId: string,
 ) {
 	await touchConversationOnMessage(conversationId, message);
-	broadcastNewMessage(message, conversationId, workspaceId);
+	await broadcastNewMessage(message, conversationId, workspaceId);
 }
 
-export function broadcastNewMessage(
+export async function broadcastNewMessage(
 	message: typeof messages.$inferSelect,
 	conversationId: string,
 	workspaceId: string,
 ) {
 	try {
 		const io = getIO();
-		const payload = { message, conversation: { id: conversationId } };
+		const conv = await db.query.conversations.findFirst({
+			where: eq(conversations.id, conversationId),
+			columns: {
+				id: true,
+				assignedAgentId: true,
+				lastAgentReplyAt: true,
+			},
+		});
+		const payload = {
+			message,
+			conversation: {
+				id: conversationId,
+				assignedAgentId: conv?.assignedAgentId ?? null,
+				lastAgentReplyAt: conv?.lastAgentReplyAt?.toISOString() ?? null,
+			},
+		};
 		io.to(`conversation:${conversationId}`).emit("message:new", payload);
 		io.to(`workspace:${workspaceId}`).emit("message:new", payload);
 	} catch {

@@ -53,6 +53,8 @@ isProject: false
 - اصلاح `getWorkspaceId()` ([apps/api/src/lib/workspace.ts](apps/api/src/lib/workspace.ts)) -- استخراج workspace از JWT به جای header
 - پیاده‌سازی role check: owner/admin/agent/viewer
 - جلوگیری از دسترسی cross-workspace
+- **Inbox isolation (انجام شد):** مکالمه بدون پاسخ اپراتور = صف مشترک برای همه agentها؛ با اولین پاسخ اپراتور → `assignedAgentId` خودکار + مخفی از inbox بقیه
+- **آینده (برنامه‌ریزی):** سطوح دسترسی تفصیلی (per-permission)، صف‌های تیمی، محدودیت گزارش/تنظیمات/KB بر اساس نقش
 
 ### P4.3 -- Widget Visitor Token
 - endpoint `POST /widget/v1/sessions` یک `visitor_token` (JWT 24h) برگرداند
