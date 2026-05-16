@@ -26,27 +26,48 @@ export function Inbox({ workspaceId }: Props) {
 
 		const socket = getSocket(workspaceId);
 
-		socket.on("message:new", (data: { message: Message }) => {
-			setConversations((prev) =>
-				prev.map((c) =>
-					c.id === data.message.conversationId
-						? { ...c, lastMessageAt: data.message.createdAt }
-						: c,
-				),
-			);
-		});
+		const onConversationNew = (data: { conversation: Conversation }) => {
+			setConversations((prev) => {
+				if (prev.some((c) => c.id === data.conversation.id)) return prev;
+				return [data.conversation, ...prev];
+			});
+		};
 
-		socket.on("conv:needs_human", (data: { conversation_id: string }) => {
+		const onMessageNew = (data: { message: Message }) => {
+			const convId = data.message.conversationId;
+			setConversations((prev) => {
+				const idx = prev.findIndex((c) => c.id === convId);
+				if (idx === -1) {
+					void fetchConversations(workspaceId).then(setConversations);
+					return prev;
+				}
+				const next = [...prev];
+				next[idx] = { ...next[idx], lastMessageAt: data.message.createdAt };
+				next.sort(
+					(a, b) =>
+						new Date(b.lastMessageAt ?? b.createdAt).getTime() -
+						new Date(a.lastMessageAt ?? a.createdAt).getTime(),
+				);
+				return next;
+			});
+		};
+
+		const onNeedsHuman = (data: { conversation_id: string }) => {
 			setConversations((prev) =>
 				prev.map((c) =>
 					c.id === data.conversation_id ? { ...c, needsHuman: true } : c,
 				),
 			);
-		});
+		};
+
+		socket.on("conversation:new", onConversationNew);
+		socket.on("message:new", onMessageNew);
+		socket.on("conv:needs_human", onNeedsHuman);
 
 		return () => {
-			socket.off("message:new");
-			socket.off("conv:needs_human");
+			socket.off("conversation:new", onConversationNew);
+			socket.off("message:new", onMessageNew);
+			socket.off("conv:needs_human", onNeedsHuman);
 		};
 	}, [workspaceId]);
 

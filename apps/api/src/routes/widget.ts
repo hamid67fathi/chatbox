@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../db/index.js";
 import { contacts, conversations, messages, workspaces } from "../db/schema/index.js";
@@ -10,6 +10,7 @@ import {
 } from "../lib/auth.js";
 import { notFound, validationError } from "../lib/errors.js";
 import {
+	broadcastNewConversation,
 	broadcastNewMessage,
 	triggerAIReply,
 } from "../lib/message-delivery.js";
@@ -61,7 +62,10 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			let contact = visitor_id
 				? await db.query.contacts.findFirst({
-						where: eq(contacts.externalId, visitor_id),
+						where: and(
+							eq(contacts.externalId, visitor_id),
+							eq(contacts.workspaceId, ws.id),
+						),
 					})
 				: null;
 
@@ -78,15 +82,28 @@ export async function widgetRoutes(app: FastifyInstance) {
 				contact = created;
 			}
 
-			const [conv] = await db
-				.insert(conversations)
-				.values({
-					workspaceId: ws.id,
-					contactId: contact.id,
-					channel: "widget",
-					status: "open",
-				})
-				.returning();
+			const existingConv = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.workspaceId, ws.id),
+					eq(conversations.contactId, contact.id),
+					eq(conversations.status, "open"),
+				),
+				orderBy: [desc(conversations.lastMessageAt), desc(conversations.createdAt)],
+			});
+
+			let conv = existingConv;
+			if (!conv) {
+				[conv] = await db
+					.insert(conversations)
+					.values({
+						workspaceId: ws.id,
+						contactId: contact.id,
+						channel: "widget",
+						status: "open",
+					})
+					.returning();
+				broadcastNewConversation(conv, contact);
+			}
 
 			const token = await signVisitorToken(contact.id, ws.id, conv.id);
 

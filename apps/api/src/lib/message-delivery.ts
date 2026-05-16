@@ -1,8 +1,34 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { aiInteractions, conversations, messages } from "../db/schema/index.js";
+import {
+	aiInteractions,
+	conversations,
+	messages,
+	type contacts,
+} from "../db/schema/index.js";
 import { askAI } from "./ai-client.js";
 import { getIO } from "../ws/broadcast.js";
+
+export function broadcastNewConversation(
+	conversation: typeof conversations.$inferSelect,
+	contact: typeof contacts.$inferSelect,
+) {
+	try {
+		const io = getIO();
+		io.to(`workspace:${conversation.workspaceId}`).emit("conversation:new", {
+			conversation: {
+				...conversation,
+				contact: {
+					id: contact.id,
+					fullName: contact.fullName,
+					email: contact.email,
+				},
+			},
+		});
+	} catch {
+		/* socket.io not yet initialized */
+	}
+}
 
 export function broadcastNewMessage(
 	message: typeof messages.$inferSelect,
