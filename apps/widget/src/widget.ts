@@ -370,7 +370,6 @@ export class ChatBoxWidget {
 		} else {
 			this.welcomeEl.style.display = "none";
 			for (const msg of msgs) {
-				if (msg.id) this.renderedIds.add(msg.id);
 				this.appendMessage(msg, false);
 				if (msg.senderType === "agent" || msg.senderType === "ai") {
 					this.markIncomingRead(msg);
@@ -518,7 +517,10 @@ export class ChatBoxWidget {
 
 	private appendMessage(msg: Message, scroll = true) {
 		if (msg.id) {
-			if (this.renderedIds.has(msg.id)) {
+			const existing = this.messagesEl.querySelector(
+				`[data-msg-id="${msg.id}"]`,
+			);
+			if (existing) {
 				if (msg.senderType === "contact") {
 					this.updateContactMessageStatus(msg.id, {
 						readAt: msg.readAt ?? undefined,
@@ -549,13 +551,17 @@ export class ChatBoxWidget {
 
 	private renderMessageContent(el: HTMLElement, msg: Message) {
 		const att = msg.attachments?.[0];
-		if (att?.type === "image") {
+		const isImage =
+			Boolean(att) && (att.type === "image" || msg.type === "image");
+		const isFile =
+			Boolean(att) && (att.type === "file" || msg.type === "file");
+		if (isImage) {
 			const img = document.createElement("img");
 			img.className = "cb-msg-image";
 			img.src = attachmentFullUrl(this.config.apiUrl, att.url);
 			img.alt = att.name;
 			el.appendChild(img);
-		} else if (att?.type === "file") {
+		} else if (isFile) {
 			const a = document.createElement("a");
 			a.className = "cb-msg-file";
 			a.href = attachmentFullUrl(this.config.apiUrl, att.url);

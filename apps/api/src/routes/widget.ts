@@ -259,7 +259,18 @@ export async function widgetRoutes(app: FastifyInstance) {
 				orderBy: (m, { asc }) => [asc(m.createdAt)],
 			});
 
-			return { data: rows };
+			return {
+				data: rows.map((row) => ({
+					id: row.id,
+					body: row.body ?? "",
+					sender_type: row.senderType,
+					type: row.type,
+					attachments: row.attachments,
+					created_at: row.createdAt,
+					read_at: row.readAt,
+					delivered_at: row.deliveredAt,
+				})),
+			};
 		},
 	);
 

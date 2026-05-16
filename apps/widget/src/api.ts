@@ -51,20 +51,37 @@ export interface Message {
 	deliveredAt?: string | null;
 }
 
+function attachmentKind(
+	o: Record<string, unknown>,
+): "image" | "file" {
+	if (o.type === "image") return "image";
+	const mime = String(o.mime_type ?? o.mimeType ?? "");
+	if (mime.startsWith("image/")) return "image";
+	return "file";
+}
+
 function parseAttachments(raw: unknown): MessageAttachment[] | null {
-	if (!raw || !Array.isArray(raw)) return null;
+	let data: unknown = raw;
+	if (typeof data === "string") {
+		try {
+			data = JSON.parse(data) as unknown;
+		} catch {
+			return null;
+		}
+	}
+	if (!data || !Array.isArray(data)) return null;
 	const out: MessageAttachment[] = [];
-	for (const item of raw) {
+	for (const item of data) {
 		if (!item || typeof item !== "object") continue;
 		const o = item as Record<string, unknown>;
-		if (typeof o.url !== "string") continue;
+		if (typeof o.url !== "string" || !o.url) continue;
 		out.push({
 			id: typeof o.id === "string" ? o.id : undefined,
 			url: o.url,
 			name: String(o.name ?? "file"),
 			mime_type: String(o.mime_type ?? o.mimeType ?? ""),
 			size_bytes: Number(o.size_bytes ?? o.sizeBytes ?? 0),
-			type: o.type === "image" ? "image" : "file",
+			type: attachmentKind(o),
 		});
 	}
 	return out.length > 0 ? out : null;

@@ -17,12 +17,15 @@ function normalizeMessage(raw: Record<string, unknown>): Message {
 			.filter((a) => a && typeof a === "object" && typeof (a as { url?: string }).url === "string")
 			.map((a) => {
 				const o = a as Record<string, unknown>;
+				const mime = String(o.mime_type ?? o.mimeType ?? "");
+				const type =
+					o.type === "image" || mime.startsWith("image/") ? "image" : "file";
 				return {
 					url: String(o.url),
 					name: String(o.name ?? "file"),
-					mime_type: String(o.mime_type ?? ""),
-					size_bytes: Number(o.size_bytes ?? 0),
-					type: o.type === "image" ? "image" : "file",
+					mime_type: mime,
+					size_bytes: Number(o.size_bytes ?? o.sizeBytes ?? 0),
+					type,
 				};
 			});
 	}
