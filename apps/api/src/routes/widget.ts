@@ -11,7 +11,7 @@ import {
 import { notFound, validationError } from "../lib/errors.js";
 import {
 	broadcastNewConversation,
-	broadcastNewMessage,
+	deliverNewMessage,
 	triggerAIReply,
 } from "../lib/message-delivery.js";
 
@@ -155,7 +155,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 				})
 				.returning();
 
-			broadcastNewMessage(msg, conversationId, workspaceId);
+			await deliverNewMessage(msg, conversationId, workspaceId);
 			triggerAIReply(workspaceId, conversationId, body, msg.id);
 
 			return reply.status(201).send(msg);

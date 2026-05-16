@@ -47,14 +47,16 @@ export function ConversationList({ conversations, activeId, onSelect }: Props) {
 						<div className={styles.row}>
 							<span className={styles.name}>
 								{statusBadge(conv.status)}{" "}
-								{conv.subject ?? `مکالمه ${conv.channel}`}
+								{conv.contact?.fullName ?? "Visitor"} ·{" "}
+								{conv.id.slice(0, 8)}
 							</span>
 							<span className={styles.time}>
 								{timeAgo(conv.lastMessageAt ?? conv.createdAt)}
 							</span>
 						</div>
 						<div className={styles.sub}>
-							{conv.contact?.fullName ?? conv.contactId?.slice(0, 8)}
+							{conv.channel === "widget" ? "ویجت" : conv.channel}
+							{conv.subject ? ` · ${conv.subject}` : ""}
 							{conv.needsHuman && (
 								<span className={styles.needsHuman}>🔴 نیاز به اپراتور</span>
 							)}

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, exists, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
@@ -17,12 +17,29 @@ export async function conversationRoutes(app: FastifyInstance) {
 			channel?: string;
 			assigned_to?: string;
 			limit?: string;
+			include_empty?: string;
 		};
 	}>("/v1/conversations", async (request) => {
 		const wsId = getWorkspaceId(request);
 		const limit = Math.min(Number(request.query.limit) || 50, 100);
 
 		const conditions = [eq(conversations.workspaceId, wsId)];
+
+		if (request.query.include_empty !== "true") {
+			conditions.push(
+				exists(
+					db
+						.select({ x: sql`1` })
+						.from(messages)
+						.where(
+							and(
+								eq(messages.conversationId, conversations.id),
+								eq(messages.workspaceId, wsId),
+							),
+						),
+				),
+			);
+		}
 
 		if (request.query.status) {
 			conditions.push(eq(conversations.status, request.query.status as "open"));
@@ -41,7 +58,11 @@ export async function conversationRoutes(app: FastifyInstance) {
 		const rows = await db.query.conversations.findMany({
 			where: and(...conditions),
 			limit,
-			orderBy: (c, { desc }) => [desc(c.lastMessageAt), desc(c.createdAt)],
+			orderBy: [
+				desc(
+					sql`COALESCE(${conversations.lastMessageAt}, ${conversations.createdAt})`,
+				),
+			],
 			with: { contact: true },
 		});
 

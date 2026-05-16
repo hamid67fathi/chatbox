@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { conversations, messages } from "../db/schema/index.js";
 import {
-	broadcastNewMessage,
+	deliverNewMessage,
 	triggerAIReply,
 } from "../lib/message-delivery.js";
 import { notFound, validationError } from "../lib/errors.js";
@@ -101,7 +101,7 @@ export async function messageRoutes(app: FastifyInstance) {
 			})
 			.returning();
 
-		broadcastNewMessage(msg, convId, wsId);
+		await deliverNewMessage(msg, convId, wsId);
 
 		if ((sender_type ?? "agent") === "contact") {
 			triggerAIReply(wsId, convId, body, msg.id);

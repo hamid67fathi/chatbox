@@ -30,6 +30,33 @@ export function broadcastNewConversation(
 	}
 }
 
+/** Updates conversation timestamps (fallback when DB trigger is missing). */
+export async function touchConversationOnMessage(
+	conversationId: string,
+	message: typeof messages.$inferSelect,
+) {
+	const at = message.createdAt ?? new Date();
+	await db
+		.update(conversations)
+		.set({
+			lastMessageAt: at,
+			updatedAt: new Date(),
+			...(message.senderType === "agent"
+				? { lastAgentReplyAt: at }
+				: {}),
+		})
+		.where(eq(conversations.id, conversationId));
+}
+
+export async function deliverNewMessage(
+	message: typeof messages.$inferSelect,
+	conversationId: string,
+	workspaceId: string,
+) {
+	await touchConversationOnMessage(conversationId, message);
+	broadcastNewMessage(message, conversationId, workspaceId);
+}
+
 export function broadcastNewMessage(
 	message: typeof messages.$inferSelect,
 	conversationId: string,
@@ -125,5 +152,5 @@ async function runAIReply(
 		latencyMs,
 	});
 
-	broadcastNewMessage(aiMsg, conversationId, workspaceId);
+	await deliverNewMessage(aiMsg, conversationId, workspaceId);
 }
