@@ -122,6 +122,8 @@ export const WIDGET_CSS = `
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* LTR column: visitor (contact) right, agent/AI left */
+  direction: ltr;
 }
 
 .cb-welcome {
@@ -364,7 +366,8 @@ export const WIDGET_CSS = `
 .cb-msg-meta {
   position: absolute;
   bottom: 4px;
-  left: 8px;
+  right: 8px;
+  left: auto;
   font-size: 10px;
   opacity: 0.75;
   line-height: 1;
