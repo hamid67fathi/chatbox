@@ -1,10 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Message } from "@/lib/api";
 import { fetchMessages, sendMessage } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
+import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
-import styles from "./MessageThread.module.css";
 
 interface Props {
 	workspaceId: string;
@@ -106,29 +108,29 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 	}, [text, sending, workspaceId, conversationId]);
 
 	return (
-		<div className={styles.thread}>
-			<div className={styles.messages}>
+		<div className="flex min-h-0 flex-1 flex-col">
+			<div className="flex-1 space-y-3 overflow-y-auto p-4">
 				{messages.map((msg) => (
 					<div
 						key={msg.id}
-						className={`${styles.bubble} ${
-							msg.senderType === "ai"
-								? styles.ai
-								: msg.senderType === "agent"
-									? styles.agent
-									: msg.senderType === "contact"
-										? styles.contact
-										: styles.system
-						}`}
+						className={cn(
+							"max-w-[75%] rounded-xl px-3 py-2 text-sm shadow-sm",
+							msg.senderType === "ai" &&
+								"ms-auto bg-violet-100 text-violet-950 dark:bg-violet-950 dark:text-violet-100",
+							msg.senderType === "agent" &&
+								"ms-auto bg-primary text-primary-foreground",
+							msg.senderType === "contact" && "me-auto bg-muted text-foreground",
+							msg.senderType === "system" &&
+								"mx-auto bg-secondary text-center text-xs text-muted-foreground",
+						)}
 					>
-						{msg.senderType === "ai" && (
-							<span className={styles.badge}>🤖 AI</span>
+						{(msg.senderType === "ai" || msg.senderType === "agent") && (
+							<span className="mb-1 block text-[10px] font-medium opacity-80">
+								{msg.senderType === "ai" ? "🤖 AI" : "👤 اپراتور"}
+							</span>
 						)}
-						{msg.senderType === "agent" && (
-							<span className={styles.badge}>👤 اپراتور</span>
-						)}
-						<div className={styles.body}>{msg.body}</div>
-						<div className={styles.time}>
+						<div className="whitespace-pre-wrap break-words">{msg.body}</div>
+						<div className="mt-1 text-[10px] opacity-70">
 							{new Date(msg.createdAt).toLocaleTimeString("fa-IR", {
 								hour: "2-digit",
 								minute: "2-digit",
@@ -139,26 +141,22 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 				<div ref={bottomRef} />
 			</div>
 			<form
-				className={styles.inputArea}
+				className="flex gap-2 border-t border-border bg-card p-4"
 				onSubmit={(e) => {
 					e.preventDefault();
 					handleSend();
 				}}
 			>
-				<input
-					className={styles.input}
+				<Input
 					value={text}
 					onChange={(e) => setText(e.target.value)}
 					placeholder="پیام بنویسید..."
 					disabled={sending}
+					className="flex-1"
 				/>
-				<button
-					type="submit"
-					className={styles.send}
-					disabled={!text.trim() || sending}
-				>
+				<Button type="submit" disabled={!text.trim() || sending}>
 					ارسال
-				</button>
+				</Button>
 			</form>
 		</div>
 	);

@@ -1,45 +1,64 @@
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-	--bg: #f8fafc;
-	--bg-card: #ffffff;
-	--bg-hover: #f1f5f9;
-	--bg-active: #e2e8f0;
-	--bg-primary: #2563eb;
-	--bg-primary-hover: #1d4ed8;
-	--text: #1e293b;
-	--text-secondary: #64748b;
-	--text-on-primary: #ffffff;
-	--border: #e2e8f0;
-	--msg-agent: #2563eb;
-	--msg-contact: #f1f5f9;
-	--shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
+@layer base {
+	:root {
+		--background: 210 40% 98%;
+		--foreground: 222 47% 11%;
+		--card: 0 0% 100%;
+		--card-foreground: 222 47% 11%;
+		--primary: 221 83% 53%;
+		--primary-foreground: 210 40% 98%;
+		--secondary: 210 40% 96%;
+		--secondary-foreground: 222 47% 11%;
+		--muted: 210 40% 96%;
+		--muted-foreground: 215 16% 47%;
+		--accent: 210 40% 96%;
+		--accent-foreground: 222 47% 11%;
+		--destructive: 0 84% 60%;
+		--destructive-foreground: 210 40% 98%;
+		--border: 214 32% 91%;
+		--input: 214 32% 91%;
+		--ring: 221 83% 53%;
+		--radius: 0.5rem;
+		--sidebar: 0 0% 100%;
+		--sidebar-foreground: 222 47% 11%;
+	}
 
-html {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-	font-size: 14px;
-	color: var(--text);
-	background: var(--bg);
-}
+	.dark {
+		--background: 222 47% 7%;
+		--foreground: 210 40% 98%;
+		--card: 222 47% 10%;
+		--card-foreground: 210 40% 98%;
+		--primary: 217 91% 60%;
+		--primary-foreground: 222 47% 11%;
+		--secondary: 217 33% 17%;
+		--secondary-foreground: 210 40% 98%;
+		--muted: 217 33% 17%;
+		--muted-foreground: 215 20% 65%;
+		--accent: 217 33% 17%;
+		--accent-foreground: 210 40% 98%;
+		--destructive: 0 63% 31%;
+		--destructive-foreground: 210 40% 98%;
+		--border: 217 33% 17%;
+		--input: 217 33% 17%;
+		--ring: 224 76% 48%;
+		--sidebar: 222 47% 9%;
+		--sidebar-foreground: 210 40% 98%;
+	}
 
-body {
-	height: 100vh;
-	overflow: hidden;
-}
+	* {
+		@apply border-border;
+	}
 
-input,
-button,
-textarea {
-	font: inherit;
-}
+	body {
+		@apply bg-background text-foreground antialiased;
+	}
 
-button {
-	cursor: pointer;
+	input,
+	button,
+	textarea {
+		font: inherit;
+	}
 }

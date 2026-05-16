@@ -1,19 +1,25 @@
 "use client";
 
 import { fetchWorkspaces } from "@/lib/api";
-import { clearAuth, getWorkspaceIdFromAuth, refreshAuthUser } from "@/lib/auth-store";
-import { disconnectSocket } from "@/lib/socket";
+import { getWorkspaceIdFromAuth, refreshAuthUser } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
+export interface AuthContext {
+	workspaceId: string;
+	userId: string;
+	userEmail: string;
+	workspaceName: string;
+}
+
 interface Props {
-	children: (context: { workspaceId: string; userId: string }) => ReactNode;
+	children: (context: AuthContext) => ReactNode;
 }
 
 export function AuthGuard({ children }: Props) {
 	const router = useRouter();
 	const [ready, setReady] = useState(false);
-	const [ctx, setCtx] = useState<{ workspaceId: string; userId: string } | null>(null);
+	const [ctx, setCtx] = useState<AuthContext | null>(null);
 	const [connError, setConnError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -32,10 +38,9 @@ export function AuthGuard({ children }: Props) {
 				const { data: workspaces, error } = await fetchWorkspaces();
 				if (cancelled) return;
 
-				let wsId =
-					workspaces.find((w) => w.slug === "demo")?.id ??
-					workspaces[0]?.id ??
-					getWorkspaceIdFromAuth();
+				const demo = workspaces.find((w) => w.slug === "demo");
+				const primary = demo ?? workspaces[0];
+				let wsId = primary?.id ?? getWorkspaceIdFromAuth();
 
 				if (!wsId) {
 					setConnError(
@@ -46,7 +51,12 @@ export function AuthGuard({ children }: Props) {
 				}
 
 				setConnError(null);
-				setCtx({ workspaceId: wsId, userId: auth.user.id });
+				setCtx({
+					workspaceId: wsId,
+					userId: auth.user.id,
+					userEmail: auth.user.email,
+					workspaceName: primary?.name ?? "ورک‌اسپیس",
+				});
 				setReady(true);
 			} catch (err) {
 				if (!cancelled) {
@@ -62,21 +72,10 @@ export function AuthGuard({ children }: Props) {
 
 	if (connError) {
 		return (
-			<div
-				style={{
-					minHeight: "100vh",
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "center",
-					justifyContent: "center",
-					gap: 12,
-					padding: 24,
-					textAlign: "center",
-				}}
-			>
-				<p style={{ color: "#b91c1c", fontSize: 16 }}>{connError}</p>
-				<p style={{ color: "#64748b", fontSize: 14 }}>
-					ترمینال API: <code>pnpm --filter api dev</code>
+			<div className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
+				<p className="text-base text-destructive">{connError}</p>
+				<p className="text-sm text-muted-foreground">
+					ترمینال API: <code className="rounded bg-muted px-1.5 py-0.5">pnpm --filter api dev</code>
 					<br />
 					سپس صفحه را رفرش کنید.
 				</p>
@@ -86,16 +85,7 @@ export function AuthGuard({ children }: Props) {
 
 	if (!ready || !ctx) {
 		return (
-			<div
-				style={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					fontSize: 18,
-					color: "#64748b",
-				}}
-			>
+			<div className="flex min-h-screen items-center justify-center text-lg text-muted-foreground">
 				در حال بارگذاری…
 			</div>
 		);

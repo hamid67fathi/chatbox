@@ -1,6 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { type AuthData, setAuth } from "@/lib/auth-store";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
@@ -40,131 +43,62 @@ export default function RegisterPage() {
 	}
 
 	return (
-		<div style={styles.wrapper}>
-			<form onSubmit={handleSubmit} style={styles.card}>
-				<h1 style={styles.title}>ثبت‌نام در ChatBox</h1>
+		<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/80 to-violet-700 p-4">
+			<form
+				onSubmit={handleSubmit}
+				className="flex w-full max-w-md flex-col gap-4 rounded-xl border border-border bg-card p-8 shadow-xl"
+			>
+				<h1 className="text-center text-2xl font-bold">ثبت‌نام در ChatBox</h1>
 
-				{error && <p style={styles.error}>{error}</p>}
+				{error && (
+					<p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+						{error}
+					</p>
+				)}
 
-				<label style={styles.label}>
+				<label className="flex flex-col gap-1.5 text-sm font-medium">
 					نام کامل
-					<input
+					<Input
 						type="text"
 						value={fullName}
 						onChange={(e) => setFullName(e.target.value)}
-						style={styles.input}
 					/>
 				</label>
 
-				<label style={styles.label}>
+				<label className="flex flex-col gap-1.5 text-sm font-medium">
 					ایمیل
-					<input
+					<Input
 						type="email"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						required
-						style={styles.input}
 						dir="ltr"
 					/>
 				</label>
 
-				<label style={styles.label}>
+				<label className="flex flex-col gap-1.5 text-sm font-medium">
 					رمز عبور (حداقل ۸ کاراکتر)
-					<input
+					<Input
 						type="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
 						minLength={8}
-						style={styles.input}
 						dir="ltr"
 					/>
 				</label>
 
-				<button type="submit" disabled={loading} style={styles.button}>
+				<Button type="submit" disabled={loading} className="mt-2">
 					{loading ? "لطفاً صبر کنید…" : "ثبت‌نام"}
-				</button>
+				</Button>
 
-				<p style={styles.link}>
+				<p className="text-center text-sm text-muted-foreground">
 					حساب دارید؟{" "}
-					<a href="/login" style={styles.anchor}>
+					<Link href="/login" className="font-semibold text-primary hover:underline">
 						وارد شوید
-					</a>
+					</Link>
 				</p>
 			</form>
 		</div>
 	);
 }
-
-const styles: Record<string, React.CSSProperties> = {
-	wrapper: {
-		minHeight: "100vh",
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-	},
-	card: {
-		background: "#fff",
-		borderRadius: 16,
-		padding: "40px 32px",
-		width: "100%",
-		maxWidth: 400,
-		boxShadow: "0 20px 60px rgba(0,0,0,.15)",
-		display: "flex",
-		flexDirection: "column",
-		gap: 16,
-	},
-	title: {
-		margin: 0,
-		fontSize: 24,
-		fontWeight: 700,
-		textAlign: "center",
-		color: "#1a1a2e",
-	},
-	error: {
-		margin: 0,
-		padding: "10px 12px",
-		background: "#fee2e2",
-		color: "#b91c1c",
-		borderRadius: 8,
-		fontSize: 14,
-	},
-	label: {
-		display: "flex",
-		flexDirection: "column",
-		gap: 4,
-		fontSize: 14,
-		fontWeight: 500,
-		color: "#334155",
-	},
-	input: {
-		padding: "10px 12px",
-		border: "1px solid #d1d5db",
-		borderRadius: 8,
-		fontSize: 15,
-		outline: "none",
-	},
-	button: {
-		marginTop: 8,
-		padding: "12px 0",
-		background: "#667eea",
-		color: "#fff",
-		border: "none",
-		borderRadius: 8,
-		fontSize: 16,
-		fontWeight: 600,
-		cursor: "pointer",
-	},
-	link: {
-		textAlign: "center",
-		fontSize: 14,
-		color: "#64748b",
-		margin: 0,
-	},
-	anchor: {
-		color: "#667eea",
-		textDecoration: "none",
-		fontWeight: 600,
-	},
-};

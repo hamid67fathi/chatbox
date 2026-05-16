@@ -1,29 +1,53 @@
 "use client";
 
-import type { Conversation, Message } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import type { Conversation, ConversationFilters, Message } from "@/lib/api";
 import { fetchConversations } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
-import { useCallback, useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConversationList } from "./ConversationList";
-import styles from "./Inbox.module.css";
 import { MessageThread } from "./MessageThread";
 
 interface Props {
 	workspaceId: string;
 }
 
+const STATUS_OPTIONS = [
+	{ value: "", label: "همه وضعیت‌ها" },
+	{ value: "open", label: "باز" },
+	{ value: "pending", label: "در انتظار" },
+	{ value: "resolved", label: "حل‌شده" },
+	{ value: "closed", label: "بسته" },
+];
+
+const CHANNEL_OPTIONS = [
+	{ value: "", label: "همه کانال‌ها" },
+	{ value: "widget", label: "ویجت" },
+];
+
 export function Inbox({ workspaceId }: Props) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
+	const [search, setSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState("");
+	const [channelFilter, setChannelFilter] = useState("");
+
+	const apiFilters = useMemo((): ConversationFilters => {
+		const f: ConversationFilters = { limit: 100 };
+		if (statusFilter) f.status = statusFilter;
+		if (channelFilter) f.channel = channelFilter;
+		return f;
+	}, [statusFilter, channelFilter]);
 
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
-		fetchConversations(workspaceId).then(({ data, error }) => {
+		fetchConversations(workspaceId, apiFilters).then(({ data, error }) => {
 			setConversations(data);
 			setLoadError(error ?? null);
 		});
-	}, [workspaceId]);
+	}, [workspaceId, apiFilters]);
 
 	useEffect(() => {
 		reloadConversations();
@@ -93,49 +117,96 @@ export function Inbox({ workspaceId }: Props) {
 		};
 	}, [workspaceId, reloadConversations]);
 
+	const filteredConversations = useMemo(() => {
+		const q = search.trim().toLowerCase();
+		if (!q) return conversations;
+		return conversations.filter((c) => {
+			const name = c.contact?.fullName?.toLowerCase() ?? "";
+			const id = c.id.toLowerCase();
+			const subject = c.subject?.toLowerCase() ?? "";
+			return name.includes(q) || id.includes(q) || subject.includes(q);
+		});
+	}, [conversations, search]);
+
 	const handleSelect = useCallback((id: string) => {
 		setActiveId(id);
 	}, []);
 
 	if (!workspaceId) {
 		return (
-			<div className={styles.empty}>
+			<div className="flex flex-1 items-center justify-center p-6 text-muted-foreground">
 				<p>
-					متغیر <code>NEXT_PUBLIC_WORKSPACE_ID</code> تنظیم نشده.
+					متغیر <code className="rounded bg-muted px-1.5 py-0.5">NEXT_PUBLIC_WORKSPACE_ID</code>{" "}
+					تنظیم نشده.
 				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className={styles.inbox}>
-			<aside className={styles.sidebar}>
-				<div className={styles.sidebarHeader}>
-					<h1>📥 صندوق ورودی</h1>
-					<p style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-						{conversations.length} مکالمه
-					</p>
+		<div className="flex min-h-0 flex-1">
+			<aside className="flex w-80 shrink-0 flex-col border-e border-border bg-card">
+				<div className="space-y-3 border-b border-border p-4">
+					<div>
+						<h2 className="text-base font-semibold">صندوق ورودی</h2>
+						<p className="text-xs text-muted-foreground">
+							{filteredConversations.length} مکالمه
+						</p>
+					</div>
+					<div className="relative">
+						<Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							placeholder="جستجو نام، شناسه…"
+							className="ps-9"
+						/>
+					</div>
+					<div className="flex gap-2">
+						<select
+							value={statusFilter}
+							onChange={(e) => setStatusFilter(e.target.value)}
+							className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+						>
+							{STATUS_OPTIONS.map((o) => (
+								<option key={o.value || "all"} value={o.value}>
+									{o.label}
+								</option>
+							))}
+						</select>
+						<select
+							value={channelFilter}
+							onChange={(e) => setChannelFilter(e.target.value)}
+							className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+						>
+							{CHANNEL_OPTIONS.map((o) => (
+								<option key={o.value || "all"} value={o.value}>
+									{o.label}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
 				{loadError && (
-					<p style={{ padding: "8px 12px", color: "#b91c1c", fontSize: 13 }}>
+					<p className="px-4 py-2 text-xs text-destructive">
 						خطا: {loadError} — دوباره وارد شوید.
 					</p>
 				)}
 				<ConversationList
-					conversations={conversations}
+					conversations={filteredConversations}
 					activeId={activeId}
 					onSelect={handleSelect}
 				/>
 			</aside>
-			<main className={styles.main}>
+			<section className="flex min-w-0 flex-1 flex-col bg-background">
 				{activeId ? (
 					<MessageThread workspaceId={workspaceId} conversationId={activeId} />
 				) : (
-					<div className={styles.placeholder}>
+					<div className="flex flex-1 items-center justify-center text-muted-foreground">
 						<p>یک مکالمه را انتخاب کنید</p>
 					</div>
 				)}
-			</main>
+			</section>
 		</div>
 	);
 }

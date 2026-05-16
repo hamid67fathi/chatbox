@@ -99,10 +99,23 @@ export async function fetchWorkspaces(): Promise<{
 	return { data: json.data ?? [] };
 }
 
+export interface ConversationFilters {
+	status?: string;
+	channel?: string;
+	assignedTo?: string;
+	limit?: number;
+}
+
 export async function fetchConversations(
 	workspaceId: string,
+	filters: ConversationFilters = {},
 ): Promise<{ data: Conversation[]; error?: string }> {
-	const res = await authFetch(`${API_URL}/v1/conversations?limit=100`, {
+	const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
+	if (filters.status) params.set("status", filters.status);
+	if (filters.channel) params.set("channel", filters.channel);
+	if (filters.assignedTo) params.set("assigned_to", filters.assignedTo);
+
+	const res = await authFetch(`${API_URL}/v1/conversations?${params}`, {
 		headers: authHeaders(workspaceId),
 		cache: "no-store",
 	});

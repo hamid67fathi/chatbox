@@ -1,7 +1,7 @@
 "use client";
 
 import type { Conversation } from "@/lib/api";
-import styles from "./ConversationList.module.css";
+import { cn } from "@/lib/utils";
 
 interface Props {
 	conversations: Conversation[];
@@ -32,36 +32,46 @@ function timeAgo(iso: string | null): string {
 
 export function ConversationList({ conversations, activeId, onSelect }: Props) {
 	if (conversations.length === 0) {
-		return <div className={styles.empty}>مکالمه‌ای وجود ندارد</div>;
+		return (
+			<div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+				مکالمه‌ای وجود ندارد
+			</div>
+		);
 	}
 
 	return (
-		<ul className={styles.list}>
+		<ul className="flex-1 overflow-y-auto">
 			{conversations.map((conv) => (
 				<li key={conv.id}>
 					<button
 						type="button"
-						className={`${styles.item} ${conv.id === activeId ? styles.active : ""}`}
 						onClick={() => onSelect(conv.id)}
+						className={cn(
+							"w-full border-b border-border px-4 py-3 text-start transition-colors hover:bg-accent/50",
+							conv.id === activeId && "bg-primary/10",
+						)}
 					>
-						<div className={styles.row}>
-							<span className={styles.name}>
+						<div className="flex items-start justify-between gap-2">
+							<span className="truncate text-sm font-medium">
 								{statusBadge(conv.status)}{" "}
-								{conv.contact?.fullName ?? "Visitor"} ·{" "}
-								{conv.id.slice(0, 8)}
+								{conv.contact?.fullName ?? "Visitor"} · {conv.id.slice(0, 8)}
 							</span>
-							<span className={styles.time}>
+							<span className="shrink-0 text-xs text-muted-foreground">
 								{timeAgo(conv.lastMessageAt ?? conv.createdAt)}
 							</span>
 						</div>
-						<div className={styles.sub}>
-							{conv.channel === "widget" ? "ویجت" : conv.channel}
-							{conv.subject ? ` · ${conv.subject}` : ""}
+						<div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+							<span>{conv.channel === "widget" ? "ویجت" : conv.channel}</span>
+							{conv.subject && <span>· {conv.subject}</span>}
 							{conv.needsHuman && (
-								<span className={styles.needsHuman}>🔴 نیاز به اپراتور</span>
+								<span className="rounded bg-destructive/10 px-1.5 py-0.5 text-destructive">
+									نیاز به اپراتور
+								</span>
 							)}
 							{conv.aiHandled && !conv.needsHuman && (
-								<span className={styles.aiHandled}>🤖 AI</span>
+								<span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+									AI
+								</span>
 							)}
 						</div>
 					</button>
