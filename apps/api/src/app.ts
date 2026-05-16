@@ -46,8 +46,12 @@ export function buildApp() {
 	app.get("/widget-demo/dist/index.global.js", async (_request, reply) => {
 		try {
 			const js = await getWidgetBundleJs();
+			const cacheControl =
+				process.env.NODE_ENV === "production"
+					? "public, max-age=60"
+					: "no-store";
 			return reply
-				.header("Cache-Control", "public, max-age=60")
+				.header("Cache-Control", cacheControl)
 				.type("application/javascript; charset=utf-8")
 				.send(js);
 		} catch (err) {
