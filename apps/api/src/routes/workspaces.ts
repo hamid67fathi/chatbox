@@ -4,8 +4,8 @@ import { randomBytes } from "node:crypto";
 import { db } from "../db/index.js";
 import { users, workspaceMembers, workspaces } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
-import { hashPassword } from "../lib/auth.js";
-import { forbidden, conflict, notFound, validationError } from "../lib/errors.js";
+import { forbidden, hashPassword } from "../lib/auth.js";
+import { conflict, notFound, validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
