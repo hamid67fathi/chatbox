@@ -79,7 +79,6 @@ export function buildApp() {
 		instance.register(messageRoutes);
 		instance.register(cannedResponseRoutes);
 		instance.register(knowledgeRoutes);
-		instance.register(knowledgeRoutes);
 		instance.register(billingRoutes);
 	});
 
