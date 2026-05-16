@@ -54,6 +54,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [widgetTitle, setWidgetTitle] = useState("پشتیبانی");
 	const [widgetWelcome, setWidgetWelcome] = useState("");
 	const [widgetAvatar, setWidgetAvatar] = useState("");
+	const [prechatEnabled, setPrechatEnabled] = useState(false);
+	const [prechatName, setPrechatName] = useState(true);
+	const [prechatNameRequired, setPrechatNameRequired] = useState(true);
+	const [prechatEmail, setPrechatEmail] = useState(true);
+	const [prechatEmailRequired, setPrechatEmailRequired] = useState(false);
+	const [prechatPhone, setPrechatPhone] = useState(false);
+	const [prechatPhoneRequired, setPrechatPhoneRequired] = useState(false);
 	const [widgetMsg, setWidgetMsg] = useState("");
 	const [widgetError, setWidgetError] = useState("");
 
@@ -83,6 +90,15 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			setWidgetTitle(cfg.title);
 			setWidgetWelcome(cfg.welcome_message);
 			setWidgetAvatar(cfg.avatar_url ?? "");
+			if (cfg.prechat) {
+				setPrechatEnabled(cfg.prechat.enabled);
+				setPrechatName(cfg.prechat.fields.name.enabled);
+				setPrechatNameRequired(cfg.prechat.fields.name.required);
+				setPrechatEmail(cfg.prechat.fields.email.enabled);
+				setPrechatEmailRequired(cfg.prechat.fields.email.required);
+				setPrechatPhone(cfg.prechat.fields.phone.enabled);
+				setPrechatPhoneRequired(cfg.prechat.fields.phone.required);
+			}
 		}
 	}, [workspaceId]);
 
@@ -139,6 +155,14 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			title: widgetTitle,
 			welcome_message: widgetWelcome,
 			avatar_url: widgetAvatar.trim() || null,
+			prechat: {
+				enabled: prechatEnabled,
+				fields: {
+					name: { enabled: prechatName, required: prechatNameRequired },
+					email: { enabled: prechatEmail, required: prechatEmailRequired },
+					phone: { enabled: prechatPhone, required: prechatPhoneRequired },
+				},
+			},
 		};
 		const result = await updateWidgetConfig(workspaceId, patch);
 		if (!result.ok) {
@@ -311,6 +335,72 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 								placeholder="https://..."
 							/>
 						</label>
+						<hr className="border-border" />
+						<p className="text-sm font-medium">فرم قبل از چت (Pre-chat)</p>
+						<label className="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								checked={prechatEnabled}
+								onChange={(e) => setPrechatEnabled(e.target.checked)}
+								disabled={!canEditWorkspace}
+							/>
+							فعال‌سازی فرم قبل از شروع گفتگو
+						</label>
+						{prechatEnabled && (
+							<div className="space-y-2 rounded-md border border-border p-3 text-sm">
+								{(
+									[
+										{
+											label: "نام",
+											enabled: prechatName,
+											setEnabled: setPrechatName,
+											required: prechatNameRequired,
+											setRequired: setPrechatNameRequired,
+										},
+										{
+											label: "ایمیل",
+											enabled: prechatEmail,
+											setEnabled: setPrechatEmail,
+											required: prechatEmailRequired,
+											setRequired: setPrechatEmailRequired,
+										},
+										{
+											label: "تلفن",
+											enabled: prechatPhone,
+											setEnabled: setPrechatPhone,
+											required: prechatPhoneRequired,
+											setRequired: setPrechatPhoneRequired,
+										},
+									] as const
+								).map((f) => (
+									<div
+										key={f.label}
+										className="flex flex-wrap items-center gap-4"
+									>
+										<label className="flex items-center gap-2">
+											<input
+												type="checkbox"
+												checked={f.enabled}
+												onChange={(e) => f.setEnabled(e.target.checked)}
+												disabled={!canEditWorkspace}
+											/>
+											{f.label}
+										</label>
+										{f.enabled && (
+											<label className="flex items-center gap-2 text-muted-foreground">
+												<input
+													type="checkbox"
+													checked={f.required}
+													onChange={(e) => f.setRequired(e.target.checked)}
+													disabled={!canEditWorkspace}
+												/>
+												الزامی
+											</label>
+										)}
+									</div>
+								))}
+							</div>
+						)}
 						{widgetError && (
 							<p className="text-sm text-destructive">{widgetError}</p>
 						)}

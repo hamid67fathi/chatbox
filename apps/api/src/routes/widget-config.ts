@@ -5,9 +5,14 @@ import { workspaces } from "../db/schema/index.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
 import {
+	type PrechatConfig,
+	mergePrechatSettings,
+	parsePrechatConfig,
+	prechatToPublic,
+} from "../lib/prechat-settings.js";
+import {
 	type WidgetPosition,
 	type WidgetThemeConfig,
-	DEFAULT_WIDGET_CONFIG,
 	mergeWorkspaceWidgetSettings,
 	parseWidgetConfig,
 	widgetConfigToPublic,
@@ -58,6 +63,42 @@ function parsePatch(body: Record<string, unknown>): Partial<WidgetThemeConfig> {
 	return patch;
 }
 
+function parsePrechatPatch(body: Record<string, unknown>): Partial<PrechatConfig> {
+	const patch: Partial<PrechatConfig> = {};
+	const raw = body.prechat;
+	if (!raw || typeof raw !== "object") return patch;
+	const o = raw as Record<string, unknown>;
+	if (typeof o.enabled === "boolean") patch.enabled = o.enabled;
+	const fields = o.fields;
+	if (fields && typeof fields === "object") {
+		const f = fields as Record<string, unknown>;
+		const nextFields: PrechatConfig["fields"] = {
+			name: { enabled: false, required: false },
+			email: { enabled: false, required: false },
+			phone: { enabled: false, required: false },
+		};
+		for (const key of ["name", "email", "phone"] as const) {
+			const field = f[key];
+			if (field && typeof field === "object") {
+				const fo = field as Record<string, unknown>;
+				nextFields[key] = {
+					enabled: fo.enabled === true,
+					required: fo.required === true,
+				};
+			}
+		}
+		patch.fields = nextFields;
+	}
+	return patch;
+}
+
+function publicWidgetData(settings: unknown) {
+	return {
+		...widgetConfigToPublic(parseWidgetConfig(settings)),
+		prechat: prechatToPublic(parsePrechatConfig(settings)),
+	};
+}
+
 export async function widgetConfigRoutes(app: FastifyInstance) {
 	app.get<{ Params: { id: string } }>(
 		"/v1/workspaces/:id/widget-config",
@@ -67,8 +108,7 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 				where: eq(workspaces.id, request.params.id),
 			});
 			if (!ws) throw notFound("Workspace not found.");
-			const config = parseWidgetConfig(ws.settings);
-			return { data: widgetConfigToPublic(config) };
+			return { data: publicWidgetData(ws.settings) };
 		},
 	);
 
@@ -82,12 +122,30 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 			});
 			if (!ws) throw notFound("Workspace not found.");
 
-			const patch = parsePatch(request.body ?? {});
-			if (Object.keys(patch).length === 0) {
+			const body = request.body ?? {};
+			const themePatch = parsePatch(body);
+			const prechatPatch = parsePrechatPatch(body);
+
+			const hasPrechatPatch =
+				prechatPatch.enabled !== undefined ||
+				(prechatPatch.fields &&
+					Object.keys(prechatPatch.fields).length > 0);
+
+			if (Object.keys(themePatch).length === 0 && !hasPrechatPatch) {
 				throw validationError("No valid fields to update.");
 			}
 
-			const nextSettings = mergeWorkspaceWidgetSettings(ws.settings, patch);
+			let nextSettings = ws.settings as Record<string, unknown>;
+			if (Object.keys(themePatch).length > 0) {
+				nextSettings = mergeWorkspaceWidgetSettings(nextSettings, themePatch);
+			}
+			if (
+				prechatPatch.enabled !== undefined ||
+				prechatPatch.fields
+			) {
+				nextSettings = mergePrechatSettings(nextSettings, prechatPatch);
+			}
+
 			const [updated] = await db
 				.update(workspaces)
 				.set({ settings: nextSettings, updatedAt: new Date() })
@@ -95,7 +153,7 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Workspace not found.");
-			return { data: widgetConfigToPublic(parseWidgetConfig(updated.settings)) };
+			return { data: publicWidgetData(updated.settings) };
 		},
 	);
 }
@@ -112,12 +170,9 @@ export async function publicWidgetConfigHandler(
 	});
 	if (!ws) throw notFound("Workspace not found.");
 
-	const config = parseWidgetConfig(ws.settings);
 	return {
 		workspace_id: ws.id,
 		slug: ws.slug,
-		...widgetConfigToPublic(config),
+		...publicWidgetData(ws.settings),
 	};
 }
-
-export { DEFAULT_WIDGET_CONFIG };

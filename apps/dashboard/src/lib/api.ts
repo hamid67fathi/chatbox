@@ -630,12 +630,25 @@ export async function reindexKbDocument(
 	return { doc: body as KbDocument };
 }
 
+export interface PrechatFieldPublic {
+	enabled: boolean;
+	required: boolean;
+}
+
 export interface WidgetConfigPublic {
 	primary_color: string;
 	position: "left" | "right";
 	title: string;
 	welcome_message: string;
 	avatar_url: string | null;
+	prechat?: {
+		enabled: boolean;
+		fields: {
+			name: PrechatFieldPublic;
+			email: PrechatFieldPublic;
+			phone: PrechatFieldPublic;
+		};
+	};
 }
 
 export async function fetchWidgetConfig(

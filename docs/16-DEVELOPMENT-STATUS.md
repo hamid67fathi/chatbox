@@ -98,7 +98,7 @@ rule: >
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
 | P6.1 | Theming و سفارشی‌سازی | Config: color/position/welcome/avatar، CSS variables، widget config API | انجام شد | 2026-05-16 | GET /widget/v1/config، تب ویجت در /settings |
-| P6.2 | Pre-chat Form | فرم نام/ایمیل/تلفن، ذخیره contact، قابل تنظیم از داشبورد | شروع نشده | — | — |
+| P6.2 | Pre-chat Form | فرم نام/ایمیل/تلفن، ذخیره contact، قابل تنظیم از داشبورد | انجام شد | 2026-05-16 | PATCH /widget/v1/contact، تنظیم در تب ویجت |
 | P6.3 | File Upload | آپلود تصویر/فایل (ویجت + داشبورد)، ذخیره MinIO/local، پیش‌نمایش | شروع نشده | — | — |
 | P6.4 | تجربه چت پیشرفته | Emoji، وضعیت پیام، welcome message، triggers، mobile responsive | شروع نشده | — | — |
 

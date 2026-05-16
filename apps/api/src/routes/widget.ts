@@ -1,7 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../db/index.js";
 import { contacts, conversations, messages, workspaces } from "../db/schema/index.js";
+import {
+	isContactProfileComplete,
+	parsePrechatConfig,
+	validatePrechatPayload,
+} from "../lib/prechat-settings.js";
 import {
 	type VisitorTokenPayload,
 	signVisitorToken,
@@ -77,7 +83,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 				: null;
 
 			if (!contact) {
-				const newVisitorId = visitor_id ?? crypto.randomUUID();
+				const newVisitorId = visitor_id ?? randomUUID();
 				const [created] = await db
 					.insert(contacts)
 					.values({
@@ -113,13 +119,105 @@ export async function widgetRoutes(app: FastifyInstance) {
 			}
 
 			const token = await signVisitorToken(contact.id, ws.id, conv.id);
+			const prechat = parsePrechatConfig(ws.settings);
+			const profile = {
+				fullName: contact.fullName,
+				email: contact.email,
+				phone: contact.phone,
+			};
 
 			return reply.status(201).send({
 				workspace_id: ws.id,
 				conversation_id: conv.id,
 				contact_id: contact.id,
+				visitor_id: contact.externalId,
 				token,
+				profile_complete: isContactProfileComplete(profile, prechat),
+				contact: {
+					full_name: contact.fullName,
+					email: contact.email,
+					phone: contact.phone,
+				},
 			});
+		},
+	);
+
+	app.patch<{
+		Body: { full_name?: string; email?: string; phone?: string };
+	}>(
+		"/widget/v1/contact",
+		{ preHandler: [requireVisitorToken] },
+		async (request) => {
+			const { contactId, workspaceId } = (request as VisitorRequest).visitor;
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, workspaceId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			const existing = await db.query.contacts.findFirst({
+				where: and(
+					eq(contacts.id, contactId),
+					eq(contacts.workspaceId, workspaceId),
+				),
+			});
+			if (!existing) throw notFound("Contact not found.");
+
+			const prechat = parsePrechatConfig(ws.settings);
+			const body = request.body ?? {};
+			const merged = {
+				full_name:
+					body.full_name !== undefined
+						? body.full_name
+						: (existing.fullName ?? undefined),
+				email:
+					body.email !== undefined ? body.email : (existing.email ?? undefined),
+				phone:
+					body.phone !== undefined ? body.phone : (existing.phone ?? undefined),
+			};
+
+			let parsed: ReturnType<typeof validatePrechatPayload>;
+			try {
+				parsed = validatePrechatPayload(prechat, merged);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				const field = msg.includes("email")
+					? "email"
+					: msg.includes("phone")
+						? "phone"
+						: "full_name";
+				throw validationError(msg, field);
+			}
+
+			const [updated] = await db
+				.update(contacts)
+				.set({
+					fullName: parsed.fullName,
+					email: parsed.email,
+					phone: parsed.phone,
+					lastSeenAt: new Date(),
+					updatedAt: new Date(),
+				})
+				.where(
+					and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
+				)
+				.returning();
+
+			if (!updated) throw notFound("Contact not found.");
+
+			const profile = {
+				fullName: updated.fullName,
+				email: updated.email,
+				phone: updated.phone,
+			};
+
+			return {
+				profile_complete: isContactProfileComplete(profile, prechat),
+				contact: {
+					full_name: updated.fullName,
+					email: updated.email,
+					phone: updated.phone,
+				},
+			};
 		},
 	);
 

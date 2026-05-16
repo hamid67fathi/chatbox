@@ -1,4 +1,5 @@
 import { ChatBoxWidget } from "./widget.js";
+import { visitorStorageKey } from "./api.js";
 
 export { ChatBoxWidget };
 export type { WidgetConfig, WidgetTheme } from "./api.js";
@@ -29,7 +30,15 @@ function autoInit() {
 		return;
 	}
 
-	const widget = new ChatBoxWidget({ apiUrl, workspaceSlug });
+	let visitorId: string | undefined;
+	try {
+		visitorId =
+			localStorage.getItem(visitorStorageKey(workspaceSlug)) ?? undefined;
+	} catch {
+		visitorId = undefined;
+	}
+
+	const widget = new ChatBoxWidget({ apiUrl, workspaceSlug, visitorId });
 	void widget.mount().catch((err) => {
 		console.error("[ChatBox] mount failed:", err);
 	});

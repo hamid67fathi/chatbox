@@ -213,6 +213,88 @@ export const WIDGET_CSS = `
   cursor: not-allowed;
 }
 
+.cb-prechat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cb-prechat.visible {
+  display: flex;
+}
+
+.cb-prechat-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cb-agent-text);
+  margin: 0;
+}
+
+.cb-prechat-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cb-prechat label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cb-agent-text);
+}
+
+.cb-prechat input {
+  border: 1px solid var(--cb-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  direction: rtl;
+}
+
+.cb-prechat input:focus {
+  border-color: var(--cb-primary);
+  outline: none;
+}
+
+.cb-prechat-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
+
+.cb-prechat-submit {
+  margin-top: 4px;
+  background: var(--cb-primary);
+  color: var(--cb-text-on-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cb-prechat-submit:hover {
+  background: var(--cb-primary-hover);
+}
+
+.cb-prechat-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cb-chat-hidden {
+  display: none !important;
+}
+
 @media (max-width: 480px) {
   .cb-window {
     width: calc(100vw - 16px);

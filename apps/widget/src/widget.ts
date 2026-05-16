@@ -1,11 +1,15 @@
 import {
 	type Message,
+	type PrechatFieldConfig,
 	type WidgetConfig,
+	type SessionResponse,
 	type WidgetTheme,
 	createSession,
 	fetchMessages,
 	fetchWidgetTheme,
 	sendMessageHttp,
+	setApiBaseUrl,
+	updateContactProfile,
 } from "./api.js";
 import { WidgetSocket } from "./socket.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
@@ -13,12 +17,22 @@ import { WIDGET_CSS, darkenHex } from "./styles.js";
 const CHAT_ICON = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`;
 const CLOSE_ICON = "✕";
 
+const DEFAULT_PRECHAT = {
+	enabled: false,
+	fields: {
+		name: { enabled: true, required: true },
+		email: { enabled: true, required: false },
+		phone: { enabled: false, required: false },
+	},
+};
+
 const DEFAULT_THEME: WidgetTheme = {
 	primary_color: "#2563eb",
 	position: "right",
 	title: "پشتیبانی",
 	welcome_message: "سلام! چطور می‌توانیم کمکتان کنیم؟",
 	avatar_url: null,
+	prechat: DEFAULT_PRECHAT,
 };
 
 export class ChatBoxWidget {
@@ -31,7 +45,11 @@ export class ChatBoxWidget {
 	private headerAvatarEl!: HTMLImageElement | null;
 	private welcomeEl!: HTMLElement;
 	private messagesEl!: HTMLElement;
+	private prechatEl!: HTMLElement;
+	private prechatFormEl!: HTMLFormElement;
+	private prechatErrorEl!: HTMLElement;
 	private typingEl!: HTMLElement;
+	private inputAreaEl!: HTMLElement;
 	private inputEl!: HTMLInputElement;
 	private sendBtn!: HTMLButtonElement;
 	private windowEl!: HTMLElement;
@@ -39,16 +57,18 @@ export class ChatBoxWidget {
 	private conversationId = "";
 	private isOpen = false;
 	private welcomeShown = false;
+	private chatStarted = false;
 	private readonly renderedIds = new Set<string>();
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
 		this.ws = new WidgetSocket();
+		setApiBaseUrl(config.apiUrl);
 	}
 
 	async mount(target?: HTMLElement) {
 		const theme = await fetchWidgetTheme(this.config);
-		if (theme) this.theme = theme;
+		if (theme) this.theme = { ...DEFAULT_THEME, ...theme, prechat: theme.prechat ?? DEFAULT_PRECHAT };
 
 		const host = document.createElement("div");
 		host.id = "chatbox-widget";
@@ -73,11 +93,17 @@ export class ChatBoxWidget {
 						</div>
 						<button class="cb-close" id="cb-close" type="button">${CLOSE_ICON}</button>
 					</div>
+					<div class="cb-prechat" id="cb-prechat">
+						<p class="cb-prechat-title">قبل از شروع گفتگو</p>
+						<p class="cb-prechat-desc">لطفاً اطلاعات زیر را وارد کنید.</p>
+						<form id="cb-prechat-form"></form>
+						<p class="cb-prechat-error" id="cb-prechat-error"></p>
+					</div>
 					<div class="cb-messages" id="cb-messages">
 						<div class="cb-welcome" id="cb-welcome"></div>
 					</div>
 					<div class="cb-typing" id="cb-typing">در حال نوشتن...</div>
-					<div class="cb-input-area">
+					<div class="cb-input-area" id="cb-input-area">
 						<input class="cb-input" id="cb-input" placeholder="پیام بنویسید..." />
 						<button class="cb-send" id="cb-send" type="button">ارسال</button>
 					</div>
@@ -92,12 +118,21 @@ export class ChatBoxWidget {
 		this.headerAvatarEl = this.root.getElementById(
 			"cb-avatar",
 		) as HTMLImageElement | null;
+		this.prechatEl = this.root.getElementById("cb-prechat") as HTMLElement;
+		this.prechatFormEl = this.root.getElementById(
+			"cb-prechat-form",
+		) as HTMLFormElement;
+		this.prechatErrorEl = this.root.getElementById(
+			"cb-prechat-error",
+		) as HTMLElement;
 		this.welcomeEl = this.root.getElementById("cb-welcome") as HTMLElement;
 		this.messagesEl = this.root.getElementById("cb-messages") as HTMLElement;
 		this.typingEl = this.root.getElementById("cb-typing") as HTMLElement;
+		this.inputAreaEl = this.root.getElementById("cb-input-area") as HTMLElement;
 		this.inputEl = this.root.getElementById("cb-input") as HTMLInputElement;
 		this.sendBtn = this.root.getElementById("cb-send") as HTMLButtonElement;
 
+		this.buildPrechatForm();
 		this.applyTheme();
 
 		this.root
@@ -113,6 +148,10 @@ export class ChatBoxWidget {
 				this.send();
 			}
 		});
+		this.prechatFormEl.addEventListener("submit", (e) => {
+			e.preventDefault();
+			void this.submitPrechat();
+		});
 
 		await this.initSession();
 	}
@@ -123,6 +162,121 @@ export class ChatBoxWidget {
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;")
 			.replace(/"/g, "&quot;");
+	}
+
+	private prechatFields() {
+		return this.theme.prechat ?? DEFAULT_PRECHAT;
+	}
+
+	private buildPrechatForm() {
+		const pc = this.prechatFields();
+		const fields: Array<{
+			key: "name" | "email" | "phone";
+			cfg: PrechatFieldConfig;
+			label: string;
+			type: string;
+			id: string;
+		}> = [
+			{ key: "name", cfg: pc.fields.name, label: "نام", type: "text", id: "cb-pc-name" },
+			{
+				key: "email",
+				cfg: pc.fields.email,
+				label: "ایمیل",
+				type: "email",
+				id: "cb-pc-email",
+			},
+			{
+				key: "phone",
+				cfg: pc.fields.phone,
+				label: "تلفن",
+				type: "tel",
+				id: "cb-pc-phone",
+			},
+		];
+
+		this.prechatFormEl.innerHTML = "";
+		for (const f of fields) {
+			if (!f.cfg.enabled) continue;
+			const label = document.createElement("label");
+			label.htmlFor = f.id;
+			label.textContent = f.cfg.required ? `${f.label} *` : f.label;
+			const input = document.createElement("input");
+			input.id = f.id;
+			input.name = f.key;
+			input.type = f.type;
+			input.required = f.cfg.required;
+			label.appendChild(input);
+			this.prechatFormEl.appendChild(label);
+		}
+
+		const btn = document.createElement("button");
+		btn.type = "submit";
+		btn.className = "cb-prechat-submit";
+		btn.textContent = "شروع گفتگو";
+		this.prechatFormEl.appendChild(btn);
+	}
+
+	private fillPrechatForm(contact: {
+		full_name: string | null;
+		email: string | null;
+		phone: string | null;
+	}) {
+		const name = this.prechatFormEl.querySelector("#cb-pc-name") as HTMLInputElement | null;
+		const email = this.prechatFormEl.querySelector("#cb-pc-email") as HTMLInputElement | null;
+		const phone = this.prechatFormEl.querySelector("#cb-pc-phone") as HTMLInputElement | null;
+		if (name && contact.full_name && contact.full_name !== "Visitor") {
+			name.value = contact.full_name;
+		}
+		if (email && contact.email) email.value = contact.email;
+		if (phone && contact.phone) phone.value = contact.phone;
+	}
+
+	private showPrechat(contact: SessionResponse["contact"]) {
+		this.prechatEl.classList.add("visible");
+		this.messagesEl.classList.add("cb-chat-hidden");
+		this.typingEl.classList.add("cb-chat-hidden");
+		this.inputAreaEl.classList.add("cb-chat-hidden");
+		this.fillPrechatForm(contact);
+	}
+
+	private hidePrechat() {
+		this.prechatEl.classList.remove("visible");
+		this.messagesEl.classList.remove("cb-chat-hidden");
+		this.typingEl.classList.remove("cb-chat-hidden");
+		this.inputAreaEl.classList.remove("cb-chat-hidden");
+	}
+
+	private async submitPrechat() {
+		this.prechatErrorEl.textContent = "";
+		const fd = new FormData(this.prechatFormEl);
+		const payload: { full_name?: string; email?: string; phone?: string } = {};
+		const name = fd.get("name");
+		const email = fd.get("email");
+		const phone = fd.get("phone");
+		if (typeof name === "string") payload.full_name = name;
+		if (typeof email === "string") payload.email = email;
+		if (typeof phone === "string") payload.phone = phone;
+
+		const submitBtn = this.prechatFormEl.querySelector(
+			".cb-prechat-submit",
+		) as HTMLButtonElement;
+		submitBtn.disabled = true;
+
+		try {
+			const result = await updateContactProfile(payload);
+			if (!result.profile_complete) {
+				this.prechatErrorEl.textContent =
+					"لطفاً فیلدهای الزامی را تکمیل کنید.";
+				return;
+			}
+			this.hidePrechat();
+			await this.startChat();
+		} catch (err) {
+			this.prechatErrorEl.textContent =
+				err instanceof Error ? err.message : "ذخیره ناموفق بود.";
+		} finally {
+			submitBtn.disabled = false;
+		}
 	}
 
 	private applyTheme() {
@@ -152,34 +306,50 @@ export class ChatBoxWidget {
 			this.workspaceId = session.workspace_id;
 			this.conversationId = session.conversation_id;
 
-			const msgs = await fetchMessages(this.config);
-			if (msgs.length === 0) {
-				this.showWelcome();
-			} else {
-				this.welcomeEl.style.display = "none";
-				for (const msg of msgs) {
-					if (msg.id) this.renderedIds.add(msg.id);
-					this.appendMessage(msg, false);
-				}
+			const needsPrechat =
+				this.prechatFields().enabled && !session.profile_complete;
+
+			if (needsPrechat) {
+				this.showPrechat(session.contact);
+				return;
 			}
 
-			this.ws.connect(
-				this.config.apiUrl,
-				this.workspaceId,
-				this.conversationId,
-				{
-					onMessage: (msg) => {
-						this.hideWelcome();
-						this.appendMessage(msg);
-					},
-					onTyping: (data) => {
-						this.typingEl.classList.toggle("visible", data.isTyping);
-					},
-				},
-			);
+			await this.startChat();
 		} catch (err) {
 			console.error("[ChatBox] Init failed:", err);
 		}
+	}
+
+	private async startChat() {
+		if (this.chatStarted) return;
+		this.chatStarted = true;
+		this.hidePrechat();
+
+		const msgs = await fetchMessages(this.config);
+		if (msgs.length === 0) {
+			this.showWelcome();
+		} else {
+			this.welcomeEl.style.display = "none";
+			for (const msg of msgs) {
+				if (msg.id) this.renderedIds.add(msg.id);
+				this.appendMessage(msg, false);
+			}
+		}
+
+		this.ws.connect(
+			this.config.apiUrl,
+			this.workspaceId,
+			this.conversationId,
+			{
+				onMessage: (msg) => {
+					this.hideWelcome();
+					this.appendMessage(msg);
+				},
+				onTyping: (data) => {
+					this.typingEl.classList.toggle("visible", data.isTyping);
+				},
+			},
+		);
 	}
 
 	private showWelcome() {
@@ -197,7 +367,9 @@ export class ChatBoxWidget {
 		this.windowEl.classList.toggle("open", this.isOpen);
 		if (this.isOpen) {
 			this.scrollToBottom();
-			this.inputEl.focus();
+			if (!this.prechatEl.classList.contains("visible")) {
+				this.inputEl.focus();
+			}
 		}
 	}
 
@@ -243,4 +415,3 @@ export class ChatBoxWidget {
 		this.root.host.remove();
 	}
 }
-
