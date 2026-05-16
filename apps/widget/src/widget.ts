@@ -7,6 +7,7 @@ import {
 	fetchWidgetTheme,
 	sendMessageHttp,
 } from "./api.js";
+import { randomId } from "./id.js";
 import { WidgetSocket } from "./socket.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
 
@@ -220,7 +221,7 @@ export class ChatBoxWidget {
 		this.sendBtn.disabled = true;
 
 		this.appendMessage({
-			id: crypto.randomUUID(),
+			id: randomId(),
 			body,
 			senderType: "contact",
 			createdAt: new Date().toISOString(),
