@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Inbox, MessageSquare, Settings, Users, Zap } from "lucide-react";
+import { BookOpen, Inbox, Settings, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,7 +10,7 @@ const navItems = [
 	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
 	{ href: "/settings", label: "تنظیمات", icon: Settings },
 	{ href: "/team", label: "تیم", icon: Users },
-	{ href: "/knowledge", label: "پایگاه دانش", icon: MessageSquare, disabled: true },
+	{ href: "/knowledge", label: "پایگاه دانش", icon: BookOpen },
 ];
 
 export function Sidebar() {
@@ -28,20 +28,8 @@ export function Sidebar() {
 				</div>
 			</div>
 			<nav className="flex flex-1 flex-col gap-1 p-3">
-				{navItems.map(({ href, label, icon: Icon, disabled }) => {
+				{navItems.map(({ href, label, icon: Icon }) => {
 					const active = pathname === href;
-					if (disabled) {
-						return (
-							<span
-								key={href}
-								className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground/60"
-								title="به‌زودی"
-							>
-								<Icon className="h-4 w-4" />
-								{label}
-							</span>
-						);
-					}
 					return (
 						<Link
 							key={href}

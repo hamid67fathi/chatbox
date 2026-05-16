@@ -533,4 +533,101 @@ export async function useCannedResponse(
 	return json.body ?? null;
 }
 
+export interface KnowledgeBase {
+	id: string;
+	name: string;
+	description: string | null;
+	createdAt: string;
+}
+
+export interface KbDocument {
+	id: string;
+	kbId: string;
+	title: string | null;
+	filePath: string | null;
+	sourceType: string;
+	status: "uploaded" | "processing" | "indexed" | "failed";
+	sizeBytes: number | null;
+	chunkCount: number;
+	lastIndexedAt: string | null;
+	errorMessage: string | null;
+	createdAt: string;
+}
+
+export async function fetchKnowledgeBases(
+	workspaceId: string,
+): Promise<KnowledgeBase[]> {
+	const res = await authFetch(`${API_URL}/v1/knowledge-bases`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = await res.json();
+	return json.data ?? [];
+}
+
+export async function fetchKbDocuments(
+	workspaceId: string,
+	kbId: string,
+): Promise<KbDocument[]> {
+	const res = await authFetch(`${API_URL}/v1/knowledge-bases/${kbId}/documents`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = await res.json();
+	return json.data ?? [];
+}
+
+export async function uploadKbDocument(
+	workspaceId: string,
+	kbId: string,
+	data: { title?: string; filename: string; content: string },
+): Promise<{ doc: KbDocument | null; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/knowledge-bases/${kbId}/documents`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify(data),
+	});
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return { doc: null, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return { doc: body as KbDocument };
+}
+
+export async function deleteKbDocument(
+	workspaceId: string,
+	kbId: string,
+	docId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/knowledge-bases/${kbId}/documents/${docId}`,
+		{
+			method: "DELETE",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	return res.ok;
+}
+
+export async function reindexKbDocument(
+	workspaceId: string,
+	kbId: string,
+	docId: string,
+): Promise<{ doc: KbDocument | null; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/knowledge-bases/${kbId}/documents/${docId}/reindex`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return { doc: null, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return { doc: body as KbDocument };
+}
+
 export { API_URL };

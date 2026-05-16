@@ -91,7 +91,7 @@ rule: >
 | P5.3 | مدیریت مکالمه | Assignment، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote | انجام شد | 2026-05-16 | toolbar وضعیت/تخصیص/اولویت/تگ/یادداشت + reply |
 | P5.4 | پاسخ‌های آماده | CRUD canned responses، جستجوی /shortcut، متغیرها | انجام شد | 2026-05-16 | API CRUD + صفحه /canned + picker در composer |
 | P5.5 | تنظیمات و مدیریت تیم | Settings، invite اعضا، تغییر role، workspace management | انجام شد | 2026-05-16 | /settings + /team، invite با رمز موقت |
-| P5.6 | Knowledge Base UI | آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index | شروع نشده | — | — |
+| P5.6 | Knowledge Base UI | آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index | انجام شد | 2026-05-16 | /knowledge، txt/md، ingest به AI service |
 
 ### فاز ۶ — ویجت و تجربه چت
 
