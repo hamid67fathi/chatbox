@@ -33,6 +33,14 @@ export function buildApp() {
 		origin: true,
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+		allowedHeaders: [
+			"Content-Type",
+			"Authorization",
+			"X-Workspace-Id",
+			"Accept",
+			"Cache-Control",
+		],
+		exposedHeaders: ["Content-Type"],
 	});
 	app.register(cookie);
 	app.register(helmet, {

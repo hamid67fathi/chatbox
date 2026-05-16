@@ -1,3 +1,4 @@
+import { PassThrough } from "node:stream";
 import { and, asc, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
@@ -115,47 +116,58 @@ export async function copilotRoutes(app: FastifyInstance) {
 				await loadCopilotContext(wsId, convId);
 			await assertConversationAccess(conv, wsId, user.id);
 
-			reply.hijack();
-			reply.raw.writeHead(200, {
-				"Content-Type": "text/event-stream; charset=utf-8",
-				"Cache-Control": "no-cache, no-transform",
-				Connection: "keep-alive",
-				"X-Accel-Buffering": "no",
-			});
-
+			const stream = new PassThrough();
 			let tokens = { model: "stub", input_tokens: 0, output_tokens: 0 };
 
-			const ok = await streamCopilotFromAI(
-				wsId,
-				copilotMessages,
-				contactName,
-				convId,
-				(event) => {
-					if (event.type === "meta" && event.model) {
-						tokens.model = String(event.model);
-					}
-					if (event.type === "done") {
-						tokens = {
-							model: String(event.model ?? tokens.model),
-							input_tokens: Number(event.input_tokens ?? 0),
-							output_tokens: Number(event.output_tokens ?? 0),
-						};
-					}
-					reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
-				},
-			);
+			void (async () => {
+				try {
+					const ok = await streamCopilotFromAI(
+						wsId,
+						copilotMessages,
+						contactName,
+						convId,
+						(event) => {
+							if (event.type === "meta" && event.model) {
+								tokens.model = String(event.model);
+							}
+							if (event.type === "done") {
+								tokens = {
+									model: String(event.model ?? tokens.model),
+									input_tokens: Number(event.input_tokens ?? 0),
+									output_tokens: Number(event.output_tokens ?? 0),
+								};
+							}
+							stream.write(`data: ${JSON.stringify(event)}\n\n`);
+						},
+					);
 
-			if (!ok) {
-				reply.raw.write(
-					`data: ${JSON.stringify({
-						type: "error",
-						message: "سرویس پیشنهاد پاسخ در دسترس نیست.",
-					})}\n\n`,
-				);
-			}
+					if (!ok) {
+						stream.write(
+							`data: ${JSON.stringify({
+								type: "error",
+								message: "سرویس پیشنهاد پاسخ در دسترس نیست.",
+							})}\n\n`,
+						);
+					}
 
-			await logCopilotInteraction(wsId, convId, user.id, tokens);
-			reply.raw.end();
+					await logCopilotInteraction(wsId, convId, user.id, tokens);
+				} catch (err) {
+					const message =
+						err instanceof Error ? err.message : "خطای داخلی سرور.";
+					stream.write(
+						`data: ${JSON.stringify({ type: "error", message })}\n\n`,
+					);
+				} finally {
+					stream.end();
+				}
+			})();
+
+			return reply
+				.header("Content-Type", "text/event-stream; charset=utf-8")
+				.header("Cache-Control", "no-cache, no-transform")
+				.header("Connection", "keep-alive")
+				.header("X-Accel-Buffering", "no")
+				.send(stream);
 		},
 	);
 }
