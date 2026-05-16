@@ -29,6 +29,16 @@ pnpm --filter api dev          # API on http://localhost:3001
 
 Health check: `curl -s http://127.0.0.1:3001/health` → `{"ok":true}`
 
+### Widget demo
+
+With the API running, open **http://localhost:3001/widget-demo/demo.html** (or your server IP instead of `localhost`).
+
+The bundle is served from `apps/widget/dist/` when present; otherwise the API builds it on first request (requires `esbuild` after `pnpm install`). Optional pre-build:
+
+```bash
+pnpm build:widget
+```
+
 ### Build & production-like run
 
 ```bash

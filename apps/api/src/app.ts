@@ -10,6 +10,7 @@ import Fastify from "fastify";
 import { db } from "./db/index.js";
 import { requireAuth } from "./lib/auth.js";
 import { errorHandler } from "./lib/errors.js";
+import { getWidgetBundleJs } from "./lib/widget-bundle.js";
 import { authRoutes } from "./routes/auth.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
@@ -42,6 +43,24 @@ export function buildApp() {
 
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 
+	app.get("/widget-demo/dist/index.global.js", async (_request, reply) => {
+		try {
+			const js = await getWidgetBundleJs();
+			return reply
+				.header("Cache-Control", "public, max-age=60")
+				.type("application/javascript; charset=utf-8")
+				.send(js);
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			return reply
+				.status(500)
+				.type("application/javascript; charset=utf-8")
+				.send(
+					`console.error("[ChatBox] Widget bundle failed: ${msg.replace(/"/g, '\\"')}");`,
+				);
+		}
+	});
+
 	const publicRoot = resolve(__dirname, "../public");
 	app.register(fastifyStatic, {
 		root: publicRoot,
@@ -55,12 +74,6 @@ export function buildApp() {
 		prefix: "/widget-demo/",
 		decorateReply: false,
 	});
-	app.register(fastifyStatic, {
-		root: resolve(widgetRoot, "dist"),
-		prefix: "/widget-demo/dist/",
-		decorateReply: false,
-	});
-
 	app.setErrorHandler(errorHandler);
 
 	app.get("/health", async () => {

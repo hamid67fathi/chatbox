@@ -4,14 +4,14 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "tsup --watch",
-		"build": "tsup",
+		"dev": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --watch",
+		"build": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --minify",
 		"lint": "biome check .",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"tsup": "^8.4.0",
+		"esbuild": "^0.25.0",
 		"typescript": "^5.7.3"
 	}
 }
