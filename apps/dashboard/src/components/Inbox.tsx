@@ -225,6 +225,13 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		setActiveId(id);
 	}, []);
 
+	const activeContactName = useMemo(() => {
+		if (!activeId) return null;
+		return (
+			conversations.find((c) => c.id === activeId)?.contact?.fullName ?? null
+		);
+	}, [activeId, conversations]);
+
 	const handleConversationPatch = useCallback(
 		(id: string, patch: Partial<ConversationDetail>) => {
 			setConversations((prev) =>
@@ -312,7 +319,11 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							userId={userId}
 							onUpdated={(patch) => handleConversationPatch(activeId, patch)}
 						/>
-						<MessageThread workspaceId={workspaceId} conversationId={activeId} />
+						<MessageThread
+							workspaceId={workspaceId}
+							conversationId={activeId}
+							contactName={activeContactName}
+						/>
 					</>
 				) : (
 					<div className="flex flex-1 items-center justify-center text-muted-foreground">

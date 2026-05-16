@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Inbox, MessageSquare, Settings, Users } from "lucide-react";
+import { Inbox, MessageSquare, Settings, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
 	{ href: "/", label: "صندوق ورودی", icon: Inbox },
+	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
 	{ href: "/settings", label: "تنظیمات", icon: Settings, disabled: true },
 	{ href: "/team", label: "تیم", icon: Users, disabled: true },
 	{ href: "/knowledge", label: "پایگاه دانش", icon: MessageSquare, disabled: true },

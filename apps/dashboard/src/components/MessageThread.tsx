@@ -2,8 +2,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Message } from "@/lib/api";
-import { fetchMessages, normalizeMessage, sendMessage } from "@/lib/api";
+import { CannedResponsePicker } from "@/components/CannedResponsePicker";
+import type { CannedResponse, Message } from "@/lib/api";
+import {
+	fetchCannedResponses,
+	fetchMessages,
+	normalizeMessage,
+	sendMessage,
+	useCannedResponse,
+} from "@/lib/api";
+import {
+	defaultCannedVariables,
+	resolveCannedByShortcut,
+} from "@/lib/canned";
 import { getSocket } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,9 +22,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Props {
 	workspaceId: string;
 	conversationId: string;
+	contactName?: string | null;
 }
 
-export function MessageThread({ workspaceId, conversationId }: Props) {
+export function MessageThread({ workspaceId, conversationId, contactName }: Props) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [text, setText] = useState("");
 	const [sending, setSending] = useState(false);
@@ -23,6 +35,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 	const seenRef = useRef(new Set<string>());
 	const typingStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const markedReadRef = useRef(new Set<string>());
+	const [cannedItems, setCannedItems] = useState<CannedResponse[]>([]);
 
 	const markAsRead = useCallback(
 		(messageId: string) => {
@@ -51,6 +64,10 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		},
 		[markAsRead],
 	);
+
+	useEffect(() => {
+		fetchCannedResponses(workspaceId).then(setCannedItems);
+	}, [workspaceId]);
 
 	useEffect(() => {
 		seenRef.current.clear();
@@ -163,8 +180,16 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 	);
 
 	const handleSend = useCallback(async () => {
-		const body = text.trim();
+		let body = text.trim();
 		if (!body || sending) return;
+
+		const vars = defaultCannedVariables(contactName);
+		const resolved = resolveCannedByShortcut(body, cannedItems, vars);
+		let usedCannedId: string | null = null;
+		if (resolved) {
+			body = resolved.body;
+			usedCannedId = resolved.item.id;
+		}
 
 		emitTyping(false);
 		const replyToId = replyTo?.id ?? null;
@@ -188,6 +213,9 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		setMessages((prev) => [...prev, optimistic]);
 
 		try {
+			if (usedCannedId) {
+				void useCannedResponse(workspaceId, usedCannedId, vars);
+			}
 			const real = await sendMessage(workspaceId, conversationId, body, replyToId);
 			if (real) {
 				seenRef.current.add(real.id);
@@ -198,7 +226,16 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		} finally {
 			setSending(false);
 		}
-	}, [text, sending, workspaceId, conversationId, emitTyping, replyTo]);
+	}, [
+		text,
+		sending,
+		workspaceId,
+		conversationId,
+		emitTyping,
+		replyTo,
+		cannedItems,
+		contactName,
+	]);
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
@@ -277,19 +314,36 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 				</div>
 			)}
 			<form
-				className="flex gap-2 border-t border-border bg-card p-4"
+				className="relative flex gap-2 border-t border-border bg-card p-4"
 				onSubmit={(e) => {
 					e.preventDefault();
 					handleSend();
 				}}
 			>
-				<Input
-					value={text}
-					onChange={(e) => handleInputChange(e.target.value)}
-					placeholder="پیام بنویسید..."
-					disabled={sending}
-					className="flex-1"
-				/>
+				<div className="relative min-w-0 flex-1">
+					{text.startsWith("/") && (
+						<CannedResponsePicker
+							items={cannedItems}
+							query={text}
+							contactName={contactName}
+							onSelect={(expanded, item) => {
+								setText(expanded);
+								void useCannedResponse(
+									workspaceId,
+									item.id,
+									defaultCannedVariables(contactName),
+								);
+							}}
+						/>
+					)}
+					<Input
+						value={text}
+						onChange={(e) => handleInputChange(e.target.value)}
+						placeholder="پیام بنویسید… (/greet برای پاسخ آماده)"
+						disabled={sending}
+						className="w-full"
+					/>
+				</div>
 				<Button type="submit" disabled={!text.trim() || sending}>
 					ارسال
 				</Button>

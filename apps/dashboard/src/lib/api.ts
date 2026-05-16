@@ -346,4 +346,79 @@ export async function sendMessage(
 	return normalizeMessage(raw as Record<string, unknown>);
 }
 
+export interface CannedResponse {
+	id: string;
+	shortcut: string;
+	title: string;
+	body: string;
+	variables: string[] | null;
+	usageCount: number;
+	createdAt: string;
+}
+
+export async function fetchCannedResponses(
+	workspaceId: string,
+): Promise<CannedResponse[]> {
+	const res = await authFetch(`${API_URL}/v1/canned-responses`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = await res.json();
+	return json.data ?? [];
+}
+
+export async function createCannedResponse(
+	workspaceId: string,
+	data: { shortcut: string; title: string; body: string },
+): Promise<CannedResponse | null> {
+	const res = await authFetch(`${API_URL}/v1/canned-responses`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify(data),
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
+export async function updateCannedResponse(
+	workspaceId: string,
+	id: string,
+	data: { shortcut?: string; title?: string; body?: string },
+): Promise<CannedResponse | null> {
+	const res = await authFetch(`${API_URL}/v1/canned-responses/${id}`, {
+		method: "PATCH",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify(data),
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
+export async function deleteCannedResponse(
+	workspaceId: string,
+	id: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/canned-responses/${id}`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
+export async function useCannedResponse(
+	workspaceId: string,
+	id: string,
+	variables: Record<string, string>,
+): Promise<string | null> {
+	const res = await authFetch(`${API_URL}/v1/canned-responses/${id}/use`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify({ variables }),
+	});
+	if (!res.ok) return null;
+	const json = await res.json();
+	return json.body ?? null;
+}
+
 export { API_URL };
