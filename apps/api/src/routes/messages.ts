@@ -1,11 +1,13 @@
 import { and, eq, gt } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { aiInteractions, conversations, messages } from "../db/schema/index.js";
-import { askAI } from "../lib/ai-client.js";
+import { conversations, messages } from "../db/schema/index.js";
+import {
+	broadcastNewMessage,
+	triggerAIReply,
+} from "../lib/message-delivery.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
-import { getIO } from "../ws/broadcast.js";
 
 export async function messageRoutes(app: FastifyInstance) {
 	app.get<{
@@ -99,98 +101,12 @@ export async function messageRoutes(app: FastifyInstance) {
 			})
 			.returning();
 
-		try {
-			const io = getIO();
-			const payload = { message: msg, conversation: { id: convId } };
-			io.to(`conversation:${convId}`).emit("message:new", payload);
-			io.to(`workspace:${wsId}`).emit("message:new", payload);
-		} catch {
-			/* socket.io not yet initialized during tests */
-		}
+		broadcastNewMessage(msg, convId, wsId);
 
 		if ((sender_type ?? "agent") === "contact") {
-			triggerAIReply(wsId, convId, body, msg.id).catch(() => {});
+			triggerAIReply(wsId, convId, body, msg.id);
 		}
 
 		return reply.status(201).send(msg);
 	});
-}
-
-async function triggerAIReply(
-	workspaceId: string,
-	conversationId: string,
-	question: string,
-	sourceMessageId: string,
-) {
-	const start = Date.now();
-	const aiResult = await askAI(workspaceId, question, conversationId);
-	const latencyMs = Date.now() - start;
-
-	if (!aiResult) return;
-
-	if (aiResult.handoff) {
-		await db
-			.update(conversations)
-			.set({ aiHandled: false })
-			.where(eq(conversations.id, conversationId));
-
-		await db.insert(aiInteractions).values({
-			workspaceId,
-			conversationId,
-			messageId: sourceMessageId,
-			purpose: "auto_reply",
-			model: aiResult.model,
-			response: aiResult.reply,
-			retrievedChunks: aiResult.retrieved_chunks,
-			inputTokens: aiResult.input_tokens,
-			outputTokens: aiResult.output_tokens,
-			confidence: String(aiResult.confidence),
-			escalated: true,
-			latencyMs,
-		});
-
-		try {
-			const io = getIO();
-			io.to(`workspace:${workspaceId}`).emit("conv:needs_human", {
-				conversation_id: conversationId,
-			});
-		} catch {}
-		return;
-	}
-
-	const [aiMsg] = await db
-		.insert(messages)
-		.values({
-			workspaceId,
-			conversationId,
-			senderType: "ai",
-			type: "ai_reply",
-			body: aiResult.reply,
-			aiConfidence: String(aiResult.confidence),
-			aiModel: aiResult.model,
-		})
-		.returning();
-
-	await db.insert(aiInteractions).values({
-		workspaceId,
-		conversationId,
-		messageId: aiMsg.id,
-		purpose: "auto_reply",
-		model: aiResult.model,
-		prompt: question,
-		response: aiResult.reply,
-		retrievedChunks: aiResult.retrieved_chunks,
-		inputTokens: aiResult.input_tokens,
-		outputTokens: aiResult.output_tokens,
-		confidence: String(aiResult.confidence),
-		escalated: false,
-		latencyMs,
-	});
-
-	try {
-		const io = getIO();
-		const payload = { message: aiMsg, conversation: { id: conversationId } };
-		io.to(`conversation:${conversationId}`).emit("message:new", payload);
-		io.to(`workspace:${workspaceId}`).emit("message:new", payload);
-	} catch {}
 }

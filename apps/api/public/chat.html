@@ -195,10 +195,12 @@
   <script>
     const API = window.location.origin;
     const SLUG = 'demo';
+    const SESSION_KEY = 'chatbox_demo_session';
 
     let workspaceId = '';
     let conversationId = '';
     let contactId = '';
+    let visitorToken = '';
     let socket = null;
     const seenIds = new Set();
     let lastSentBody = null;
@@ -235,29 +237,22 @@
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    async function init() {
+    function saveSession() {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        workspaceId, conversationId, contactId, visitorToken,
+        visitor_id: localStorage.getItem(SESSION_KEY + '_vid') || contactId
+      }));
+    }
+
+    function loadSession() {
       try {
-        const res = await fetch(API + '/widget/v1/sessions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ workspace_slug: SLUG })
-        });
-        const data = await res.json();
-        workspaceId = data.workspace_id;
-        conversationId = data.conversation_id;
-        contactId = data.contact_id;
+        const raw = localStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
 
-        infoBar.textContent = 'متصل شد — conversation: ' + conversationId.slice(0, 8) + '...';
-
-        const msgRes = await fetch(API + '/v1/conversations/' + conversationId + '/messages?limit=50', {
-          headers: { 'X-Workspace-Id': workspaceId }
-        });
-        if (msgRes.ok) {
-          const msgData = await msgRes.json();
-          (msgData.data || []).forEach(m => addMessage(m));
-        }
-
-        socket = io(API, { query: { workspace_id: workspaceId, token: 'visitor' } });
+    async function connectSocket() {
+        socket = io(API, { query: { workspace_id: workspaceId, token: visitorToken } });
         socket.on('connect', () => {
           socket.emit('conv:join', { conv_id: conversationId });
         });
@@ -266,15 +261,66 @@
           const type = m.senderType || m.sender_type;
           if (type === 'contact' && m.body === lastSentBody) {
             lastSentBody = null;
+            if (m.id) seenIds.add(m.id);
             return;
           }
-          if (type !== 'contact') {
-            addMessage(m);
-          }
+          addMessage(m);
         });
         socket.on('typing', (data) => {
           typingEl.classList.toggle('visible', data.isTyping || data.is_typing);
         });
+    }
+
+    async function init() {
+      try {
+        const saved = loadSession();
+        let visitorId = saved?.visitor_id || localStorage.getItem(SESSION_KEY + '_vid');
+        if (!visitorId) {
+          visitorId = crypto.randomUUID();
+          localStorage.setItem(SESSION_KEY + '_vid', visitorId);
+        }
+
+        if (saved?.visitorToken) {
+          const tryRes = await fetch(API + '/widget/v1/messages', {
+            headers: { 'Authorization': 'Bearer ' + saved.visitorToken }
+          });
+          if (tryRes.ok) {
+            workspaceId = saved.workspaceId;
+            conversationId = saved.conversationId;
+            contactId = saved.contactId;
+            visitorToken = saved.visitorToken;
+            const msgData = await tryRes.json();
+            (msgData.data || []).forEach(m => addMessage(m));
+            infoBar.textContent = 'متصل شد — conversation: ' + conversationId.slice(0, 8) + '...';
+            await connectSocket();
+            return;
+          }
+        }
+
+        const res = await fetch(API + '/widget/v1/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspace_slug: SLUG, visitor_id: visitorId })
+        });
+        if (!res.ok) throw new Error('session failed: ' + res.status);
+        const data = await res.json();
+        workspaceId = data.workspace_id;
+        conversationId = data.conversation_id;
+        contactId = data.contact_id;
+        visitorToken = data.token;
+        saveSession();
+
+        infoBar.textContent = 'متصل شد — conversation: ' + conversationId.slice(0, 8) + '...';
+
+        const msgRes = await fetch(API + '/widget/v1/messages', {
+          headers: { 'Authorization': 'Bearer ' + visitorToken }
+        });
+        if (msgRes.ok) {
+          const msgData = await msgRes.json();
+          (msgData.data || []).forEach(m => addMessage(m));
+        }
+
+        await connectSocket();
       } catch (err) {
         infoBar.textContent = 'خطا در اتصال: ' + err.message;
         console.error(err);
@@ -291,18 +337,20 @@
       addMessage({ body, senderType: 'contact', createdAt: new Date().toISOString() });
 
       try {
-        await fetch(API + '/v1/conversations/' + conversationId + '/messages', {
+        const res = await fetch(API + '/widget/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Workspace-Id': workspaceId
+            'Authorization': 'Bearer ' + visitorToken
           },
-          body: JSON.stringify({
-            body,
-            sender_type: 'contact',
-            sender_contact_id: contactId
-          })
+          body: JSON.stringify({ body })
         });
+        if (!res.ok) {
+          console.error('Send failed:', res.status, await res.text());
+        } else {
+          const msg = await res.json();
+          if (msg.id) seenIds.add(msg.id);
+        }
       } catch (err) {
         console.error('Send failed:', err);
       }

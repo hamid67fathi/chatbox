@@ -9,6 +9,10 @@ import {
 	verifyToken,
 } from "../lib/auth.js";
 import { notFound, validationError } from "../lib/errors.js";
+import {
+	broadcastNewMessage,
+	triggerAIReply,
+} from "../lib/message-delivery.js";
 
 async function requireVisitorToken(
 	request: FastifyRequest,
@@ -133,6 +137,9 @@ export async function widgetRoutes(app: FastifyInstance) {
 					body,
 				})
 				.returning();
+
+			broadcastNewMessage(msg, conversationId, workspaceId);
+			triggerAIReply(workspaceId, conversationId, body, msg.id);
 
 			return reply.status(201).send(msg);
 		},
