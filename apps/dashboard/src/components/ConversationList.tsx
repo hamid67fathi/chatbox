@@ -2,11 +2,15 @@
 
 import type { Conversation } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
 
 interface Props {
 	conversations: Conversation[];
 	activeId: string | null;
 	onSelect: (id: string) => void;
+	hasMore?: boolean;
+	loadingMore?: boolean;
+	onLoadMore?: () => void;
 }
 
 function statusBadge(status: string) {
@@ -30,7 +34,31 @@ function timeAgo(iso: string | null): string {
 	return `${Math.floor(hrs / 24)} روز پیش`;
 }
 
-export function ConversationList({ conversations, activeId, onSelect }: Props) {
+export function ConversationList({
+	conversations,
+	activeId,
+	onSelect,
+	hasMore,
+	loadingMore,
+	onLoadMore,
+}: Props) {
+	const sentinelRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!hasMore || !onLoadMore) return;
+		const el = sentinelRef.current;
+		if (!el) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting && !loadingMore) onLoadMore();
+			},
+			{ root: el.parentElement, threshold: 0.1 },
+		);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [hasMore, loadingMore, onLoadMore]);
+
 	if (conversations.length === 0) {
 		return (
 			<div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
@@ -77,6 +105,11 @@ export function ConversationList({ conversations, activeId, onSelect }: Props) {
 					</button>
 				</li>
 			))}
+			{hasMore && (
+				<li ref={sentinelRef} className="py-3 text-center text-xs text-muted-foreground">
+					{loadingMore ? "در حال بارگذاری…" : "بارگذاری بیشتر…"}
+				</li>
+			)}
 		</ul>
 	);
 }

@@ -272,6 +272,9 @@
             return;
           }
           addMessage(m);
+          if ((type === 'agent' || type === 'ai') && m.id) {
+            socket.emit('message:read', { conv_id: conversationId, message_id: m.id });
+          }
         });
         socket.on('typing', (data) => {
           typingEl.classList.toggle('visible', data.isTyping || data.is_typing);
@@ -364,6 +367,18 @@
       sendBtn.disabled = false;
       inputEl.focus();
     }
+
+    let typingTimer = null;
+    function emitTyping(isTyping) {
+      if (!socket || !conversationId) return;
+      socket.emit(isTyping ? 'typing:start' : 'typing:stop', { conv_id: conversationId });
+    }
+    inputEl.addEventListener('input', () => {
+      if (!inputEl.value.trim()) { emitTyping(false); return; }
+      emitTyping(true);
+      if (typingTimer) clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => emitTyping(false), 2000);
+    });
 
     sendBtn.addEventListener('click', send);
     inputEl.addEventListener('keydown', (e) => {

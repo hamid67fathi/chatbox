@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, sql } from "drizzle-orm";
+import { and, desc, eq, exists, lt, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
@@ -17,13 +17,19 @@ export async function conversationRoutes(app: FastifyInstance) {
 			channel?: string;
 			assigned_to?: string;
 			limit?: string;
+			cursor?: string;
 			include_empty?: string;
 		};
 	}>("/v1/conversations", async (request) => {
 		const wsId = getWorkspaceId(request);
-		const limit = Math.min(Number(request.query.limit) || 50, 100);
+		const limit = Math.min(Number(request.query.limit) || 30, 100);
+		const sortAt = sql`COALESCE(${conversations.lastMessageAt}, ${conversations.createdAt})`;
 
 		const conditions = [eq(conversations.workspaceId, wsId)];
+
+		if (request.query.cursor) {
+			conditions.push(lt(sortAt, new Date(request.query.cursor)));
+		}
 
 		if (request.query.include_empty !== "true") {
 			conditions.push(
@@ -58,15 +64,20 @@ export async function conversationRoutes(app: FastifyInstance) {
 		const rows = await db.query.conversations.findMany({
 			where: and(...conditions),
 			limit,
-			orderBy: [
-				desc(
-					sql`COALESCE(${conversations.lastMessageAt}, ${conversations.createdAt})`,
-				),
-			],
+			orderBy: [desc(sortAt)],
 			with: { contact: true },
 		});
 
-		return { data: rows };
+		const last = rows[rows.length - 1];
+		const nextCursor =
+			rows.length === limit && last
+				? (last.lastMessageAt ?? last.createdAt)?.toISOString() ?? null
+				: null;
+
+		return {
+			data: rows,
+			page: { limit, next_cursor: nextCursor, has_more: rows.length === limit },
+		};
 	});
 
 	app.get<{ Params: { id: string } }>(

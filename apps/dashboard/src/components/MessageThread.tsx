@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Message } from "@/lib/api";
-import { fetchMessages, sendMessage } from "@/lib/api";
+import { fetchMessages, normalizeMessage, sendMessage } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,67 +17,154 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [text, setText] = useState("");
 	const [sending, setSending] = useState(false);
+	const [visitorTyping, setVisitorTyping] = useState(false);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const seenRef = useRef(new Set<string>());
+	const typingStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const markedReadRef = useRef(new Set<string>());
+
+	const markAsRead = useCallback(
+		(messageId: string) => {
+			if (markedReadRef.current.has(messageId)) return;
+			markedReadRef.current.add(messageId);
+			getSocket(workspaceId).emit("message:read", {
+				conv_id: conversationId,
+				message_id: messageId,
+			});
+			setMessages((prev) =>
+				prev.map((m) =>
+					m.id === messageId ? { ...m, readAt: new Date().toISOString() } : m,
+				),
+			);
+		},
+		[workspaceId, conversationId],
+	);
+
+	const markContactMessagesRead = useCallback(
+		(msgs: Message[]) => {
+			for (const m of msgs) {
+				if (m.senderType === "contact" && !m.readAt) {
+					markAsRead(m.id);
+				}
+			}
+		},
+		[markAsRead],
+	);
 
 	useEffect(() => {
 		seenRef.current.clear();
+		markedReadRef.current.clear();
+		setVisitorTyping(false);
 		fetchMessages(workspaceId, conversationId).then((msgs) => {
 			for (const m of msgs) seenRef.current.add(m.id);
 			setMessages(msgs);
+			markContactMessagesRead(msgs);
 		});
-	}, [workspaceId, conversationId]);
+	}, [workspaceId, conversationId, markContactMessagesRead]);
 
 	useEffect(() => {
 		const socket = getSocket(workspaceId);
 
 		socket.emit("conv:join", { conv_id: conversationId });
 
-		const handler = (data: { message: Message }) => {
-			if (data.message.conversationId !== conversationId) return;
-			if (seenRef.current.has(data.message.id)) return;
-			seenRef.current.add(data.message.id);
+		const onMessage = (data: { message: Message }) => {
+			const msg = normalizeMessage(
+				(data.message ?? data) as unknown as Record<string, unknown>,
+			);
+			if (msg.conversationId !== conversationId) return;
+			if (seenRef.current.has(msg.id)) return;
+			seenRef.current.add(msg.id);
 			setMessages((prev) => {
-				if (prev.some((m) => m.id === data.message.id)) return prev;
+				if (prev.some((m) => m.id === msg.id)) return prev;
 				if (
 					prev.some(
 						(m) =>
-							m.body === data.message.body &&
-							m.senderType === data.message.senderType &&
+							m.body === msg.body &&
+							m.senderType === msg.senderType &&
 							Math.abs(
-								new Date(m.createdAt).getTime() -
-									new Date(data.message.createdAt).getTime(),
+								new Date(m.createdAt).getTime() - new Date(msg.createdAt).getTime(),
 							) < 5000,
 					)
 				) {
 					return prev.map((m) =>
-						m.body === data.message.body &&
-						m.senderType === data.message.senderType &&
+						m.body === msg.body &&
+						m.senderType === msg.senderType &&
 						!seenRef.current.has(m.id)
-							? data.message
+							? msg
 							: m,
 					);
 				}
-				return [...prev, data.message];
+				return [...prev, msg];
 			});
+			if (msg.senderType === "contact") {
+				markAsRead(msg.id);
+			}
 		};
 
-		socket.on("message:new", handler);
+		const onTyping = (data: {
+			conv_id?: string;
+			isTyping?: boolean;
+			is_typing?: boolean;
+		}) => {
+			if (data.conv_id && data.conv_id !== conversationId) return;
+			setVisitorTyping(Boolean(data.isTyping ?? data.is_typing));
+		};
+
+		const onRead = (data: { message_id: string }) => {
+			setMessages((prev) =>
+				prev.map((m) =>
+					m.id === data.message_id
+						? { ...m, readAt: m.readAt ?? new Date().toISOString() }
+						: m,
+				),
+			);
+		};
+
+		socket.on("message:new", onMessage);
+		socket.on("typing", onTyping);
+		socket.on("message:read", onRead);
 
 		return () => {
-			socket.off("message:new", handler);
+			socket.off("message:new", onMessage);
+			socket.off("typing", onTyping);
+			socket.off("message:read", onRead);
 			socket.emit("conv:leave", { conv_id: conversationId });
+			socket.emit("typing:stop", { conv_id: conversationId });
 		};
-	}, [workspaceId, conversationId]);
+	}, [workspaceId, conversationId, markAsRead]);
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 	});
 
+	const emitTyping = useCallback(
+		(isTyping: boolean) => {
+			getSocket(workspaceId).emit(isTyping ? "typing:start" : "typing:stop", {
+				conv_id: conversationId,
+			});
+		},
+		[workspaceId, conversationId],
+	);
+
+	const handleInputChange = useCallback(
+		(value: string) => {
+			setText(value);
+			if (!value.trim()) {
+				emitTyping(false);
+				return;
+			}
+			emitTyping(true);
+			if (typingStopRef.current) clearTimeout(typingStopRef.current);
+			typingStopRef.current = setTimeout(() => emitTyping(false), 2000);
+		},
+		[emitTyping],
+	);
+
 	const handleSend = useCallback(async () => {
 		const body = text.trim();
 		if (!body || sending) return;
 
+		emitTyping(false);
 		setSending(true);
 		setText("");
 
@@ -90,6 +177,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 			body,
 			type: "text",
 			createdAt: new Date().toISOString(),
+			readAt: null,
 		};
 		seenRef.current.add(optimistic.id);
 		setMessages((prev) => [...prev, optimistic]);
@@ -105,7 +193,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		} finally {
 			setSending(false);
 		}
-	}, [text, sending, workspaceId, conversationId]);
+	}, [text, sending, workspaceId, conversationId, emitTyping]);
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
@@ -130,14 +218,24 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 							</span>
 						)}
 						<div className="whitespace-pre-wrap break-words">{msg.body}</div>
-						<div className="mt-1 text-[10px] opacity-70">
-							{new Date(msg.createdAt).toLocaleTimeString("fa-IR", {
-								hour: "2-digit",
-								minute: "2-digit",
-							})}
+						<div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
+							<span>
+								{new Date(msg.createdAt).toLocaleTimeString("fa-IR", {
+									hour: "2-digit",
+									minute: "2-digit",
+								})}
+							</span>
+							{msg.senderType === "agent" && (
+								<span title={msg.readAt ? "خوانده شد" : "ارسال شد"}>
+									{msg.readAt ? "✓✓" : "✓"}
+								</span>
+							)}
 						</div>
 					</div>
 				))}
+				{visitorTyping && (
+					<p className="text-xs text-muted-foreground">بازدیدکننده در حال نوشتن…</p>
+				)}
 				<div ref={bottomRef} />
 			</div>
 			<form
@@ -149,7 +247,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 			>
 				<Input
 					value={text}
-					onChange={(e) => setText(e.target.value)}
+					onChange={(e) => handleInputChange(e.target.value)}
 					placeholder="پیام بنویسید..."
 					disabled={sending}
 					className="flex-1"

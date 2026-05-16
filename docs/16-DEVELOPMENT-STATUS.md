@@ -86,7 +86,7 @@ rule: >
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
 | P5.1 | UI Framework Setup | Tailwind CSS + RTL + shadcn/ui، layout (sidebar + header)، dark mode | انجام شد | 2026-05-16 | Tailwind v3، AppShell/Sidebar/Header، ThemeProvider، Button/Input |
-| P5.2 | Inbox کامل | جستجو، فیلتر، مرتب‌سازی، pagination، typing indicator، read receipts | در حال انجام | 2026-05-16 | جستجو + فیلتر status/channel؛ pagination/typing/read باقی |
+| P5.2 | Inbox کامل | جستجو، فیلتر، مرتب‌سازی، pagination، typing indicator، read receipts | انجام شد | 2026-05-16 | infinite scroll، typing، ✓/✓✓ read receipts |
 | P5.3 | مدیریت مکالمه | Assignment، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote | شروع نشده | — | — |
 | P5.4 | پاسخ‌های آماده | CRUD canned responses، جستجوی /shortcut، متغیرها | شروع نشده | — | — |
 | P5.5 | تنظیمات و مدیریت تیم | Settings، invite اعضا، تغییر role، workspace management | شروع نشده | — | — |

@@ -33,9 +33,12 @@ export function Inbox({ workspaceId }: Props) {
 	const [search, setSearch] = useState("");
 	const [statusFilter, setStatusFilter] = useState("");
 	const [channelFilter, setChannelFilter] = useState("");
+	const [hasMore, setHasMore] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
+	const [nextCursor, setNextCursor] = useState<string | null>(null);
 
 	const apiFilters = useMemo((): ConversationFilters => {
-		const f: ConversationFilters = { limit: 100 };
+		const f: ConversationFilters = { limit: 30 };
 		if (statusFilter) f.status = statusFilter;
 		if (channelFilter) f.channel = channelFilter;
 		return f;
@@ -43,11 +46,33 @@ export function Inbox({ workspaceId }: Props) {
 
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
-		fetchConversations(workspaceId, apiFilters).then(({ data, error }) => {
+		fetchConversations(workspaceId, apiFilters).then(({ data, error, page }) => {
 			setConversations(data);
 			setLoadError(error ?? null);
+			setHasMore(page?.has_more ?? false);
+			setNextCursor(page?.next_cursor ?? null);
 		});
 	}, [workspaceId, apiFilters]);
+
+	const loadMore = useCallback(() => {
+		if (!workspaceId || !hasMore || loadingMore || !nextCursor) return;
+		setLoadingMore(true);
+		fetchConversations(workspaceId, { ...apiFilters, cursor: nextCursor }).then(
+			({ data, page, error }) => {
+				setLoadingMore(false);
+				if (error) {
+					setLoadError(error);
+					return;
+				}
+				setConversations((prev) => {
+					const ids = new Set(prev.map((c) => c.id));
+					return [...prev, ...data.filter((c) => !ids.has(c.id))];
+				});
+				setHasMore(page?.has_more ?? false);
+				setNextCursor(page?.next_cursor ?? null);
+			},
+		);
+	}, [workspaceId, apiFilters, hasMore, loadingMore, nextCursor]);
 
 	useEffect(() => {
 		reloadConversations();
@@ -196,6 +221,9 @@ export function Inbox({ workspaceId }: Props) {
 					conversations={filteredConversations}
 					activeId={activeId}
 					onSelect={handleSelect}
+					hasMore={hasMore && !search.trim()}
+					loadingMore={loadingMore}
+					onLoadMore={loadMore}
 				/>
 			</aside>
 			<section className="flex min-w-0 flex-1 flex-col bg-background">

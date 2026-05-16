@@ -29,6 +29,13 @@ export interface Message {
 	body: string;
 	type: string;
 	createdAt: string;
+	readAt?: string | null;
+}
+
+export interface ConversationsPage {
+	limit: number;
+	next_cursor: string | null;
+	has_more: boolean;
 }
 
 function authHeaders(workspaceId: string): Record<string, string> {
@@ -104,16 +111,22 @@ export interface ConversationFilters {
 	channel?: string;
 	assignedTo?: string;
 	limit?: number;
+	cursor?: string;
 }
 
 export async function fetchConversations(
 	workspaceId: string,
 	filters: ConversationFilters = {},
-): Promise<{ data: Conversation[]; error?: string }> {
-	const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
+): Promise<{
+	data: Conversation[];
+	page?: ConversationsPage;
+	error?: string;
+}> {
+	const params = new URLSearchParams({ limit: String(filters.limit ?? 30) });
 	if (filters.status) params.set("status", filters.status);
 	if (filters.channel) params.set("channel", filters.channel);
 	if (filters.assignedTo) params.set("assigned_to", filters.assignedTo);
+	if (filters.cursor) params.set("cursor", filters.cursor);
 
 	const res = await authFetch(`${API_URL}/v1/conversations?${params}`, {
 		headers: authHeaders(workspaceId),
@@ -127,7 +140,23 @@ export async function fetchConversations(
 		};
 	}
 	const json = await res.json();
-	return { data: json.data ?? [] };
+	return { data: json.data ?? [], page: json.page };
+}
+
+export function normalizeMessage(raw: Record<string, unknown>): Message {
+	return {
+		id: String(raw.id),
+		conversationId: String(raw.conversationId ?? raw.conversation_id),
+		senderType: String(raw.senderType ?? raw.sender_type),
+		senderUserId: (raw.senderUserId ?? raw.sender_user_id ?? null) as string | null,
+		senderContactId: (raw.senderContactId ?? raw.sender_contact_id ?? null) as
+			| string
+			| null,
+		body: String(raw.body ?? ""),
+		type: String(raw.type ?? "text"),
+		createdAt: String(raw.createdAt ?? raw.created_at),
+		readAt: (raw.readAt ?? raw.read_at ?? null) as string | null,
+	};
 }
 
 export async function fetchMessages(
@@ -143,7 +172,8 @@ export async function fetchMessages(
 	);
 	if (!res.ok) return [];
 	const data = await res.json();
-	return data.data ?? [];
+	const rows = data.data ?? [];
+	return rows.map((m: Record<string, unknown>) => normalizeMessage(m));
 }
 
 export async function sendMessage(
@@ -163,7 +193,8 @@ export async function sendMessage(
 		},
 	);
 	if (!res.ok) return null;
-	return res.json();
+	const raw = await res.json();
+	return normalizeMessage(raw as Record<string, unknown>);
 }
 
 export { API_URL };
