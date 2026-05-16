@@ -93,6 +93,15 @@ export async function broadcastNewMessage(
 	}
 }
 
+function aiPurpose(aiResult: {
+	intent?: string;
+	route?: string;
+}): string {
+	const intent = aiResult.intent ?? "faq";
+	const route = aiResult.route ?? "rag";
+	return `auto_reply:${intent}:${route}`;
+}
+
 export function triggerAIReply(
 	workspaceId: string,
 	conversationId: string,
@@ -124,7 +133,7 @@ async function runAIReply(
 			workspaceId,
 			conversationId,
 			messageId: sourceMessageId,
-			purpose: "auto_reply",
+			purpose: aiPurpose(aiResult),
 			model: aiResult.model,
 			response: aiResult.reply,
 			retrievedChunks: aiResult.retrieved_chunks,
@@ -161,7 +170,7 @@ async function runAIReply(
 		workspaceId,
 		conversationId,
 		messageId: aiMsg.id,
-		purpose: "auto_reply",
+		purpose: aiPurpose(aiResult),
 		model: aiResult.model,
 		prompt: question,
 		response: aiResult.reply,

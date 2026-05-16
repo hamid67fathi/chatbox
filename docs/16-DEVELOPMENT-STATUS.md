@@ -106,7 +106,7 @@ rule: >
 
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
-| P7.1 | Intent Classifier + Router | کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation | شروع نشده | — | — |
+| P7.1 | Intent Classifier + Router | کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation | انجام شد | 2026-05-16 | /v1/ask + /v1/classify، heuristic + LLM |
 | P7.2 | Copilot (پیشنهاد پاسخ) | /v1/copilot، ۳ پیشنهاد، SSE streaming، UI داشبورد | شروع نشده | — | — |
 | P7.3 | Summarizer و Sentiment | خلاصه مکالمه، امتیاز sentiment، mood indicator | شروع نشده | — | — |
 | P7.4 | بهبود RAG | Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback | شروع نشده | — | — |

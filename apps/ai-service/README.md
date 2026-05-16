@@ -37,7 +37,7 @@ curl -X POST http://localhost:8000/v1/ingest \
   }'
 ```
 
-### Ask (RAG retrieve + LLM generate)
+### Ask (intent classify → route → RAG / escalation)
 ```bash
 curl -X POST http://localhost:8000/v1/ask \
   -H "Content-Type: application/json" \
@@ -45,6 +45,15 @@ curl -X POST http://localhost:8000/v1/ask \
     "workspace_id": "<WORKSPACE_UUID>",
     "question": "سوال کاربر"
   }'
+```
+
+Response includes `intent` (faq|transactional|complaint|chitchat|off_topic), `route` (rag|tool_use|escalation), and `handoff`.
+
+### Classify only (debug)
+```bash
+curl -X POST http://localhost:8000/v1/classify \
+  -H "Content-Type: application/json" \
+  -d '{"question": "سلام"}'
 ```
 
 ### Embed texts

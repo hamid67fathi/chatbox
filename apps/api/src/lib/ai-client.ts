@@ -6,6 +6,9 @@ interface AskResponse {
 	confidence: number;
 	handoff: boolean;
 	model: string;
+	intent?: string;
+	route?: string;
+	intent_confidence?: number;
 	retrieved_chunks: Array<{ chunk_id: string; score: number }>;
 	input_tokens: number;
 	output_tokens: number;

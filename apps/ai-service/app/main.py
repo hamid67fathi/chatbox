@@ -8,8 +8,7 @@ from .chunker import chunk_text
 from .config import settings
 from .db import close_pool, get_pool
 from .embeddings import embed_texts
-from .llm import generate_reply
-from .retriever import retrieve_chunks
+from .router import route_and_answer
 
 
 @asynccontextmanager
@@ -100,6 +99,9 @@ class AskResponse(BaseModel):
     confidence: float
     handoff: bool
     model: str
+    intent: str
+    route: str
+    intent_confidence: float
     retrieved_chunks: list[dict]
     input_tokens: int
     output_tokens: int
@@ -107,17 +109,47 @@ class AskResponse(BaseModel):
 
 @app.post("/v1/ask", response_model=AskResponse)
 async def ask(req: AskRequest):
-    chunks = await retrieve_chunks(req.workspace_id, req.question, req.top_k)
-    result = await generate_reply(req.question, chunks)
+    result = await route_and_answer(
+        req.workspace_id,
+        req.question,
+        req.top_k,
+    )
 
     return AskResponse(
         reply=result["reply"],
         confidence=result["confidence"],
         handoff=result["handoff"],
         model=result["model"],
-        retrieved_chunks=chunks,
+        intent=result["intent"],
+        route=result["route"],
+        intent_confidence=result["intent_confidence"],
+        retrieved_chunks=result["retrieved_chunks"],
         input_tokens=result["input_tokens"],
         output_tokens=result["output_tokens"],
+    )
+
+
+class ClassifyRequest(BaseModel):
+    question: str
+
+
+class ClassifyResponse(BaseModel):
+    intent: str
+    confidence: float
+    route: str
+
+
+@app.post("/v1/classify", response_model=ClassifyResponse)
+async def classify(req: ClassifyRequest):
+    from .intent import classify_intent
+    from .router import decide_route
+
+    intent_result = await classify_intent(req.question)
+    route = decide_route(intent_result.intent, intent_result.confidence)
+    return ClassifyResponse(
+        intent=intent_result.intent.value,
+        confidence=intent_result.confidence,
+        route=route.value,
     )
 
 
