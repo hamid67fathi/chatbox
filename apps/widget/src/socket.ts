@@ -10,10 +10,28 @@ type SocketLike = {
 type IOConnectFn = (url: string, opts: Record<string, unknown>) => SocketLike;
 
 function normalizeMessage(raw: Record<string, unknown>): Message {
+	const attachments = raw.attachments;
+	let parsed: Message["attachments"] = null;
+	if (Array.isArray(attachments)) {
+		parsed = attachments
+			.filter((a) => a && typeof a === "object" && typeof (a as { url?: string }).url === "string")
+			.map((a) => {
+				const o = a as Record<string, unknown>;
+				return {
+					url: String(o.url),
+					name: String(o.name ?? "file"),
+					mime_type: String(o.mime_type ?? ""),
+					size_bytes: Number(o.size_bytes ?? 0),
+					type: o.type === "image" ? "image" : "file",
+				};
+			});
+	}
 	return {
 		id: String(raw.id ?? ""),
 		body: String(raw.body ?? ""),
 		senderType: String(raw.senderType ?? raw.sender_type ?? "system"),
+		type: String(raw.type ?? "text"),
+		attachments: parsed && parsed.length > 0 ? parsed : null,
 		createdAt: String(
 			raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
 		),

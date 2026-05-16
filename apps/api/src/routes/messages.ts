@@ -7,11 +7,12 @@ import {
 	assertConversationAccess,
 	claimConversationForAgent,
 } from "../lib/conversation-access.js";
+import { validateMessagePayload } from "../lib/attachments.js";
 import {
 	deliverNewMessage,
 	triggerAIReply,
 } from "../lib/message-delivery.js";
-import { notFound, validationError } from "../lib/errors.js";
+import { notFound } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 
 export async function messageRoutes(app: FastifyInstance) {
@@ -67,7 +68,8 @@ export async function messageRoutes(app: FastifyInstance) {
 		Params: { id: string };
 		Body: {
 			type?: string;
-			body: string;
+			body?: string;
+			attachments?: unknown;
 			sender_type?: string;
 			sender_user_id?: string;
 			sender_contact_id?: string;
@@ -77,15 +79,15 @@ export async function messageRoutes(app: FastifyInstance) {
 		const wsId = getWorkspaceId(request);
 		const convId = request.params.id;
 		const {
-			type,
 			body,
+			attachments,
 			sender_type,
 			sender_user_id,
 			sender_contact_id,
 			reply_to_id,
 		} = request.body ?? {};
 
-		if (!body) throw validationError("body is required.", "body");
+		const payload = validateMessagePayload({ body, type, attachments });
 
 		const conv = await db.query.conversations.findFirst({
 			where: and(
@@ -109,8 +111,9 @@ export async function messageRoutes(app: FastifyInstance) {
 				senderUserId:
 					effectiveSender === "agent" ? (sender_user_id ?? user.id) : sender_user_id,
 				senderContactId: sender_contact_id,
-				type: (type as "text") ?? "text",
-				body,
+				type: payload.type,
+				body: payload.body,
+				attachments: payload.attachments,
 				replyToId: reply_to_id,
 			})
 			.returning();
@@ -121,8 +124,8 @@ export async function messageRoutes(app: FastifyInstance) {
 
 		await deliverNewMessage(msg, convId, wsId);
 
-		if ((sender_type ?? "agent") === "contact") {
-			triggerAIReply(wsId, convId, body, msg.id);
+		if ((sender_type ?? "agent") === "contact" && payload.type === "text") {
+			triggerAIReply(wsId, convId, payload.body, msg.id);
 		}
 
 		return reply.status(201).send(msg);

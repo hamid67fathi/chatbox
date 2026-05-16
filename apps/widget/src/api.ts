@@ -27,11 +27,46 @@ export interface WidgetTheme {
 	};
 }
 
+export interface MessageAttachment {
+	id?: string;
+	url: string;
+	name: string;
+	mime_type: string;
+	size_bytes: number;
+	type: "image" | "file";
+}
+
 export interface Message {
 	id: string;
 	body: string;
 	senderType: string;
+	type?: string;
+	attachments?: MessageAttachment[] | null;
 	createdAt: string;
+}
+
+function parseAttachments(raw: unknown): MessageAttachment[] | null {
+	if (!raw || !Array.isArray(raw)) return null;
+	const out: MessageAttachment[] = [];
+	for (const item of raw) {
+		if (!item || typeof item !== "object") continue;
+		const o = item as Record<string, unknown>;
+		if (typeof o.url !== "string") continue;
+		out.push({
+			id: typeof o.id === "string" ? o.id : undefined,
+			url: o.url,
+			name: String(o.name ?? "file"),
+			mime_type: String(o.mime_type ?? o.mimeType ?? ""),
+			size_bytes: Number(o.size_bytes ?? o.sizeBytes ?? 0),
+			type: o.type === "image" ? "image" : "file",
+		});
+	}
+	return out.length > 0 ? out : null;
+}
+
+export function attachmentFullUrl(apiUrl: string, path: string) {
+	if (path.startsWith("http")) return path;
+	return `${apiUrl.replace(/\/$/, "")}${path}`;
 }
 
 export interface SessionResponse {
@@ -139,29 +174,62 @@ export async function fetchMessages(
 	if (!res.ok) return [];
 	const data = await res.json();
 	const rows = data.data ?? [];
-	return rows.map((m: Record<string, unknown>) => ({
+	return rows.map((m: Record<string, unknown>) => normalizeMessageRow(m));
+}
+
+function normalizeMessageRow(m: Record<string, unknown>): Message {
+	return {
 		id: String(m.id),
 		body: String(m.body ?? ""),
 		senderType: String(m.senderType ?? m.sender_type ?? "system"),
+		type: String(m.type ?? "text"),
+		attachments: parseAttachments(m.attachments),
 		createdAt: String(m.createdAt ?? m.created_at ?? new Date().toISOString()),
-	}));
+	};
+}
+
+export async function uploadWidgetFile(file: File): Promise<MessageAttachment> {
+	const form = new FormData();
+	form.append("file", file);
+	const res = await fetch(`${apiBaseUrl}/widget/v1/uploads`, {
+		method: "POST",
+		headers: visitorToken ? { Authorization: `Bearer ${visitorToken}` } : {},
+		body: form,
+	});
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({}));
+		throw new Error(
+			(err as { error?: { message?: string } })?.error?.message ??
+				`Upload failed: ${res.status}`,
+		);
+	}
+	const data = (await res.json()).data as Record<string, unknown>;
+	return {
+		id: String(data.id ?? ""),
+		url: String(data.url ?? ""),
+		name: String(data.name ?? file.name),
+		mime_type: String(data.mime_type ?? file.type),
+		size_bytes: Number(data.size_bytes ?? file.size),
+		type: data.type === "image" ? "image" : "file",
+	};
 }
 
 export async function sendMessageHttp(
 	config: WidgetConfig,
 	body: string,
+	options?: { type?: string; attachments?: MessageAttachment[] },
 ): Promise<Message> {
 	const res = await fetch(`${config.apiUrl}/widget/v1/messages`, {
 		method: "POST",
 		headers: authHeaders(),
-		body: JSON.stringify({ body }),
+		body: JSON.stringify({
+			body,
+			...(options?.type ? { type: options.type } : {}),
+			...(options?.attachments?.length
+				? { attachments: options.attachments }
+				: {}),
+		}),
 	});
 	if (!res.ok) throw new Error(`Send failed: ${res.status}`);
-	const m = await res.json();
-	return {
-		id: String(m.id),
-		body: String(m.body ?? ""),
-		senderType: String(m.senderType ?? m.sender_type ?? "contact"),
-		createdAt: String(m.createdAt ?? m.created_at ?? new Date().toISOString()),
-	};
+	return normalizeMessageRow((await res.json()) as Record<string, unknown>);
 }

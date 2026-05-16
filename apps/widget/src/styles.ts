@@ -145,11 +145,30 @@ export const WIDGET_CSS = `
   word-wrap: break-word;
 }
 
+.cb-msg-image {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.cb-msg-file {
+  display: block;
+  font-size: 13px;
+  text-decoration: underline;
+  margin-bottom: 4px;
+}
+
 .cb-msg.contact {
   align-self: flex-end;
   background: var(--cb-primary);
   color: var(--cb-text-on-primary);
   border-bottom-right-radius: 4px;
+}
+
+.cb-msg.contact .cb-msg-file {
+  color: var(--cb-text-on-primary);
 }
 
 .cb-msg.agent, .cb-msg.ai, .cb-msg.system {
@@ -171,11 +190,27 @@ export const WIDGET_CSS = `
   display: block;
 }
 
+.cb-input-area .hidden {
+  display: none;
+}
+
+.cb-attach {
+  background: transparent;
+  border: 1px solid var(--cb-border);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
 .cb-input-area {
   display: flex;
   padding: 12px;
   border-top: 1px solid var(--cb-border);
   gap: 8px;
+  align-items: center;
 }
 
 .cb-input {

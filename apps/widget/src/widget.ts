@@ -4,12 +4,14 @@ import {
 	type WidgetConfig,
 	type SessionResponse,
 	type WidgetTheme,
+	attachmentFullUrl,
 	createSession,
 	fetchMessages,
 	fetchWidgetTheme,
 	sendMessageHttp,
 	setApiBaseUrl,
 	updateContactProfile,
+	uploadWidgetFile,
 } from "./api.js";
 import { WidgetSocket } from "./socket.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
@@ -50,6 +52,7 @@ export class ChatBoxWidget {
 	private prechatErrorEl!: HTMLElement;
 	private typingEl!: HTMLElement;
 	private inputAreaEl!: HTMLElement;
+	private fileInputEl!: HTMLInputElement;
 	private inputEl!: HTMLInputElement;
 	private sendBtn!: HTMLButtonElement;
 	private windowEl!: HTMLElement;
@@ -104,6 +107,8 @@ export class ChatBoxWidget {
 					</div>
 					<div class="cb-typing" id="cb-typing">در حال نوشتن...</div>
 					<div class="cb-input-area" id="cb-input-area">
+						<input type="file" id="cb-file" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain" />
+						<button type="button" class="cb-attach" id="cb-attach" title="پیوست">📎</button>
 						<input class="cb-input" id="cb-input" placeholder="پیام بنویسید..." />
 						<button class="cb-send" id="cb-send" type="button">ارسال</button>
 					</div>
@@ -129,6 +134,7 @@ export class ChatBoxWidget {
 		this.messagesEl = this.root.getElementById("cb-messages") as HTMLElement;
 		this.typingEl = this.root.getElementById("cb-typing") as HTMLElement;
 		this.inputAreaEl = this.root.getElementById("cb-input-area") as HTMLElement;
+		this.fileInputEl = this.root.getElementById("cb-file") as HTMLInputElement;
 		this.inputEl = this.root.getElementById("cb-input") as HTMLInputElement;
 		this.sendBtn = this.root.getElementById("cb-send") as HTMLButtonElement;
 
@@ -142,6 +148,13 @@ export class ChatBoxWidget {
 			.getElementById("cb-close")
 			?.addEventListener("click", () => this.toggle());
 		this.sendBtn.addEventListener("click", () => this.send());
+		this.root.getElementById("cb-attach")?.addEventListener("click", () => {
+			this.fileInputEl.click();
+		});
+		this.fileInputEl.addEventListener("change", () => {
+			const f = this.fileInputEl.files?.[0];
+			if (f) void this.sendFile(f);
+		});
 		this.inputEl.addEventListener("keydown", (e) => {
 			if (e.key === "Enter" && !e.shiftKey) {
 				e.preventDefault();
@@ -380,15 +393,60 @@ export class ChatBoxWidget {
 		}
 		const el = document.createElement("div");
 		el.className = `cb-msg ${msg.senderType}`;
-		el.textContent = msg.body;
+		this.renderMessageContent(el, msg);
 		this.messagesEl.appendChild(el);
 		if (scroll) this.scrollToBottom();
+	}
+
+	private renderMessageContent(el: HTMLElement, msg: Message) {
+		const att = msg.attachments?.[0];
+		if (att?.type === "image") {
+			const img = document.createElement("img");
+			img.className = "cb-msg-image";
+			img.src = attachmentFullUrl(this.config.apiUrl, att.url);
+			img.alt = att.name;
+			el.appendChild(img);
+		} else if (att?.type === "file") {
+			const a = document.createElement("a");
+			a.className = "cb-msg-file";
+			a.href = attachmentFullUrl(this.config.apiUrl, att.url);
+			a.target = "_blank";
+			a.rel = "noopener";
+			a.textContent = `📎 ${att.name}`;
+			el.appendChild(a);
+		}
+		if (msg.body && !(att && msg.body === att.name && msg.type !== "text")) {
+			const text = document.createElement("div");
+			text.textContent = msg.body;
+			el.appendChild(text);
+		}
 	}
 
 	private scrollToBottom() {
 		requestAnimationFrame(() => {
 			this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
 		});
+	}
+
+	private async sendFile(file: File) {
+		this.hideWelcome();
+		this.sendBtn.disabled = true;
+		try {
+			const attachment = await uploadWidgetFile(file);
+			const caption = this.inputEl.value.trim();
+			const msg = await sendMessageHttp(this.config, caption || attachment.name, {
+				type: attachment.type,
+				attachments: [attachment],
+			});
+			this.inputEl.value = "";
+			this.appendMessage(msg);
+		} catch (err) {
+			console.error("[ChatBox] Upload failed:", err);
+		} finally {
+			this.sendBtn.disabled = false;
+			this.fileInputEl.value = "";
+			this.inputEl.focus();
+		}
 	}
 
 	private async send() {

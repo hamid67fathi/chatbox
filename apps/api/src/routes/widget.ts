@@ -14,6 +14,8 @@ import {
 	unauthorized,
 	verifyToken,
 } from "../lib/auth.js";
+import { validateMessagePayload } from "../lib/attachments.js";
+import { saveWorkspaceUpload } from "../lib/uploads.js";
 import { notFound, validationError } from "../lib/errors.js";
 import {
 	broadcastNewConversation,
@@ -221,6 +223,27 @@ export async function widgetRoutes(app: FastifyInstance) {
 		},
 	);
 
+	app.post(
+		"/widget/v1/uploads",
+		{ preHandler: [requireVisitorToken] },
+		async (request) => {
+			const { workspaceId } = (request as VisitorRequest).visitor;
+			const data = await request.file();
+			if (!data) throw validationError("file is required.", "file");
+
+			const chunks: Buffer[] = [];
+			for await (const chunk of data.file) {
+				chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+			}
+			const attachment = await saveWorkspaceUpload(workspaceId, {
+				filename: data.filename,
+				mimetype: data.mimetype,
+				buffer: Buffer.concat(chunks),
+			});
+			return { data: attachment };
+		},
+	);
+
 	app.get(
 		"/widget/v1/messages",
 		{ preHandler: [requireVisitorToken] },
@@ -240,13 +263,14 @@ export async function widgetRoutes(app: FastifyInstance) {
 		},
 	);
 
-	app.post<{ Body: { body: string } }>(
+	app.post<{
+		Body: { body?: string; type?: string; attachments?: unknown };
+	}>(
 		"/widget/v1/messages",
 		{ preHandler: [requireVisitorToken] },
 		async (request, reply) => {
 			const { workspaceId, conversationId, contactId } = (request as VisitorRequest).visitor;
-			const { body } = request.body ?? {};
-			if (!body) throw validationError("body is required.", "body");
+			const payload = validateMessagePayload(request.body ?? {});
 
 			const [msg] = await db
 				.insert(messages)
@@ -255,13 +279,16 @@ export async function widgetRoutes(app: FastifyInstance) {
 					conversationId,
 					senderType: "contact",
 					senderContactId: contactId,
-					type: "text",
-					body,
+					type: payload.type,
+					body: payload.body,
+					attachments: payload.attachments,
 				})
 				.returning();
 
 			await deliverNewMessage(msg, conversationId, workspaceId);
-			triggerAIReply(workspaceId, conversationId, body, msg.id);
+			if (payload.type === "text") {
+				triggerAIReply(workspaceId, conversationId, payload.body, msg.id);
+			}
 
 			return reply.status(201).send(msg);
 		},

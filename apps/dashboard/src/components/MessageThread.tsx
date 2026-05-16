@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CannedResponsePicker } from "@/components/CannedResponsePicker";
 import type { CannedResponse, Message } from "@/lib/api";
+import { MessageBody } from "@/components/MessageBody";
 import {
 	fetchCannedResponses,
 	fetchMessages,
 	normalizeMessage,
 	sendMessage,
+	uploadMessageFile,
 	useCannedResponse,
 } from "@/lib/api";
 import {
@@ -36,6 +38,8 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 	const typingStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const markedReadRef = useRef(new Set<string>());
 	const [cannedItems, setCannedItems] = useState<CannedResponse[]>([]);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [uploadError, setUploadError] = useState("");
 
 	const markAsRead = useCallback(
 		(messageId: string) => {
@@ -179,6 +183,41 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 		[emitTyping],
 	);
 
+	const handleFilePick = useCallback(
+		async (file: File) => {
+			setUploadError("");
+			setSending(true);
+			try {
+				const { attachment, error } = await uploadMessageFile(workspaceId, file);
+				if (error || !attachment) {
+					setUploadError(error ?? "آپلود ناموفق بود.");
+					return;
+				}
+				const caption = text.trim();
+				const real = await sendMessage(
+					workspaceId,
+					conversationId,
+					caption || attachment.name,
+					replyTo?.id ?? null,
+					{
+						type: attachment.type,
+						attachments: [attachment],
+					},
+				);
+				if (real) {
+					seenRef.current.add(real.id);
+					setMessages((prev) => [...prev, real]);
+					setText("");
+					setReplyTo(null);
+				}
+			} finally {
+				setSending(false);
+				if (fileInputRef.current) fileInputRef.current.value = "";
+			}
+		},
+		[workspaceId, conversationId, text, replyTo],
+	);
+
 	const handleSend = useCallback(async () => {
 		let body = text.trim();
 		if (!body || sending) return;
@@ -269,7 +308,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 								{quoted.body.length > 120 ? "…" : ""}
 							</div>
 						)}
-						<div className="whitespace-pre-wrap break-words">{msg.body}</div>
+						<MessageBody msg={msg} />
 						<button
 							type="button"
 							className="absolute -top-2 end-0 hidden rounded bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground shadow group-hover:block"
@@ -313,6 +352,9 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 					</button>
 				</div>
 			)}
+			{uploadError && (
+				<p className="px-4 pb-1 text-xs text-destructive">{uploadError}</p>
+			)}
 			<form
 				className="relative flex gap-2 border-t border-border bg-card p-4"
 				onSubmit={(e) => {
@@ -320,6 +362,25 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 					handleSend();
 				}}
 			>
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain"
+					className="hidden"
+					onChange={(e) => {
+						const f = e.target.files?.[0];
+						if (f) void handleFilePick(f);
+					}}
+				/>
+				<Button
+					type="button"
+					variant="outline"
+					disabled={sending}
+					onClick={() => fileInputRef.current?.click()}
+					title="پیوست فایل"
+				>
+					📎
+				</Button>
 				<div className="relative min-w-0 flex-1">
 					{text.startsWith("/") && (
 						<CannedResponsePicker

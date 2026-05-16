@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { sql } from "drizzle-orm";
@@ -11,6 +12,7 @@ import { db } from "./db/index.js";
 import { requireAuth } from "./lib/auth.js";
 import { errorHandler } from "./lib/errors.js";
 import { getWidgetBundleJs } from "./lib/widget-bundle.js";
+import { UPLOAD_ROOT } from "./lib/uploads.js";
 import { authRoutes } from "./routes/auth.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
@@ -18,6 +20,7 @@ import { cannedResponseRoutes } from "./routes/canned-responses.js";
 import { knowledgeRoutes } from "./routes/knowledge.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { messageRoutes } from "./routes/messages.js";
+import { uploadRoutes } from "./routes/uploads.js";
 import { widgetRoutes } from "./routes/widget.js";
 import { workspaceRoutes } from "./routes/workspaces.js";
 import { widgetConfigRoutes } from "./routes/widget-config.js";
@@ -40,8 +43,17 @@ export function buildApp() {
 	app.register(rateLimit, {
 		global: false,
 	});
+	app.register(multipart, {
+		limits: { fileSize: Number(process.env.MAX_UPLOAD_BYTES ?? 5 * 1024 * 1024) },
+	});
 
 	const __dirname = dirname(fileURLToPath(import.meta.url));
+
+	app.register(fastifyStatic, {
+		root: UPLOAD_ROOT,
+		prefix: "/uploads/",
+		decorateReply: false,
+	});
 
 	app.get("/widget-demo/dist/index.global.js", async (_request, reply) => {
 		try {
@@ -96,6 +108,7 @@ export function buildApp() {
 		instance.register(contactRoutes);
 		instance.register(conversationRoutes);
 		instance.register(messageRoutes);
+		instance.register(uploadRoutes);
 		instance.register(cannedResponseRoutes);
 		instance.register(knowledgeRoutes);
 		instance.register(billingRoutes);
