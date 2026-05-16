@@ -6,11 +6,14 @@ import { fetchConversations } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ConversationDetail } from "@/lib/api";
 import { ConversationList } from "./ConversationList";
+import { ConversationToolbar } from "./ConversationToolbar";
 import { MessageThread } from "./MessageThread";
 
 interface Props {
 	workspaceId: string;
+	userId: string;
 }
 
 const STATUS_OPTIONS = [
@@ -26,7 +29,7 @@ const CHANNEL_OPTIONS = [
 	{ value: "widget", label: "ویجت" },
 ];
 
-export function Inbox({ workspaceId }: Props) {
+export function Inbox({ workspaceId, userId }: Props) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
@@ -157,6 +160,15 @@ export function Inbox({ workspaceId }: Props) {
 		setActiveId(id);
 	}, []);
 
+	const handleConversationPatch = useCallback(
+		(id: string, patch: Partial<ConversationDetail>) => {
+			setConversations((prev) =>
+				prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+			);
+		},
+		[],
+	);
+
 	if (!workspaceId) {
 		return (
 			<div className="flex flex-1 items-center justify-center p-6 text-muted-foreground">
@@ -228,7 +240,15 @@ export function Inbox({ workspaceId }: Props) {
 			</aside>
 			<section className="flex min-w-0 flex-1 flex-col bg-background">
 				{activeId ? (
-					<MessageThread workspaceId={workspaceId} conversationId={activeId} />
+					<>
+						<ConversationToolbar
+							workspaceId={workspaceId}
+							conversationId={activeId}
+							userId={userId}
+							onUpdated={(patch) => handleConversationPatch(activeId, patch)}
+						/>
+						<MessageThread workspaceId={workspaceId} conversationId={activeId} />
+					</>
 				) : (
 					<div className="flex flex-1 items-center justify-center text-muted-foreground">
 						<p>یک مکالمه را انتخاب کنید</p>

@@ -18,6 +18,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 	const [text, setText] = useState("");
 	const [sending, setSending] = useState(false);
 	const [visitorTyping, setVisitorTyping] = useState(false);
+	const [replyTo, setReplyTo] = useState<Message | null>(null);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const seenRef = useRef(new Set<string>());
 	const typingStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,6 +56,7 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		seenRef.current.clear();
 		markedReadRef.current.clear();
 		setVisitorTyping(false);
+		setReplyTo(null);
 		fetchMessages(workspaceId, conversationId).then((msgs) => {
 			for (const m of msgs) seenRef.current.add(m.id);
 			setMessages(msgs);
@@ -165,8 +167,10 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		if (!body || sending) return;
 
 		emitTyping(false);
+		const replyToId = replyTo?.id ?? null;
 		setSending(true);
 		setText("");
+		setReplyTo(null);
 
 		const optimistic: Message = {
 			id: Math.random().toString(36).slice(2) + Date.now().toString(36),
@@ -178,12 +182,13 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 			type: "text",
 			createdAt: new Date().toISOString(),
 			readAt: null,
+			replyToId,
 		};
 		seenRef.current.add(optimistic.id);
 		setMessages((prev) => [...prev, optimistic]);
 
 		try {
-			const real = await sendMessage(workspaceId, conversationId, body);
+			const real = await sendMessage(workspaceId, conversationId, body, replyToId);
 			if (real) {
 				seenRef.current.add(real.id);
 				setMessages((prev) =>
@@ -193,16 +198,20 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 		} finally {
 			setSending(false);
 		}
-	}, [text, sending, workspaceId, conversationId, emitTyping]);
+	}, [text, sending, workspaceId, conversationId, emitTyping, replyTo]);
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			<div className="flex-1 space-y-3 overflow-y-auto p-4">
-				{messages.map((msg) => (
+				{messages.map((msg) => {
+					const quoted = msg.replyToId
+						? messages.find((m) => m.id === msg.replyToId)
+						: null;
+					return (
 					<div
 						key={msg.id}
 						className={cn(
-							"max-w-[75%] rounded-xl px-3 py-2 text-sm shadow-sm",
+							"group relative max-w-[75%] rounded-xl px-3 py-2 text-sm shadow-sm",
 							msg.senderType === "ai" &&
 								"ms-auto bg-violet-100 text-violet-950 dark:bg-violet-950 dark:text-violet-100",
 							msg.senderType === "agent" &&
@@ -217,7 +226,20 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 								{msg.senderType === "ai" ? "🤖 AI" : "👤 اپراتور"}
 							</span>
 						)}
+						{quoted && (
+							<div className="mb-1 border-s-2 border-current/30 ps-2 text-xs opacity-80">
+								{quoted.body.slice(0, 120)}
+								{quoted.body.length > 120 ? "…" : ""}
+							</div>
+						)}
 						<div className="whitespace-pre-wrap break-words">{msg.body}</div>
+						<button
+							type="button"
+							className="absolute -top-2 end-0 hidden rounded bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground shadow group-hover:block"
+							onClick={() => setReplyTo(msg)}
+						>
+							پاسخ
+						</button>
 						<div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
 							<span>
 								{new Date(msg.createdAt).toLocaleTimeString("fa-IR", {
@@ -232,12 +254,28 @@ export function MessageThread({ workspaceId, conversationId }: Props) {
 							)}
 						</div>
 					</div>
-				))}
+					);
+				})}
 				{visitorTyping && (
 					<p className="text-xs text-muted-foreground">بازدیدکننده در حال نوشتن…</p>
 				)}
 				<div ref={bottomRef} />
 			</div>
+			{replyTo && (
+				<div className="flex items-center justify-between gap-2 border-t border-border bg-muted/50 px-4 py-2 text-xs">
+					<span className="truncate">
+						پاسخ به: {replyTo.body.slice(0, 80)}
+						{replyTo.body.length > 80 ? "…" : ""}
+					</span>
+					<button
+						type="button"
+						className="shrink-0 text-muted-foreground hover:text-foreground"
+						onClick={() => setReplyTo(null)}
+					>
+						✕
+					</button>
+				</div>
+			)}
 			<form
 				className="flex gap-2 border-t border-border bg-card p-4"
 				onSubmit={(e) => {

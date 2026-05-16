@@ -8,16 +8,44 @@ export interface Conversation {
 	channel: string;
 	status: string;
 	subject: string | null;
-	assignedUserId: string | null;
+	assignedAgentId?: string | null;
+	assignedUserId?: string | null;
+	priority?: number;
 	lastMessageAt: string | null;
 	createdAt: string;
 	aiHandled?: boolean;
 	needsHuman?: boolean;
+	tags?: string[];
 	contact?: {
 		id: string;
 		fullName: string;
 		email: string | null;
 	};
+}
+
+export interface ConversationNote {
+	id: string;
+	body: string;
+	createdAt: string;
+	author: {
+		id: string;
+		email: string;
+		fullName: string | null;
+	} | null;
+}
+
+export interface ConversationDetail extends Conversation {
+	priority: number;
+	assignedAgentId: string | null;
+	tags: string[];
+	notes: ConversationNote[];
+}
+
+export interface WorkspaceMember {
+	userId: string;
+	role: string;
+	email: string | null;
+	fullName: string | null;
 }
 
 export interface Message {
@@ -30,6 +58,7 @@ export interface Message {
 	type: string;
 	createdAt: string;
 	readAt?: string | null;
+	replyToId?: string | null;
 }
 
 export interface ConversationsPage {
@@ -156,7 +185,121 @@ export function normalizeMessage(raw: Record<string, unknown>): Message {
 		type: String(raw.type ?? "text"),
 		createdAt: String(raw.createdAt ?? raw.created_at),
 		readAt: (raw.readAt ?? raw.read_at ?? null) as string | null,
+		replyToId: (raw.replyToId ?? raw.reply_to_id ?? null) as string | null,
 	};
+}
+
+export async function fetchConversationDetail(
+	workspaceId: string,
+	conversationId: string,
+): Promise<ConversationDetail | null> {
+	const res = await authFetch(`${API_URL}/v1/conversations/${conversationId}`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return null;
+	const raw = await res.json();
+	return {
+		id: raw.id,
+		contactId: raw.contactId ?? raw.contact_id,
+		channel: raw.channel,
+		status: raw.status,
+		subject: raw.subject,
+		priority: raw.priority ?? 0,
+		assignedAgentId: raw.assignedAgentId ?? raw.assigned_agent_id ?? null,
+		lastMessageAt: raw.lastMessageAt ?? raw.last_message_at,
+		createdAt: raw.createdAt ?? raw.created_at,
+		contact: raw.contact,
+		tags: raw.tags ?? [],
+		notes: raw.notes ?? [],
+	};
+}
+
+export async function fetchWorkspaceMembers(
+	workspaceId: string,
+): Promise<WorkspaceMember[]> {
+	const res = await authFetch(`${API_URL}/v1/workspaces/${workspaceId}/members`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = await res.json();
+	return json.data ?? [];
+}
+
+export async function updateConversationStatus(
+	workspaceId: string,
+	conversationId: string,
+	status: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/status`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify({ status }),
+		},
+	);
+	return res.ok;
+}
+
+export async function assignConversation(
+	workspaceId: string,
+	conversationId: string,
+	agentId: string | null,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/assign`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify({ agent_id: agentId }),
+		},
+	);
+	return res.ok;
+}
+
+export async function updateConversationPriority(
+	workspaceId: string,
+	conversationId: string,
+	priority: number,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/priority`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify({ priority }),
+		},
+	);
+	return res.ok;
+}
+
+export async function addConversationTags(
+	workspaceId: string,
+	conversationId: string,
+	tags: string[],
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/conversations/${conversationId}/tags`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify({ tags }),
+	});
+	return res.ok;
+}
+
+export async function addConversationNote(
+	workspaceId: string,
+	conversationId: string,
+	body: string,
+): Promise<ConversationNote | null> {
+	const res = await authFetch(`${API_URL}/v1/conversations/${conversationId}/notes`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+		body: JSON.stringify({ body }),
+	});
+	if (!res.ok) return null;
+	return res.json();
 }
 
 export async function fetchMessages(
@@ -180,6 +323,7 @@ export async function sendMessage(
 	workspaceId: string,
 	conversationId: string,
 	body: string,
+	replyToId?: string | null,
 ): Promise<Message | null> {
 	const res = await authFetch(
 		`${API_URL}/v1/conversations/${conversationId}/messages`,
@@ -189,7 +333,11 @@ export async function sendMessage(
 				"Content-Type": "application/json",
 				...authHeaders(workspaceId),
 			},
-			body: JSON.stringify({ body, sender_type: "agent" }),
+			body: JSON.stringify({
+				body,
+				sender_type: "agent",
+				...(replyToId ? { reply_to_id: replyToId } : {}),
+			}),
 		},
 	);
 	if (!res.ok) return null;

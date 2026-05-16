@@ -2,10 +2,12 @@ import { and, desc, eq, exists, lt, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
+	conversationNotes,
 	conversationTags,
 	conversations,
 	messages,
 } from "../db/schema/index.js";
+import type { AuthenticatedRequest } from "../lib/auth.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 import { getIO } from "../ws/broadcast.js";
@@ -89,9 +91,34 @@ export async function conversationRoutes(app: FastifyInstance) {
 					eq(conversations.id, request.params.id),
 					eq(conversations.workspaceId, wsId),
 				),
+				with: {
+					contact: true,
+					tags: true,
+					notes: {
+						with: { author: true },
+						orderBy: (n, { desc: d }) => [d(n.createdAt)],
+					},
+					assignedAgent: true,
+				},
 			});
 			if (!row) throw notFound("Conversation not found.");
-			return row;
+			const { tags, notes, ...conv } = row;
+			return {
+				...conv,
+				tags: tags.map((t) => t.tag),
+				notes: notes.map((n) => ({
+					id: n.id,
+					body: n.body,
+					createdAt: n.createdAt,
+					author: n.author
+						? {
+								id: n.author.id,
+								email: n.author.email,
+								fullName: n.author.fullName,
+							}
+						: null,
+				})),
+			};
 		},
 	);
 
@@ -173,16 +200,17 @@ export async function conversationRoutes(app: FastifyInstance) {
 		},
 	);
 
-	app.post<{ Params: { id: string }; Body: { agent_id: string } }>(
+	app.post<{ Params: { id: string }; Body: { agent_id: string | null } }>(
 		"/v1/conversations/:id/assign",
 		async (request) => {
 			const wsId = getWorkspaceId(request);
 			const { agent_id } = request.body ?? {};
-			if (!agent_id) throw validationError("agent_id is required.", "agent_id");
+			if (agent_id === undefined)
+				throw validationError("agent_id is required (use null to unassign).", "agent_id");
 
 			const [updated] = await db
 				.update(conversations)
-				.set({ assignedAgentId: agent_id })
+				.set({ assignedAgentId: agent_id || null })
 				.where(
 					and(
 						eq(conversations.id, request.params.id),
@@ -233,6 +261,100 @@ export async function conversationRoutes(app: FastifyInstance) {
 			await db.insert(conversationTags).values(values).onConflictDoNothing();
 
 			return { ok: true };
+		},
+	);
+
+	app.post<{ Params: { id: string }; Body: { priority: number } }>(
+		"/v1/conversations/:id/priority",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const priority = Number(request.body?.priority);
+			if (Number.isNaN(priority) || priority < 0 || priority > 3) {
+				throw validationError("priority must be 0–3.", "priority");
+			}
+
+			const [updated] = await db
+				.update(conversations)
+				.set({ priority })
+				.where(
+					and(
+						eq(conversations.id, request.params.id),
+						eq(conversations.workspaceId, wsId),
+					),
+				)
+				.returning();
+
+			if (!updated) throw notFound("Conversation not found.");
+			return updated;
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/conversations/:id/notes",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const conv = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!conv) throw notFound("Conversation not found.");
+
+			const notes = await db.query.conversationNotes.findMany({
+				where: eq(conversationNotes.conversationId, request.params.id),
+				orderBy: (n, { desc: d }) => [d(n.createdAt)],
+				with: { author: true },
+			});
+
+			return {
+				data: notes.map((n) => ({
+					id: n.id,
+					body: n.body,
+					createdAt: n.createdAt,
+					author: n.author
+						? {
+								id: n.author.id,
+								email: n.author.email,
+								fullName: n.author.fullName,
+							}
+						: null,
+				})),
+			};
+		},
+	);
+
+	app.post<{ Params: { id: string }; Body: { body: string } }>(
+		"/v1/conversations/:id/notes",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+			const { body } = request.body ?? {};
+			if (!body?.trim()) throw validationError("body is required.", "body");
+
+			const conv = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!conv) throw notFound("Conversation not found.");
+
+			const [note] = await db
+				.insert(conversationNotes)
+				.values({
+					conversationId: request.params.id,
+					authorId: user.id,
+					body: body.trim(),
+				})
+				.returning();
+
+			return {
+				id: note.id,
+				body: note.body,
+				createdAt: note.createdAt,
+				author: { id: user.id, email: user.email, fullName: null },
+			};
 		},
 	);
 }

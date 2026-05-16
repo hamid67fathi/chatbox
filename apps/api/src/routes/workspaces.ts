@@ -106,8 +106,17 @@ export async function workspaceRoutes(app: FastifyInstance) {
 		async (request) => {
 			const rows = await db.query.workspaceMembers.findMany({
 				where: eq(workspaceMembers.workspaceId, request.params.id),
+				with: { user: true },
 			});
-			return { data: rows };
+			return {
+				data: rows.map((m) => ({
+					userId: m.userId,
+					role: m.role,
+					status: m.status,
+					email: m.user?.email ?? null,
+					fullName: m.user?.fullName ?? null,
+				})),
+			};
 		},
 	);
 }

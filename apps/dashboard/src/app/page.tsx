@@ -7,9 +7,9 @@ import { AppShell } from "@/components/layout/AppShell";
 export default function HomePage() {
 	return (
 		<AuthGuard>
-			{({ workspaceId, userEmail, workspaceName }) => (
+			{({ workspaceId, userId, userEmail, workspaceName }) => (
 				<AppShell userEmail={userEmail} workspaceName={workspaceName}>
-					<Inbox workspaceId={workspaceId} />
+					<Inbox workspaceId={workspaceId} userId={userId} />
 				</AppShell>
 			)}
 		</AuthGuard>

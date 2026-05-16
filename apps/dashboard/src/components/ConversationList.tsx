@@ -13,6 +13,12 @@ interface Props {
 	onLoadMore?: () => void;
 }
 
+function priorityLabel(priority?: number) {
+	if (!priority) return null;
+	const map: Record<number, string> = { 1: "!", 2: "!!", 3: "!!!" };
+	return map[priority] ?? null;
+}
+
 function statusBadge(status: string) {
 	const map: Record<string, string> = {
 		open: "🟢",
@@ -81,6 +87,11 @@ export function ConversationList({
 					>
 						<div className="flex items-start justify-between gap-2">
 							<span className="truncate text-sm font-medium">
+								{priorityLabel(conv.priority) && (
+									<span className="me-0.5 text-destructive" title="اولویت">
+										{priorityLabel(conv.priority)}
+									</span>
+								)}
 								{statusBadge(conv.status)}{" "}
 								{conv.contact?.fullName ?? "Visitor"} · {conv.id.slice(0, 8)}
 							</span>
