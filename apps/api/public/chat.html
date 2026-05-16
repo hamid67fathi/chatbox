@@ -205,6 +205,13 @@
     const seenIds = new Set();
     let lastSentBody = null;
 
+    function newVisitorId() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    }
+
     const messagesEl = document.getElementById('messages');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
@@ -276,7 +283,7 @@
         const saved = loadSession();
         let visitorId = saved?.visitor_id || localStorage.getItem(SESSION_KEY + '_vid');
         if (!visitorId) {
-          visitorId = crypto.randomUUID();
+          visitorId = newVisitorId();
           localStorage.setItem(SESSION_KEY + '_vid', visitorId);
         }
 

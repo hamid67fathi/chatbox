@@ -27,7 +27,12 @@ export function buildApp() {
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 	});
 	app.register(cookie);
-	app.register(helmet, { contentSecurityPolicy: false });
+	app.register(helmet, {
+		contentSecurityPolicy: false,
+		crossOriginOpenerPolicy: false,
+		crossOriginEmbedderPolicy: false,
+		originAgentCluster: false,
+	});
 	app.register(rateLimit, {
 		global: false,
 	});
