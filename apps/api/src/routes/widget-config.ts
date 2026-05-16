@@ -11,6 +11,12 @@ import {
 	prechatToPublic,
 } from "../lib/prechat-settings.js";
 import {
+	type WidgetTriggersConfig,
+	mergeWidgetTriggers,
+	parseWidgetTriggers,
+	triggersToPublic,
+} from "../lib/widget-triggers.js";
+import {
 	type WidgetPosition,
 	type WidgetThemeConfig,
 	mergeWorkspaceWidgetSettings,
@@ -92,10 +98,27 @@ function parsePrechatPatch(body: Record<string, unknown>): Partial<PrechatConfig
 	return patch;
 }
 
+function parseTriggersPatch(body: Record<string, unknown>): Partial<WidgetTriggersConfig> {
+	const raw = body.triggers ?? body.widget_triggers;
+	if (!raw || typeof raw !== "object") return {};
+	const o = raw as Record<string, unknown>;
+	const patch: Partial<WidgetTriggersConfig> = {};
+	if (typeof o.auto_open_delay_ms === "number") {
+		patch.autoOpenDelayMs = o.auto_open_delay_ms;
+	}
+	if (typeof o.auto_open_on_scroll_percent === "number") {
+		patch.autoOpenOnScrollPercent = o.auto_open_on_scroll_percent;
+	} else if (o.auto_open_on_scroll_percent === null) {
+		patch.autoOpenOnScrollPercent = null;
+	}
+	return patch;
+}
+
 function publicWidgetData(settings: unknown) {
 	return {
 		...widgetConfigToPublic(parseWidgetConfig(settings)),
 		prechat: prechatToPublic(parsePrechatConfig(settings)),
+		triggers: triggersToPublic(parseWidgetTriggers(settings)),
 	};
 }
 
@@ -125,13 +148,19 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 			const body = request.body ?? {};
 			const themePatch = parsePatch(body);
 			const prechatPatch = parsePrechatPatch(body);
+			const triggersPatch = parseTriggersPatch(body);
 
 			const hasPrechatPatch =
 				prechatPatch.enabled !== undefined ||
 				(prechatPatch.fields &&
 					Object.keys(prechatPatch.fields).length > 0);
+			const hasTriggersPatch = Object.keys(triggersPatch).length > 0;
 
-			if (Object.keys(themePatch).length === 0 && !hasPrechatPatch) {
+			if (
+				Object.keys(themePatch).length === 0 &&
+				!hasPrechatPatch &&
+				!hasTriggersPatch
+			) {
 				throw validationError("No valid fields to update.");
 			}
 
@@ -144,6 +173,9 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 				prechatPatch.fields
 			) {
 				nextSettings = mergePrechatSettings(nextSettings, prechatPatch);
+			}
+			if (hasTriggersPatch) {
+				nextSettings = mergeWidgetTriggers(nextSettings, triggersPatch);
 			}
 
 			const [updated] = await db

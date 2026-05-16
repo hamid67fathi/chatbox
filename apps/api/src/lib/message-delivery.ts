@@ -54,7 +54,13 @@ export async function deliverNewMessage(
 	workspaceId: string,
 ) {
 	await touchConversationOnMessage(conversationId, message);
-	await broadcastNewMessage(message, conversationId, workspaceId);
+	const now = new Date();
+	const [delivered] = await db
+		.update(messages)
+		.set({ deliveredAt: now, status: "delivered" })
+		.where(eq(messages.id, message.id))
+		.returning();
+	await broadcastNewMessage(delivered ?? message, conversationId, workspaceId);
 }
 
 export async function broadcastNewMessage(

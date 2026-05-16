@@ -61,6 +61,8 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [prechatEmailRequired, setPrechatEmailRequired] = useState(false);
 	const [prechatPhone, setPrechatPhone] = useState(false);
 	const [prechatPhoneRequired, setPrechatPhoneRequired] = useState(false);
+	const [triggerDelayMs, setTriggerDelayMs] = useState(0);
+	const [triggerScrollPct, setTriggerScrollPct] = useState("");
 	const [widgetMsg, setWidgetMsg] = useState("");
 	const [widgetError, setWidgetError] = useState("");
 
@@ -98,6 +100,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 				setPrechatEmailRequired(cfg.prechat.fields.email.required);
 				setPrechatPhone(cfg.prechat.fields.phone.enabled);
 				setPrechatPhoneRequired(cfg.prechat.fields.phone.required);
+			}
+			if (cfg.triggers) {
+				setTriggerDelayMs(cfg.triggers.auto_open_delay_ms ?? 0);
+				const pct = cfg.triggers.auto_open_on_scroll_percent;
+				setTriggerScrollPct(pct != null ? String(pct) : "");
 			}
 		}
 	}, [workspaceId]);
@@ -162,6 +169,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 					email: { enabled: prechatEmail, required: prechatEmailRequired },
 					phone: { enabled: prechatPhone, required: prechatPhoneRequired },
 				},
+			},
+			triggers: {
+				auto_open_delay_ms: Math.max(0, triggerDelayMs),
+				auto_open_on_scroll_percent:
+					triggerScrollPct.trim() === ""
+						? null
+						: Math.min(100, Math.max(0, Number(triggerScrollPct) || 0)),
 			},
 		};
 		const result = await updateWidgetConfig(workspaceId, patch);
@@ -323,6 +337,35 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 								disabled={!canEditWorkspace}
 								rows={3}
 								className="rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
+							/>
+						</label>
+						<hr className="border-border" />
+						<p className="text-sm font-medium">باز شدن خودکار ویجت</p>
+						<label className="flex flex-col gap-1 text-sm font-medium">
+							تأخیر باز شدن (میلی‌ثانیه، ۰ = غیرفعال)
+							<Input
+								type="number"
+								min={0}
+								max={120000}
+								value={triggerDelayMs}
+								onChange={(e) =>
+									setTriggerDelayMs(Math.max(0, Number(e.target.value) || 0))
+								}
+								disabled={!canEditWorkspace}
+								dir="ltr"
+							/>
+						</label>
+						<label className="flex flex-col gap-1 text-sm font-medium">
+							باز شدن پس از اسکرول (درصد صفحه، خالی = غیرفعال)
+							<Input
+								type="number"
+								min={0}
+								max={100}
+								value={triggerScrollPct}
+								onChange={(e) => setTriggerScrollPct(e.target.value)}
+								disabled={!canEditWorkspace}
+								dir="ltr"
+								placeholder="مثلاً 50"
 							/>
 						</label>
 						<label className="flex flex-col gap-1 text-sm font-medium">

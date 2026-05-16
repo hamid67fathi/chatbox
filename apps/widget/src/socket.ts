@@ -35,6 +35,8 @@ function normalizeMessage(raw: Record<string, unknown>): Message {
 		createdAt: String(
 			raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
 		),
+		readAt: (raw.readAt ?? raw.read_at ?? null) as string | null,
+		deliveredAt: (raw.deliveredAt ?? raw.delivered_at ?? null) as string | null,
 	};
 }
 
@@ -50,10 +52,12 @@ export class WidgetSocket {
 		callbacks: {
 			onMessage: (msg: Message) => void;
 			onTyping: (data: { isTyping: boolean }) => void;
+			onRead?: (data: { message_id: string }) => void;
 		},
 	) {
 		this.onMessage = callbacks.onMessage;
 		this.onTyping = callbacks.onTyping;
+		const onRead = callbacks.onRead;
 
 		if (this.socket) {
 			this.socket.disconnect();
@@ -83,6 +87,18 @@ export class WidgetSocket {
 
 		this.socket.on("typing", (data: unknown) => {
 			this.onTyping?.(data as { isTyping: boolean });
+		});
+
+		this.socket.on("message:read", (data: unknown) => {
+			const d = data as { message_id?: string };
+			if (d.message_id) onRead?.({ message_id: d.message_id });
+		});
+	}
+
+	markRead(convId: string, messageId: string) {
+		this.socket?.emit("message:read", {
+			conv_id: convId,
+			message_id: messageId,
 		});
 	}
 

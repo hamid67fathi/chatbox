@@ -80,6 +80,7 @@ export interface Message {
 	attachments?: MessageAttachment[] | null;
 	createdAt: string;
 	readAt?: string | null;
+	deliveredAt?: string | null;
 	replyToId?: string | null;
 }
 
@@ -232,6 +233,7 @@ export function normalizeMessage(raw: Record<string, unknown>): Message {
 		attachments: parseAttachments(raw.attachments),
 		createdAt: String(raw.createdAt ?? raw.created_at),
 		readAt: (raw.readAt ?? raw.read_at ?? null) as string | null,
+		deliveredAt: (raw.deliveredAt ?? raw.delivered_at ?? null) as string | null,
 		replyToId: (raw.replyToId ?? raw.reply_to_id ?? null) as string | null,
 	};
 }
@@ -722,6 +724,10 @@ export interface WidgetConfigPublic {
 			email: PrechatFieldPublic;
 			phone: PrechatFieldPublic;
 		};
+	};
+	triggers?: {
+		auto_open_delay_ms: number;
+		auto_open_on_scroll_percent: number | null;
 	};
 }
 

@@ -25,6 +25,10 @@ export interface WidgetTheme {
 			phone: PrechatFieldConfig;
 		};
 	};
+	triggers?: {
+		auto_open_delay_ms: number;
+		auto_open_on_scroll_percent: number | null;
+	};
 }
 
 export interface MessageAttachment {
@@ -43,6 +47,8 @@ export interface Message {
 	type?: string;
 	attachments?: MessageAttachment[] | null;
 	createdAt: string;
+	readAt?: string | null;
+	deliveredAt?: string | null;
 }
 
 function parseAttachments(raw: unknown): MessageAttachment[] | null {
@@ -185,6 +191,8 @@ function normalizeMessageRow(m: Record<string, unknown>): Message {
 		type: String(m.type ?? "text"),
 		attachments: parseAttachments(m.attachments),
 		createdAt: String(m.createdAt ?? m.created_at ?? new Date().toISOString()),
+		readAt: (m.readAt ?? m.read_at ?? null) as string | null,
+		deliveredAt: (m.deliveredAt ?? m.delivered_at ?? null) as string | null,
 	};
 }
 

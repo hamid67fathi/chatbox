@@ -165,6 +165,8 @@ export const WIDGET_CSS = `
   background: var(--cb-primary);
   color: var(--cb-text-on-primary);
   border-bottom-right-radius: 4px;
+  position: relative;
+  padding-bottom: 18px;
 }
 
 .cb-msg.contact .cb-msg-file {
@@ -328,6 +330,44 @@ export const WIDGET_CSS = `
 
 .cb-chat-hidden {
   display: none !important;
+}
+
+.cb-emoji-picker {
+  display: none;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+  max-height: 120px;
+  overflow-y: auto;
+  border-top: 1px solid var(--cb-border);
+  background: var(--cb-surface);
+}
+
+.cb-emoji-picker.open {
+  display: flex;
+}
+
+.cb-emoji-item {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.cb-emoji-item:hover {
+  background: var(--cb-agent-bg);
+}
+
+.cb-msg-meta {
+  position: absolute;
+  bottom: 4px;
+  left: 8px;
+  font-size: 10px;
+  opacity: 0.75;
+  line-height: 1;
 }
 
 @media (max-width: 480px) {

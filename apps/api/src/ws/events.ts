@@ -72,9 +72,10 @@ export function registerEvents(io: Server, socket: Socket) {
 			conv_id,
 			message_id,
 		}: { conv_id: string; message_id: string }) => {
+			const now = new Date();
 			await db
 				.update(messages)
-				.set({ readAt: new Date() })
+				.set({ readAt: now, status: "read" })
 				.where(
 					and(eq(messages.id, message_id), eq(messages.workspaceId, wsId)),
 				);

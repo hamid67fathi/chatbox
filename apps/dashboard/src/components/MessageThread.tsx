@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CannedResponsePicker } from "@/components/CannedResponsePicker";
 import type { CannedResponse, Message } from "@/lib/api";
+import { EmojiPicker } from "@/components/EmojiPicker";
 import { MessageBody } from "@/components/MessageBody";
+import { MessageStatus } from "@/components/MessageStatus";
 import {
 	fetchCannedResponses,
 	fetchMessages,
@@ -134,11 +136,10 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 		};
 
 		const onRead = (data: { message_id: string }) => {
+			const at = new Date().toISOString();
 			setMessages((prev) =>
 				prev.map((m) =>
-					m.id === data.message_id
-						? { ...m, readAt: m.readAt ?? new Date().toISOString() }
-						: m,
+					m.id === data.message_id ? { ...m, readAt: m.readAt ?? at } : m,
 				),
 			);
 		};
@@ -308,7 +309,17 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 								{quoted.body.length > 120 ? "…" : ""}
 							</div>
 						)}
-						<MessageBody msg={msg} />
+						<div
+							dir={
+								/[\u0590-\u08FF]/.test(msg.body)
+									? "rtl"
+									: msg.body.trim()
+										? "ltr"
+										: "rtl"
+							}
+						>
+							<MessageBody msg={msg} />
+						</div>
 						<button
 							type="button"
 							className="absolute -top-2 end-0 hidden rounded bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground shadow group-hover:block"
@@ -323,10 +334,8 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 									minute: "2-digit",
 								})}
 							</span>
-							{msg.senderType === "agent" && (
-								<span title={msg.readAt ? "خوانده شد" : "ارسال شد"}>
-									{msg.readAt ? "✓✓" : "✓"}
-								</span>
+							{(msg.senderType === "agent" || msg.senderType === "contact") && (
+								<MessageStatus msg={msg} />
 							)}
 						</div>
 					</div>
@@ -371,6 +380,10 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 						const f = e.target.files?.[0];
 						if (f) void handleFilePick(f);
 					}}
+				/>
+				<EmojiPicker
+					disabled={sending}
+					onPick={(emoji) => setText((t) => t + emoji)}
 				/>
 				<Button
 					type="button"

@@ -13,7 +13,9 @@ import {
 	updateContactProfile,
 	uploadWidgetFile,
 } from "./api.js";
+import { CHAT_EMOJIS } from "./emoji.js";
 import { WidgetSocket } from "./socket.js";
+import { detectTextDirection } from "./text-direction.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
 
 const CHAT_ICON = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`;
@@ -55,7 +57,11 @@ export class ChatBoxWidget {
 	private fileInputEl!: HTMLInputElement;
 	private inputEl!: HTMLInputElement;
 	private sendBtn!: HTMLButtonElement;
+	private emojiPickerEl!: HTMLElement;
 	private windowEl!: HTMLElement;
+	private typingTimer: ReturnType<typeof setTimeout> | null = null;
+	private triggersBound = false;
+	private autoOpened = false;
 	private workspaceId = "";
 	private conversationId = "";
 	private isOpen = false;
@@ -106,8 +112,10 @@ export class ChatBoxWidget {
 						<div class="cb-welcome" id="cb-welcome"></div>
 					</div>
 					<div class="cb-typing" id="cb-typing">در حال نوشتن...</div>
+					<div class="cb-emoji-picker" id="cb-emoji-picker"></div>
 					<div class="cb-input-area" id="cb-input-area">
 						<input type="file" id="cb-file" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain" />
+						<button type="button" class="cb-attach" id="cb-emoji-btn" title="ایموجی">😊</button>
 						<button type="button" class="cb-attach" id="cb-attach" title="پیوست">📎</button>
 						<input class="cb-input" id="cb-input" placeholder="پیام بنویسید..." />
 						<button class="cb-send" id="cb-send" type="button">ارسال</button>
@@ -137,9 +145,14 @@ export class ChatBoxWidget {
 		this.fileInputEl = this.root.getElementById("cb-file") as HTMLInputElement;
 		this.inputEl = this.root.getElementById("cb-input") as HTMLInputElement;
 		this.sendBtn = this.root.getElementById("cb-send") as HTMLButtonElement;
+		this.emojiPickerEl = this.root.getElementById(
+			"cb-emoji-picker",
+		) as HTMLElement;
 
 		this.buildPrechatForm();
 		this.applyTheme();
+		this.buildEmojiPicker();
+		this.setupTriggers();
 
 		this.root
 			.getElementById("cb-launcher")
@@ -148,12 +161,25 @@ export class ChatBoxWidget {
 			.getElementById("cb-close")
 			?.addEventListener("click", () => this.toggle());
 		this.sendBtn.addEventListener("click", () => this.send());
+		this.root.getElementById("cb-emoji-btn")?.addEventListener("click", () => {
+			this.emojiPickerEl.classList.toggle("open");
+		});
 		this.root.getElementById("cb-attach")?.addEventListener("click", () => {
+			this.emojiPickerEl.classList.remove("open");
 			this.fileInputEl.click();
 		});
 		this.fileInputEl.addEventListener("change", () => {
 			const f = this.fileInputEl.files?.[0];
 			if (f) void this.sendFile(f);
+		});
+		this.inputEl.addEventListener("input", () => {
+			this.syncInputDirection();
+			if (!this.conversationId) return;
+			this.ws.emitTyping(this.conversationId, true);
+			if (this.typingTimer) clearTimeout(this.typingTimer);
+			this.typingTimer = setTimeout(() => {
+				this.ws.emitTyping(this.conversationId, false);
+			}, 2000);
 		});
 		this.inputEl.addEventListener("keydown", (e) => {
 			if (e.key === "Enter" && !e.shiftKey) {
@@ -346,6 +372,9 @@ export class ChatBoxWidget {
 			for (const msg of msgs) {
 				if (msg.id) this.renderedIds.add(msg.id);
 				this.appendMessage(msg, false);
+				if (msg.senderType === "agent" || msg.senderType === "ai") {
+					this.markIncomingRead(msg);
+				}
 			}
 		}
 
@@ -357,9 +386,17 @@ export class ChatBoxWidget {
 				onMessage: (msg) => {
 					this.hideWelcome();
 					this.appendMessage(msg);
+					if (msg.senderType === "agent" || msg.senderType === "ai") {
+						this.markIncomingRead(msg);
+					}
 				},
 				onTyping: (data) => {
 					this.typingEl.classList.toggle("visible", data.isTyping);
+				},
+				onRead: ({ message_id }) => {
+					this.updateContactMessageStatus(message_id, {
+						readAt: new Date().toISOString(),
+					});
 				},
 			},
 		);
@@ -375,25 +412,137 @@ export class ChatBoxWidget {
 		this.welcomeEl.style.display = "none";
 	}
 
+	private buildEmojiPicker() {
+		this.emojiPickerEl.innerHTML = "";
+		for (const emoji of CHAT_EMOJIS) {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "cb-emoji-item";
+			btn.textContent = emoji;
+			btn.addEventListener("click", () => {
+				this.inputEl.value += emoji;
+				this.syncInputDirection();
+				this.inputEl.focus();
+				this.emojiPickerEl.classList.remove("open");
+			});
+			this.emojiPickerEl.appendChild(btn);
+		}
+	}
+
+	private syncInputDirection() {
+		this.inputEl.dir = detectTextDirection(this.inputEl.value);
+	}
+
+	private setupTriggers() {
+		if (this.triggersBound) return;
+		const t = this.theme.triggers;
+		if (!t) return;
+		this.triggersBound = true;
+
+		const delay = t.auto_open_delay_ms ?? 0;
+		if (delay > 0) {
+			window.setTimeout(() => this.autoOpenOnce(), delay);
+		}
+
+		const scrollPct = t.auto_open_on_scroll_percent;
+		if (scrollPct != null && scrollPct > 0) {
+			const onScroll = () => {
+				const doc = document.documentElement;
+				const max = doc.scrollHeight - window.innerHeight;
+				if (max <= 0) return;
+				const pct = (window.scrollY / max) * 100;
+				if (pct >= scrollPct) {
+					this.autoOpenOnce();
+					window.removeEventListener("scroll", onScroll);
+				}
+			};
+			window.addEventListener("scroll", onScroll, { passive: true });
+		}
+	}
+
+	private autoOpenOnce() {
+		if (this.autoOpened || this.isOpen) return;
+		this.autoOpened = true;
+		this.toggle();
+	}
+
+	private contactStatusLabel(msg: Message) {
+		if (msg.readAt) return "✓✓";
+		if (msg.deliveredAt) return "✓";
+		return "";
+	}
+
+	private updateContactMessageStatus(
+		messageId: string,
+		patch: { readAt?: string; deliveredAt?: string },
+	) {
+		const el = this.messagesEl.querySelector(
+			`[data-msg-id="${messageId}"]`,
+		) as HTMLElement | null;
+		if (!el) return;
+		if (patch.readAt) el.dataset.readAt = patch.readAt;
+		if (patch.deliveredAt) el.dataset.deliveredAt = patch.deliveredAt;
+		const meta = el.querySelector(".cb-msg-meta");
+		if (!meta) return;
+		const readAt = el.dataset.readAt;
+		const deliveredAt = el.dataset.deliveredAt;
+		meta.textContent = readAt ? "✓✓" : deliveredAt ? "✓" : "";
+	}
+
+	private markIncomingRead(msg: Message) {
+		if (!msg.id || !this.conversationId) return;
+		if (msg.senderType !== "agent" && msg.senderType !== "ai") return;
+		if (msg.readAt) return;
+		this.ws.markRead(this.conversationId, msg.id);
+	}
+
 	private toggle() {
 		this.isOpen = !this.isOpen;
 		this.windowEl.classList.toggle("open", this.isOpen);
 		if (this.isOpen) {
 			this.scrollToBottom();
+			if (
+				this.chatStarted &&
+				this.renderedIds.size === 0 &&
+				!this.prechatEl.classList.contains("visible")
+			) {
+				this.showWelcome();
+			}
 			if (!this.prechatEl.classList.contains("visible")) {
 				this.inputEl.focus();
 			}
+		} else {
+			this.emojiPickerEl.classList.remove("open");
 		}
 	}
 
 	private appendMessage(msg: Message, scroll = true) {
 		if (msg.id) {
-			if (this.renderedIds.has(msg.id)) return;
+			if (this.renderedIds.has(msg.id)) {
+				if (msg.senderType === "contact") {
+					this.updateContactMessageStatus(msg.id, {
+						readAt: msg.readAt ?? undefined,
+						deliveredAt: msg.deliveredAt ?? undefined,
+					});
+				}
+				return;
+			}
 			this.renderedIds.add(msg.id);
 		}
 		const el = document.createElement("div");
 		el.className = `cb-msg ${msg.senderType}`;
+		if (msg.id) el.dataset.msgId = msg.id;
+		if (msg.senderType === "contact") {
+			if (msg.deliveredAt) el.dataset.deliveredAt = msg.deliveredAt;
+			if (msg.readAt) el.dataset.readAt = msg.readAt;
+		}
 		this.renderMessageContent(el, msg);
+		if (msg.senderType === "contact") {
+			const meta = document.createElement("span");
+			meta.className = "cb-msg-meta";
+			meta.textContent = this.contactStatusLabel(msg);
+			el.appendChild(meta);
+		}
 		this.messagesEl.appendChild(el);
 		if (scroll) this.scrollToBottom();
 	}
@@ -418,6 +567,7 @@ export class ChatBoxWidget {
 		if (msg.body && !(att && msg.body === att.name && msg.type !== "text")) {
 			const text = document.createElement("div");
 			text.textContent = msg.body;
+			text.dir = detectTextDirection(msg.body);
 			el.appendChild(text);
 		}
 	}
