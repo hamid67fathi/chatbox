@@ -138,11 +138,18 @@ curl -s -X POST http://192.168.1.8:3001/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test1234","fullName":"کاربر تست"}' | jq .
 
-# ورود با حساب seed
-curl -s -X POST http://192.168.1.8:3001/v1/auth/login \
+# ورود با حساب seed (توکن واقعی — YOUR_TOKEN ننویسید!)
+TOKEN=$(curl -s -X POST http://192.168.1.8:3001/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@chatbox.local","password":"chatbox123"}' | jq .
-# ← access_token و refresh_token را ذخیره کنید
+  -d '{"email":"admin@chatbox.local","password":"chatbox123"}' | jq -r '.access_token')
+echo "TOKEN=$TOKEN"
+
+WS_ID=$(curl -s http://192.168.1.8:3001/v1/auth/me \
+  -H "Authorization: Bearer $TOKEN" | jq -r '.user.workspaces[0].id')
+echo "WORKSPACE=$WS_ID"
+
+# یا اسکript کامل:
+# bash scripts/diag-inbox.sh
 
 # دریافت اطلاعات کاربر
 curl -s http://192.168.1.8:3001/v1/auth/me \

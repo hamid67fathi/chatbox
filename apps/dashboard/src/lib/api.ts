@@ -57,16 +57,51 @@ async function authFetch(url: string, init: RequestInit = {}): Promise<Response>
 	return res;
 }
 
+export interface WorkspaceSummary {
+	id: string;
+	name: string;
+	slug: string;
+	role?: string;
+}
+
+export async function fetchWorkspaces(): Promise<{
+	data: WorkspaceSummary[];
+	error?: string;
+}> {
+	const token = getAccessToken();
+	if (!token) return { data: [], error: "Not logged in" };
+
+	const res = await authFetch(`${API_URL}/v1/workspaces`, {
+		headers: { Authorization: `Bearer ${token}` },
+		cache: "no-store",
+	});
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return {
+			data: [],
+			error: body?.error?.message ?? `HTTP ${res.status}`,
+		};
+	}
+	const json = await res.json();
+	return { data: json.data ?? [] };
+}
+
 export async function fetchConversations(
 	workspaceId: string,
-): Promise<Conversation[]> {
-	const res = await authFetch(`${API_URL}/v1/conversations?limit=50`, {
+): Promise<{ data: Conversation[]; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/conversations?limit=100`, {
 		headers: authHeaders(workspaceId),
 		cache: "no-store",
 	});
-	if (!res.ok) return [];
-	const data = await res.json();
-	return data.data ?? [];
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return {
+			data: [],
+			error: body?.error?.message ?? `HTTP ${res.status}`,
+		};
+	}
+	const json = await res.json();
+	return { data: json.data ?? [] };
 }
 
 export async function fetchMessages(

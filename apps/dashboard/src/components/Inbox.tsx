@@ -15,10 +15,14 @@ interface Props {
 export function Inbox({ workspaceId }: Props) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
 
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
-		fetchConversations(workspaceId).then(setConversations);
+		fetchConversations(workspaceId).then(({ data, error }) => {
+			setConversations(data);
+			setLoadError(error ?? null);
+		});
 	}, [workspaceId]);
 
 	useEffect(() => {
@@ -108,7 +112,15 @@ export function Inbox({ workspaceId }: Props) {
 			<aside className={styles.sidebar}>
 				<div className={styles.sidebarHeader}>
 					<h1>📥 صندوق ورودی</h1>
+					<p style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+						{conversations.length} مکالمه
+					</p>
 				</div>
+				{loadError && (
+					<p style={{ padding: "8px 12px", color: "#b91c1c", fontSize: 13 }}>
+						خطا: {loadError} — دوباره وارد شوید.
+					</p>
+				)}
 				<ConversationList
 					conversations={conversations}
 					activeId={activeId}
