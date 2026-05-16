@@ -29,6 +29,16 @@ interface Props {
 	contactName?: string | null;
 }
 
+function upsertMessage(prev: Message[], msg: Message): Message[] {
+	const i = prev.findIndex((m) => m.id === msg.id);
+	if (i >= 0) {
+		const next = [...prev];
+		next[i] = msg;
+		return next;
+	}
+	return [...prev, msg];
+}
+
 export function MessageThread({ workspaceId, conversationId, contactName }: Props) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [text, setText] = useState("");
@@ -97,30 +107,8 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 				(data.message ?? data) as unknown as Record<string, unknown>,
 			);
 			if (msg.conversationId !== conversationId) return;
-			if (seenRef.current.has(msg.id)) return;
 			seenRef.current.add(msg.id);
-			setMessages((prev) => {
-				if (prev.some((m) => m.id === msg.id)) return prev;
-				if (
-					prev.some(
-						(m) =>
-							m.body === msg.body &&
-							m.senderType === msg.senderType &&
-							Math.abs(
-								new Date(m.createdAt).getTime() - new Date(msg.createdAt).getTime(),
-							) < 5000,
-					)
-				) {
-					return prev.map((m) =>
-						m.body === msg.body &&
-						m.senderType === msg.senderType &&
-						!seenRef.current.has(m.id)
-							? msg
-							: m,
-					);
-				}
-				return [...prev, msg];
-			});
+			setMessages((prev) => upsertMessage(prev, msg));
 			if (msg.senderType === "contact") {
 				markAsRead(msg.id);
 			}
@@ -207,7 +195,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 				);
 				if (real) {
 					seenRef.current.add(real.id);
-					setMessages((prev) => [...prev, real]);
+					setMessages((prev) => upsertMessage(prev, real));
 					setText("");
 					setReplyTo(null);
 				}
@@ -260,7 +248,10 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 			if (real) {
 				seenRef.current.add(real.id);
 				setMessages((prev) =>
-					prev.map((m) => (m.id === optimistic.id ? real : m)),
+					upsertMessage(
+						prev.filter((m) => m.id !== optimistic.id),
+						real,
+					),
 				);
 			}
 		} finally {
