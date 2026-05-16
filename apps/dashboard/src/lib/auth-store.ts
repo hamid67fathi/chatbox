@@ -38,7 +38,33 @@ export function getAccessToken(): string | null {
 
 export function getWorkspaceIdFromAuth(): string | null {
 	const auth = getAuth();
-	return auth?.user?.workspaces?.[0]?.id ?? null;
+	if (auth?.user?.workspaces?.[0]?.id) return auth.user.workspaces[0].id;
+	return process.env.NEXT_PUBLIC_WORKSPACE_ID ?? null;
+}
+
+export async function refreshAuthUser(): Promise<AuthData | null> {
+	const auth = getAuth();
+	if (!auth?.access_token) return null;
+
+	try {
+		const res = await fetch(`${API_URL}/v1/auth/me`, {
+			headers: { Authorization: `Bearer ${auth.access_token}` },
+		});
+		if (!res.ok) return auth;
+		const data = await res.json();
+		const updated: AuthData = {
+			...auth,
+			user: {
+				...auth.user,
+				...data.user,
+				workspaces: data.user.workspaces,
+			},
+		};
+		setAuth(updated);
+		return updated;
+	} catch {
+		return auth;
+	}
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";

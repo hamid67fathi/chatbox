@@ -2,7 +2,12 @@ import { and, eq, gt } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { randomBytes } from "node:crypto";
 import { db } from "../db/index.js";
-import { sessions, users, workspaceMembers } from "../db/schema/index.js";
+import {
+	sessions,
+	users,
+	workspaceMembers,
+	workspaces,
+} from "../db/schema/index.js";
 import {
 	type AuthenticatedRequest,
 	type RefreshTokenPayload,
@@ -57,11 +62,20 @@ export async function authRoutes(app: FastifyInstance) {
 			request.ip,
 		);
 
+		const memberships = await ensureDemoWorkspaceMembership(user.id);
+
 		return reply.status(201).send({
 			access_token: accessToken,
 			refresh_token: refreshToken,
 			session_id: sessionId,
-			user: { id: user.id, email: user.email },
+			user: {
+				id: user.id,
+				email: user.email,
+				workspaces: memberships.map((m) => ({
+					id: m.workspaceId,
+					role: m.role,
+				})),
+			},
 		});
 	});
 
@@ -101,13 +115,7 @@ export async function authRoutes(app: FastifyInstance) {
 			request.ip,
 		);
 
-		const memberships = await db
-			.select({
-				workspaceId: workspaceMembers.workspaceId,
-				role: workspaceMembers.role,
-			})
-			.from(workspaceMembers)
-			.where(eq(workspaceMembers.userId, user.id));
+		const memberships = await ensureDemoWorkspaceMembership(user.id);
 
 		return reply.send({
 			access_token: accessToken,
@@ -220,13 +228,7 @@ export async function authRoutes(app: FastifyInstance) {
 
 			if (!user) throw unauthorized("User not found.");
 
-			const memberships = await db
-				.select({
-					workspaceId: workspaceMembers.workspaceId,
-					role: workspaceMembers.role,
-				})
-				.from(workspaceMembers)
-				.where(eq(workspaceMembers.userId, id));
+			const memberships = await ensureDemoWorkspaceMembership(id);
 
 			return reply.send({
 				user: {
@@ -244,6 +246,41 @@ export async function authRoutes(app: FastifyInstance) {
 			});
 		},
 	);
+}
+
+async function loadUserWorkspaces(userId: string) {
+	return db
+		.select({
+			workspaceId: workspaceMembers.workspaceId,
+			role: workspaceMembers.role,
+		})
+		.from(workspaceMembers)
+		.where(eq(workspaceMembers.userId, userId));
+}
+
+/** Ensures dev users can access the demo workspace inbox. */
+async function ensureDemoWorkspaceMembership(userId: string) {
+	let memberships = await loadUserWorkspaces(userId);
+	if (memberships.length > 0) return memberships;
+
+	const demo = await db.query.workspaces.findFirst({
+		where: eq(workspaces.slug, "demo"),
+	});
+	if (!demo) return memberships;
+
+	await db
+		.insert(workspaceMembers)
+		.values({
+			workspaceId: demo.id,
+			userId,
+			role: "agent",
+			status: "active",
+			joinedAt: new Date(),
+		})
+		.onConflictDoNothing();
+
+	memberships = await loadUserWorkspaces(userId);
+	return memberships;
 }
 
 async function createSession(

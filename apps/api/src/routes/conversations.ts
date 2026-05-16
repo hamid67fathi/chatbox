@@ -42,7 +42,7 @@ export async function conversationRoutes(app: FastifyInstance) {
 			where: and(...conditions),
 			limit,
 			orderBy: (c, { desc }) => [desc(c.lastMessageAt), desc(c.createdAt)],
-			with: {},
+			with: { contact: true },
 		});
 
 		return { data: rows };

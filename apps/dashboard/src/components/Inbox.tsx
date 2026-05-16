@@ -16,15 +16,29 @@ export function Inbox({ workspaceId }: Props) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
 
-	useEffect(() => {
+	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
 		fetchConversations(workspaceId).then(setConversations);
 	}, [workspaceId]);
 
 	useEffect(() => {
+		reloadConversations();
+	}, [reloadConversations]);
+
+	useEffect(() => {
+		if (!workspaceId) return;
+		const interval = setInterval(reloadConversations, 8000);
+		return () => clearInterval(interval);
+	}, [workspaceId, reloadConversations]);
+
+	useEffect(() => {
 		if (!workspaceId) return;
 
 		const socket = getSocket(workspaceId);
+
+		const onConnected = () => {
+			reloadConversations();
+		};
 
 		const onConversationNew = (data: { conversation: Conversation }) => {
 			setConversations((prev) => {
@@ -38,7 +52,7 @@ export function Inbox({ workspaceId }: Props) {
 			setConversations((prev) => {
 				const idx = prev.findIndex((c) => c.id === convId);
 				if (idx === -1) {
-					void fetchConversations(workspaceId).then(setConversations);
+					reloadConversations();
 					return prev;
 				}
 				const next = [...prev];
@@ -60,16 +74,20 @@ export function Inbox({ workspaceId }: Props) {
 			);
 		};
 
+		socket.on("connected", onConnected);
 		socket.on("conversation:new", onConversationNew);
 		socket.on("message:new", onMessageNew);
 		socket.on("conv:needs_human", onNeedsHuman);
 
+		if (socket.connected) onConnected();
+
 		return () => {
+			socket.off("connected", onConnected);
 			socket.off("conversation:new", onConversationNew);
 			socket.off("message:new", onMessageNew);
 			socket.off("conv:needs_human", onNeedsHuman);
 		};
-	}, [workspaceId]);
+	}, [workspaceId, reloadConversations]);
 
 	const handleSelect = useCallback((id: string) => {
 		setActiveId(id);

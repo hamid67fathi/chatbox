@@ -1,6 +1,10 @@
 "use client";
 
-import { clearAuth, getAuth, getWorkspaceIdFromAuth } from "@/lib/auth-store";
+import {
+	clearAuth,
+	getWorkspaceIdFromAuth,
+	refreshAuthUser,
+} from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
@@ -14,24 +18,31 @@ export function AuthGuard({ children }: Props) {
 	const [ctx, setCtx] = useState<{ workspaceId: string; userId: string } | null>(null);
 
 	useEffect(() => {
-		const auth = getAuth();
-		if (!auth?.access_token) {
-			router.replace("/login");
-			return;
-		}
+		let cancelled = false;
 
-		const wsId =
-			getWorkspaceIdFromAuth() ??
-			(process.env.NEXT_PUBLIC_WORKSPACE_ID || "");
+		(async () => {
+			const auth = await refreshAuthUser();
+			if (cancelled) return;
 
-		if (!wsId) {
-			clearAuth();
-			router.replace("/login");
-			return;
-		}
+			if (!auth?.access_token) {
+				router.replace("/login");
+				return;
+			}
 
-		setCtx({ workspaceId: wsId, userId: auth.user.id });
-		setReady(true);
+			const wsId = getWorkspaceIdFromAuth();
+			if (!wsId) {
+				clearAuth();
+				router.replace("/login");
+				return;
+			}
+
+			setCtx({ workspaceId: wsId, userId: auth.user.id });
+			setReady(true);
+		})();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [router]);
 
 	if (!ready || !ctx) {
