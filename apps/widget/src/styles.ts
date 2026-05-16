@@ -4,6 +4,14 @@ export const WIDGET_CSS = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   direction: rtl;
+
+  --cb-primary: #2563eb;
+  --cb-primary-hover: #1d4ed8;
+  --cb-surface: #ffffff;
+  --cb-text-on-primary: #ffffff;
+  --cb-agent-bg: #f1f5f9;
+  --cb-agent-text: #1e293b;
+  --cb-border: #e2e8f0;
 }
 
 .cb-container {
@@ -14,11 +22,16 @@ export const WIDGET_CSS = `
   font-family: inherit;
 }
 
+.cb-container.cb-pos-left {
+  right: auto;
+  left: 20px;
+}
+
 .cb-launcher {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--cb-primary);
   border: none;
   cursor: pointer;
   display: flex;
@@ -36,7 +49,7 @@ export const WIDGET_CSS = `
 .cb-launcher svg {
   width: 28px;
   height: 28px;
-  fill: white;
+  fill: var(--cb-text-on-primary);
 }
 
 .cb-window {
@@ -46,7 +59,8 @@ export const WIDGET_CSS = `
   right: 20px;
   width: 370px;
   height: 520px;
-  background: #fff;
+  max-height: calc(100vh - 100px);
+  background: var(--cb-surface);
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
   flex-direction: column;
@@ -54,28 +68,51 @@ export const WIDGET_CSS = `
   z-index: 999998;
 }
 
+.cb-container.cb-pos-left .cb-window {
+  right: auto;
+  left: 20px;
+}
+
 .cb-window.open {
   display: flex;
 }
 
 .cb-header {
-  background: #2563eb;
-  color: white;
-  padding: 16px;
+  background: var(--cb-primary);
+  color: var(--cb-text-on-primary);
+  padding: 12px 16px;
   font-weight: 600;
   font-size: 15px;
   display: flex;
   align-items: center;
+  gap: 10px;
   justify-content: space-between;
+}
+
+.cb-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cb-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.2);
 }
 
 .cb-close {
   background: none;
   border: none;
-  color: white;
+  color: var(--cb-text-on-primary);
   cursor: pointer;
   font-size: 20px;
   padding: 0 4px;
+  flex-shrink: 0;
 }
 
 .cb-messages {
@@ -85,6 +122,18 @@ export const WIDGET_CSS = `
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.cb-welcome {
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--cb-agent-bg);
+  color: var(--cb-agent-text);
+  border-bottom-left-radius: 4px;
 }
 
 .cb-msg {
@@ -98,15 +147,15 @@ export const WIDGET_CSS = `
 
 .cb-msg.contact {
   align-self: flex-end;
-  background: #2563eb;
-  color: white;
+  background: var(--cb-primary);
+  color: var(--cb-text-on-primary);
   border-bottom-right-radius: 4px;
 }
 
 .cb-msg.agent, .cb-msg.ai, .cb-msg.system {
   align-self: flex-start;
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--cb-agent-bg);
+  color: var(--cb-agent-text);
   border-bottom-left-radius: 4px;
 }
 
@@ -125,13 +174,13 @@ export const WIDGET_CSS = `
 .cb-input-area {
   display: flex;
   padding: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--cb-border);
   gap: 8px;
 }
 
 .cb-input {
   flex: 1;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--cb-border);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 14px;
@@ -141,12 +190,12 @@ export const WIDGET_CSS = `
 }
 
 .cb-input:focus {
-  border-color: #2563eb;
+  border-color: var(--cb-primary);
 }
 
 .cb-send {
-  background: #2563eb;
-  color: white;
+  background: var(--cb-primary);
+  color: var(--cb-text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 10px 16px;
@@ -156,11 +205,45 @@ export const WIDGET_CSS = `
 }
 
 .cb-send:hover {
-  background: #1d4ed8;
+  background: var(--cb-primary-hover);
 }
 
 .cb-send:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .cb-window {
+    width: calc(100vw - 16px);
+    height: calc(100vh - 88px);
+    max-height: none;
+    bottom: 72px;
+    right: 8px;
+    border-radius: 12px;
+  }
+  .cb-container.cb-pos-left .cb-window {
+    left: 8px;
+    right: auto;
+  }
+  .cb-container {
+    right: 8px;
+    bottom: 12px;
+  }
+  .cb-container.cb-pos-left {
+    left: 8px;
+    right: auto;
+  }
+}
 `;
+
+/** Darken hex color by ~12% for hover */
+export function darkenHex(hex: string, amount = 0.12): string {
+	const m = /^#([0-9A-Fa-f]{6})$/.exec(hex);
+	if (!m) return hex;
+	const n = Number.parseInt(m[1], 16);
+	const r = Math.max(0, ((n >> 16) & 0xff) * (1 - amount)) | 0;
+	const g = Math.max(0, ((n >> 8) & 0xff) * (1 - amount)) | 0;
+	const b = Math.max(0, (n & 0xff) * (1 - amount)) | 0;
+	return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}

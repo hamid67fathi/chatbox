@@ -19,6 +19,7 @@ import { conversationRoutes } from "./routes/conversations.js";
 import { messageRoutes } from "./routes/messages.js";
 import { widgetRoutes } from "./routes/widget.js";
 import { workspaceRoutes } from "./routes/workspaces.js";
+import { widgetConfigRoutes } from "./routes/widget-config.js";
 
 export function buildApp() {
 	const app = Fastify({ logger: false });
@@ -74,6 +75,7 @@ export function buildApp() {
 		instance.addHook("onRequest", requireAuth);
 
 		instance.register(workspaceRoutes);
+		instance.register(widgetConfigRoutes);
 		instance.register(contactRoutes);
 		instance.register(conversationRoutes);
 		instance.register(messageRoutes);

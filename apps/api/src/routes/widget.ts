@@ -14,6 +14,7 @@ import {
 	deliverNewMessage,
 	triggerAIReply,
 } from "../lib/message-delivery.js";
+import { publicWidgetConfigHandler } from "./widget-config.js";
 
 async function requireVisitorToken(
 	request: FastifyRequest,
@@ -42,6 +43,12 @@ interface VisitorRequest extends FastifyRequest {
 }
 
 export async function widgetRoutes(app: FastifyInstance) {
+	app.get<{ Querystring: { workspace_slug?: string } }>(
+		"/widget/v1/config",
+		{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+		async (request) => publicWidgetConfigHandler(request.query.workspace_slug),
+	);
+
 	app.post<{
 		Body: {
 			workspace_slug: string;

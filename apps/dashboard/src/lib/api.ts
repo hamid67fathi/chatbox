@@ -630,4 +630,43 @@ export async function reindexKbDocument(
 	return { doc: body as KbDocument };
 }
 
+export interface WidgetConfigPublic {
+	primary_color: string;
+	position: "left" | "right";
+	title: string;
+	welcome_message: string;
+	avatar_url: string | null;
+}
+
+export async function fetchWidgetConfig(
+	workspaceId: string,
+): Promise<WidgetConfigPublic | null> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/widget-config`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	if (!res.ok) return null;
+	const json = await res.json();
+	return json.data ?? null;
+}
+
+export async function updateWidgetConfig(
+	workspaceId: string,
+	data: Partial<WidgetConfigPublic>,
+): Promise<{ ok: boolean; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/widget-config`,
+		{
+			method: "PATCH",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify(data),
+		},
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return { ok: false, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return { ok: true };
+}
+
 export { API_URL };

@@ -1,7 +1,7 @@
 import { ChatBoxWidget } from "./widget.js";
 
 export { ChatBoxWidget };
-export type { WidgetConfig } from "./api.js";
+export type { WidgetConfig, WidgetTheme } from "./api.js";
 
 function autoInit() {
 	const script = document.currentScript as HTMLScriptElement | null;
