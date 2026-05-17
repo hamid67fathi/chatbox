@@ -53,7 +53,7 @@ export function VisitorInfoPanel({
 
 	useEffect(() => {
 		if (channel !== "widget") return;
-		const socket = getSocket();
+		const socket = getSocket(workspaceId);
 		const onContext = (data: {
 			conversation_id?: string;
 			visitor?: VisitorInfo | null;
@@ -65,7 +65,7 @@ export function VisitorInfoPanel({
 		return () => {
 			socket.off("visitor:context", onContext);
 		};
-	}, [conversationId, channel]);
+	}, [workspaceId, conversationId, channel]);
 
 	if (channel !== "widget") return null;
 

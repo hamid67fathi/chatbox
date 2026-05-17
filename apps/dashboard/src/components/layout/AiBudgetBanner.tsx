@@ -22,8 +22,7 @@ export function AiBudgetBanner({ workspaceId }: Props) {
 	}, [load]);
 
 	useEffect(() => {
-		const socket = getSocket();
-		if (!socket) return;
+		const socket = getSocket(workspaceId);
 
 		const onBudget = (payload: {
 			level?: string;
@@ -55,7 +54,7 @@ export function AiBudgetBanner({ workspaceId }: Props) {
 		return () => {
 			socket.off("workspace:ai_budget", onBudget);
 		};
-	}, [load]);
+	}, [workspaceId, load]);
 
 	if (!status || status.level === "ok" || status.level === "unlimited") {
 		return null;

@@ -40,8 +40,7 @@ export function PlanUsageBanner({ workspaceId }: Props) {
 	}, [workspaceId]);
 
 	useEffect(() => {
-		const socket = getSocket();
-		if (!socket) return;
+		const socket = getSocket(workspaceId);
 		const onUsage = (payload: {
 			members?: UsageMetric;
 			conversations_month?: UsageMetric;
