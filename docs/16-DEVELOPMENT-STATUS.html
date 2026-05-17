@@ -53,6 +53,7 @@
       <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
       <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
       <li><a href="#sec-3b">جدول وضعیت (مراحل P4 → P10 — تولید)</a></li>
+      <li><a href="#sec-feature-list">فیچر لیست (بک‌لاگ محصول)</a></li>
       <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
     </ul>
   </aside>
@@ -526,9 +527,9 @@ rule: &gt;
 <td>P7.5</td>
 <td>هزینه و مانیتورینگ AI</td>
 <td>per-workspace credits، budget enforcement، Langfuse integration</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
+<td>انجام شد</td>
+<td>2026-05-16</td>
+<td>ai-usage API، بنر داشبورد، Langfuse اختیاری</td>
 </tr>
 
 <tr><td colspan="6"><strong>فاز ۸ — لندینگ پیج و Billing واقعی</strong></td></tr>
@@ -640,6 +641,38 @@ rule: &gt;
 <td>—</td>
 <td>—</td>
 </tr>
+</tbody>
+</table></div>
+
+<hr />
+<h2 id="sec-feature-list">فیچر لیست (بک‌لاگ محصول)</h2>
+<p>قابلیت‌های درخواست‌شده برای توسعه آینده — خارج از جدول فازهای P0–P10.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>کد</th>
+<th>عنوان</th>
+<th>توضیح</th>
+<th>دسته</th>
+<th>وضعیت</th>
+<th>فاز مرتبط</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>FL-01</td><td>مستندات API</td><td>مستندات عمومی REST (OpenAPI/Swagger، مثال‌ها، auth)</td><td>توسعه‌دهندگان</td><td>برنامه‌ریزی</td><td>P10.5</td></tr>
+<tr><td>FL-02</td><td>توکن API برای برنامه‌نویسان</td><td>ساخت/لغو توکن شخصی workspace برای API و webhook</td><td>توسعه‌دهندگان</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
+<tr><td>FL-03</td><td>لیست پلن‌های شارژ اکانت</td><td>پلن‌های افزایش اعتبار/شارژ و خرید از پنل</td><td>Billing</td><td>برنامه‌ریزی</td><td>P8</td></tr>
+<tr><td>FL-04</td><td>محدودیت پلن</td><td>سقف اپراتور، مکالمه فعال، حجم آپلود بر اساس پلن + هشدار</td><td>Billing</td><td>برنامه‌ریزی</td><td>P8.3</td></tr>
+<tr><td>FL-05</td><td>ابزارک (ویجت + پلاگین)</td><td>ویجت embed + پلاگین CMS (وردپرس و …) با برند «ابزارک»</td><td>ابزارک</td><td>برنامه‌ریزی</td><td>P6 / P8</td></tr>
+<tr><td>FL-06</td><td>آرشیو گفتگوها</td><td>آرشیو مکالمات، بازیابی و فیلتر archived</td><td>Inbox</td><td>برنامه‌ریزی</td><td>P5+</td></tr>
+<tr><td>FL-07</td><td>گزارش گفتگوها</td><td>گزارش بازه تاریخ، export، جستجو</td><td>گزارش</td><td>برنامه‌ریزی</td><td>P5+</td></tr>
+<tr><td>FL-08</td><td>بازدیدکننده آنلاین</td><td>نمایش live تعداد مشتری/بازدیدکننده آنلاین</td><td>ریل‌تایم</td><td>برنامه‌ریزی</td><td>P1.3+</td></tr>
+<tr><td>FL-09</td><td>اپراتور آنلاین</td><td>نمایش live تعداد اپراتورهای آنلاین</td><td>ریل‌تایم</td><td>برنامه‌ریزی</td><td>P1.3+</td></tr>
+<tr><td>FL-10</td><td>اطلاعات بازدیدکننده</td><td>IP، صفحه فعلی، کشور، دستگاه و نسخه در پنل</td><td>Visitor</td><td>برنامه‌ریزی</td><td>P6+</td></tr>
+<tr><td>FL-11</td><td>سابقه بازدید صفحات</td><td>تاریخچه صفحات بازدیدشده توسط مشتری</td><td>Visitor</td><td>برنامه‌ریزی</td><td>P6+</td></tr>
+<tr><td>FL-12</td><td>آواتار اپراتور</td><td>آپلود/تنظیم آواتار برای هر اپراتور</td><td>تیم</td><td>برنامه‌ریزی</td><td>P5.5+</td></tr>
+<tr><td>FL-13</td><td>Ban کاربر</td><td>مسدود کردن contact خاطی</td><td>امنیت</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
+<tr><td>FL-14</td><td>Ban بر اساس IP</td><td>مسدود کردن IP یا محدوده IP</td><td>امنیت</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
 </tbody>
 </table></div>
 

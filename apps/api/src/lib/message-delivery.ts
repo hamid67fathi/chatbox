@@ -8,6 +8,11 @@ import {
 } from "../db/schema/index.js";
 import { askAI } from "./ai-client.js";
 import {
+	estimateCostUsd,
+	getAiBudgetStatus,
+	notifyAiBudgetIfNeeded,
+} from "./ai-budget.js";
+import {
 	triggerContactMessageSentiment,
 	triggerConversationSummary,
 } from "./conversation-insights.js";
@@ -125,12 +130,47 @@ export function triggerAIReply(
 	void runAIReply(workspaceId, conversationId, question, sourceMessageId);
 }
 
+async function escalateBudgetExhausted(
+	workspaceId: string,
+	conversationId: string,
+	sourceMessageId: string,
+) {
+	await db
+		.update(conversations)
+		.set({ aiHandled: false })
+		.where(eq(conversations.id, conversationId));
+
+	await db.insert(aiInteractions).values({
+		workspaceId,
+		conversationId,
+		messageId: sourceMessageId,
+		purpose: "auto_reply:budget_exhausted",
+		model: "budget:blocked",
+		response: null,
+		escalated: true,
+	});
+
+	try {
+		const io = getIO();
+		io.to(`workspace:${workspaceId}`).emit("conv:needs_human", {
+			conversation_id: conversationId,
+			reason: "ai_budget_exhausted",
+		});
+	} catch {}
+}
+
 async function runAIReply(
 	workspaceId: string,
 	conversationId: string,
 	question: string,
 	sourceMessageId: string,
 ) {
+	const budget = await getAiBudgetStatus(workspaceId);
+	if (budget && !budget.allowAi) {
+		await escalateBudgetExhausted(workspaceId, conversationId, sourceMessageId);
+		return;
+	}
+
 	const start = Date.now();
 	const aiResult = await askAI(workspaceId, question, conversationId);
 	const latencyMs = Date.now() - start;
@@ -153,10 +193,16 @@ async function runAIReply(
 			retrievedChunks: aiResult.retrieved_chunks,
 			inputTokens: aiResult.input_tokens,
 			outputTokens: aiResult.output_tokens,
+			costUsd: estimateCostUsd(
+				aiResult.model,
+				aiResult.input_tokens,
+				aiResult.output_tokens,
+			),
 			confidence: String(aiResult.confidence),
 			escalated: true,
 			latencyMs,
 		});
+		await notifyAiBudgetIfNeeded(workspaceId);
 
 		try {
 			const io = getIO();
@@ -193,10 +239,16 @@ async function runAIReply(
 		retrievedChunks: aiResult.retrieved_chunks,
 		inputTokens: aiResult.input_tokens,
 		outputTokens: aiResult.output_tokens,
+		costUsd: estimateCostUsd(
+			aiResult.model,
+			aiResult.input_tokens,
+			aiResult.output_tokens,
+		),
 		confidence: String(aiResult.confidence),
 		escalated: false,
 		latencyMs,
 	});
+	await notifyAiBudgetIfNeeded(workspaceId);
 
 	await deliverNewMessage(aiMsg, conversationId, workspaceId);
 }

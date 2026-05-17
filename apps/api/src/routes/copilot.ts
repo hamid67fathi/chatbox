@@ -9,6 +9,11 @@ import {
 	requestCopilot,
 	streamCopilotFromAI,
 } from "../lib/copilot-client.js";
+import {
+	assertAiBudgetAllowed,
+	estimateCostUsd,
+	notifyAiBudgetIfNeeded,
+} from "../lib/ai-budget.js";
 import { assertConversationAccess } from "../lib/conversation-access.js";
 import { notFound } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
@@ -66,8 +71,14 @@ async function logCopilotInteraction(
 		response: null,
 		inputTokens: result.input_tokens,
 		outputTokens: result.output_tokens,
+		costUsd: estimateCostUsd(
+			result.model,
+			result.input_tokens,
+			result.output_tokens,
+		),
 		escalated: false,
 	});
+	await notifyAiBudgetIfNeeded(wsId);
 }
 
 export async function copilotRoutes(app: FastifyInstance) {
@@ -82,6 +93,7 @@ export async function copilotRoutes(app: FastifyInstance) {
 			const { conv, messages: copilotMessages, contactName } =
 				await loadCopilotContext(wsId, convId);
 			await assertConversationAccess(conv, wsId, user.id);
+			await assertAiBudgetAllowed(wsId);
 
 			const result = await requestCopilot(
 				wsId,
@@ -115,6 +127,7 @@ export async function copilotRoutes(app: FastifyInstance) {
 			const { conv, messages: copilotMessages, contactName } =
 				await loadCopilotContext(wsId, convId);
 			await assertConversationAccess(conv, wsId, user.id);
+			await assertAiBudgetAllowed(wsId);
 
 			const stream = new PassThrough();
 			let tokens = { model: "stub", input_tokens: 0, output_tokens: 0 };

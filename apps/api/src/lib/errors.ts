@@ -48,6 +48,16 @@ export function conflict(message: string) {
 	return new ApiError({ code: "conflict", message, statusCode: 409 });
 }
 
+export function aiBudgetExhausted(details: Record<string, unknown>) {
+	return new ApiError({
+		code: "ai_budget_exhausted",
+		message:
+			"اعتبار AI این workspace برای ماه جاری تمام شده است. لطفاً پلن را ارتقا دهید یا اعتبار اضافه خریداری کنید.",
+		statusCode: 402,
+		details,
+	});
+}
+
 export function errorHandler(
 	error: Error,
 	request: FastifyRequest,

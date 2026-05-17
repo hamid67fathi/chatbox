@@ -63,6 +63,19 @@ export interface WorkspaceDetail {
 	timezone: string;
 }
 
+export interface AiBudgetStatus {
+	plan: string;
+	monthlyLimit: number | null;
+	bonusCredits: number;
+	totalLimit: number | null;
+	usedCredits: number;
+	remainingCredits: number | null;
+	percentUsed: number | null;
+	level: "ok" | "warning" | "exhausted" | "unlimited";
+	periodStart: string;
+	allowAi: boolean;
+}
+
 export interface MessageAttachment {
 	id?: string;
 	url: string;
@@ -334,6 +347,21 @@ export async function fetchWorkspaceDetail(
 	});
 	if (!res.ok) return null;
 	return res.json();
+}
+
+export async function fetchAiUsage(
+	workspaceId: string,
+): Promise<AiBudgetStatus | null> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/ai-usage`,
+		{
+			headers: authHeaders(workspaceId),
+			cache: "no-store",
+		},
+	);
+	if (!res.ok) return null;
+	const json = (await res.json()) as { data?: AiBudgetStatus };
+	return json.data ?? null;
 }
 
 export async function updateWorkspace(

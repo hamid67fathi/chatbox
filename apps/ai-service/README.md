@@ -106,6 +106,23 @@ curl -X POST http://localhost:8000/v1/embed \
 
 `GET /health` reports provider flags and cache sizes.
 
+## Cost & observability (P7.5)
+
+- API tracks monthly AI credits per workspace (plan limit + `ai_credits` bonus column).
+- Enforcement at 80% (dashboard banner + WebSocket `workspace:ai_budget`) and 100% (block auto-reply / copilot / summarize).
+- Optional **Langfuse**: set `LANGFUSE_PUBLIC_KEY` + `LANGFUSE_SECRET_KEY` for traces on `/v1/ask` and LLM generations.
+
+API env (optional overrides):
+
+```
+AI_CREDITS_FREE=500
+AI_CREDITS_STARTER=5000
+AI_CREDITS_PRO=25000
+AI_BUDGET_WARN_PCT=80
+```
+
+Dashboard: `GET /v1/workspaces/:id/ai-usage`
+
 ## Modes
 
 - **With OpenAI**: Set `OPENAI_API_KEY` in `.env` for real embeddings and LLM responses

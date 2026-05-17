@@ -8,7 +8,11 @@ export default function CannedPage() {
 	return (
 		<AuthGuard>
 			{({ workspaceId, userEmail, workspaceName }) => (
-				<AppShell userEmail={userEmail} workspaceName={workspaceName}>
+				<AppShell
+					workspaceId={workspaceId}
+					userEmail={userEmail}
+					workspaceName={workspaceName}
+				>
 					<CannedResponsesManager workspaceId={workspaceId} />
 				</AppShell>
 			)}

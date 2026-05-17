@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_chat_model: str = "claude-3-5-haiku-latest"
 
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
     @property
@@ -32,6 +36,10 @@ class Settings(BaseSettings):
     @property
     def use_anthropic(self) -> bool:
         return bool(self.anthropic_api_key)
+
+    @property
+    def use_langfuse(self) -> bool:
+        return bool(self.langfuse_public_key and self.langfuse_secret_key)
 
 
 settings = Settings()

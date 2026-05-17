@@ -6,6 +6,7 @@ import { users, workspaceMembers, workspaces } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
 import { forbidden, hashPassword } from "../lib/auth.js";
 import { conflict, notFound, validationError } from "../lib/errors.js";
+import { getAiBudgetStatus } from "../lib/ai-budget.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -77,6 +78,16 @@ export async function workspaceRoutes(app: FastifyInstance) {
 			});
 			if (!ws) throw notFound("Workspace not found.");
 			return ws;
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/workspaces/:id/ai-usage",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const status = await getAiBudgetStatus(request.params.id);
+			if (!status) throw notFound("Workspace not found.");
+			return { data: status };
 		},
 	);
 

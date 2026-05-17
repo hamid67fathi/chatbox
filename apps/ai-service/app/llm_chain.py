@@ -7,6 +7,7 @@ import logging
 import httpx
 
 from .config import settings
+from .langfuse_tracing import log_generation, trace_operation
 from .pii import redact
 
 logger = logging.getLogger(__name__)
@@ -125,21 +126,58 @@ async def _try_anthropic(question: str, context: str) -> dict:
 async def generate_reply_with_fallback(
     question: str,
     context_chunks: list[dict],
+    *,
+    workspace_id: str | None = None,
+    conversation_id: str | None = None,
 ) -> dict:
     context = "\n---\n".join(c["content"] for c in context_chunks)
     safe_question = redact(question)
     safe_context = redact(context)
 
-    if settings.use_openai:
-        try:
-            return await _try_openai(safe_question, safe_context)
-        except Exception as exc:
-            logger.warning("OpenAI generation failed: %s", exc)
+    with trace_operation(
+        "llm_reply",
+        workspace_id=workspace_id,
+        conversation_id=conversation_id,
+        metadata={"chunks": len(context_chunks)},
+    ) as trace:
+        if settings.use_openai:
+            try:
+                result = await _try_openai(safe_question, safe_context)
+                log_generation(
+                    trace,
+                    name="openai",
+                    model=result["model"],
+                    input_text=f"{safe_context}\n\n{safe_question}",
+                    output_text=result["reply"],
+                    input_tokens=result["input_tokens"],
+                    output_tokens=result["output_tokens"],
+                )
+                return result
+            except Exception as exc:
+                logger.warning("OpenAI generation failed: %s", exc)
 
-    if settings.use_anthropic:
-        try:
-            return await _try_anthropic(safe_question, safe_context)
-        except Exception as exc:
-            logger.warning("Anthropic generation failed: %s", exc)
+        if settings.use_anthropic:
+            try:
+                result = await _try_anthropic(safe_question, safe_context)
+                log_generation(
+                    trace,
+                    name="anthropic",
+                    model=result["model"],
+                    input_text=f"{safe_context}\n\n{safe_question}",
+                    output_text=result["reply"],
+                    input_tokens=result["input_tokens"],
+                    output_tokens=result["output_tokens"],
+                )
+                return result
+            except Exception as exc:
+                logger.warning("Anthropic generation failed: %s", exc)
 
-    return _template_reply(safe_question, context_chunks)
+        result = _template_reply(safe_question, context_chunks)
+        log_generation(
+            trace,
+            name="template",
+            model=result["model"],
+            input_text=safe_question,
+            output_text=result["reply"],
+        )
+        return result

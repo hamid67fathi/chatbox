@@ -46,6 +46,7 @@ async def health():
             "answer": answer_cache.stats(),
             "intent": intent_cache.stats(),
         },
+        "langfuse": settings.use_langfuse,
     }
 
 
@@ -134,6 +135,7 @@ async def ask(req: AskRequest):
         req.workspace_id,
         req.question,
         req.top_k,
+        req.conversation_id,
     )
 
     return AskResponse(

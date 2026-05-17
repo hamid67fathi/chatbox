@@ -8,7 +8,11 @@ export default function HomePage() {
 	return (
 		<AuthGuard>
 			{({ workspaceId, userId, userEmail, workspaceName, workspaceRole }) => (
-				<AppShell userEmail={userEmail} workspaceName={workspaceName}>
+				<AppShell
+					workspaceId={workspaceId}
+					userEmail={userEmail}
+					workspaceName={workspaceName}
+				>
 					<Inbox
 						workspaceId={workspaceId}
 						userId={userId}

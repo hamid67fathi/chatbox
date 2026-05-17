@@ -1,3 +1,6 @@
+import { assertAiBudgetAllowed } from "./ai-budget.js";
+import { ApiError } from "./errors.js";
+
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL ?? "http://localhost:8000";
 const AI_TIMEOUT = Number(process.env.AI_TIMEOUT_MS ?? 10_000);
 
@@ -25,6 +28,15 @@ export async function askAI(
 	question: string,
 	conversationId?: string,
 ): Promise<AskResponse | null> {
+	try {
+		await assertAiBudgetAllowed(workspaceId);
+	} catch (err) {
+		if (err instanceof ApiError && err.statusCode === 402) {
+			console.warn("[AI] budget exhausted for workspace", workspaceId);
+		}
+		return null;
+	}
+
 	if (circuitOpen) {
 		if (Date.now() < circuitResetAt) return null;
 		circuitOpen = false;

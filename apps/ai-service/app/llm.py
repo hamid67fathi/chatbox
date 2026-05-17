@@ -14,6 +14,7 @@ async def generate_reply(
     context_chunks: list[dict],
     *,
     workspace_id: str | None = None,
+    conversation_id: str | None = None,
     use_cache: bool = True,
 ) -> dict:
     normalized_q = normalize_persian(question)
@@ -29,7 +30,12 @@ async def generate_reply(
         if hit is not None:
             return json.loads(hit) if isinstance(hit, str) else hit
 
-    result = await generate_reply_with_fallback(question, context_chunks)
+    result = await generate_reply_with_fallback(
+        question,
+        context_chunks,
+        workspace_id=workspace_id,
+        conversation_id=conversation_id,
+    )
 
     if use_cache and cache_key and not result.get("handoff"):
         answer_cache.set(cache_key, json.dumps(result, ensure_ascii=False))

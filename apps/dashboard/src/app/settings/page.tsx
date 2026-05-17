@@ -8,7 +8,11 @@ export default function SettingsPage() {
 	return (
 		<AuthGuard>
 			{({ workspaceId, userEmail, workspaceName, workspaceRole }) => (
-				<AppShell userEmail={userEmail} workspaceName={workspaceName}>
+				<AppShell
+					workspaceId={workspaceId}
+					userEmail={userEmail}
+					workspaceName={workspaceName}
+				>
 					<SettingsPanel
 						workspaceId={workspaceId}
 						workspaceRole={workspaceRole}

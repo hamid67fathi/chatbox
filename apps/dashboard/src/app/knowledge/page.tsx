@@ -8,7 +8,11 @@ export default function KnowledgePage() {
 	return (
 		<AuthGuard>
 			{({ workspaceId, userEmail, workspaceName, workspaceRole }) => (
-				<AppShell userEmail={userEmail} workspaceName={workspaceName}>
+				<AppShell
+					workspaceId={workspaceId}
+					userEmail={userEmail}
+					workspaceName={workspaceName}
+				>
 					<KnowledgePanel workspaceId={workspaceId} workspaceRole={workspaceRole} />
 				</AppShell>
 			)}

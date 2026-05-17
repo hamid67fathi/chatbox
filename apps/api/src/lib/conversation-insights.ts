@@ -1,6 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { aiInteractions, conversations, messages } from "../db/schema/index.js";
+import { getAiBudgetStatus, estimateCostUsd, notifyAiBudgetIfNeeded } from "./ai-budget.js";
 import {
 	analyzeSentimentText,
 	summarizeConversationText,
@@ -138,6 +139,9 @@ export async function refreshConversationSummary(
 	const insightMessages = await loadInsightMessages(workspaceId, conversationId);
 	if (insightMessages.length === 0) return null;
 
+	const budget = await getAiBudgetStatus(workspaceId);
+	if (budget && !budget.allowAi) return null;
+
 	const result = await summarizeConversationText(
 		workspaceId,
 		insightMessages,
@@ -169,8 +173,14 @@ export async function refreshConversationSummary(
 		response: result.summary,
 		inputTokens: result.input_tokens,
 		outputTokens: result.output_tokens,
+		costUsd: estimateCostUsd(
+			result.model,
+			result.input_tokens,
+			result.output_tokens,
+		),
 		escalated: false,
 	});
+	await notifyAiBudgetIfNeeded(workspaceId);
 
 	emitInsightsUpdated(workspaceId, conversationId, {
 		summary: result.summary,

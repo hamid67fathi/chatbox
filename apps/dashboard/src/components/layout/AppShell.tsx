@@ -1,21 +1,29 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { AiBudgetBanner } from "./AiBudgetBanner";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 
 interface Props {
 	children: ReactNode;
+	workspaceId?: string;
 	userEmail?: string;
 	workspaceName?: string;
 }
 
-export function AppShell({ children, userEmail, workspaceName }: Props) {
+export function AppShell({
+	children,
+	workspaceId,
+	userEmail,
+	workspaceName,
+}: Props) {
 	return (
 		<div className="flex h-screen overflow-hidden bg-background text-foreground">
 			<Sidebar />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<Header userEmail={userEmail} workspaceName={workspaceName} />
+				{workspaceId ? <AiBudgetBanner workspaceId={workspaceId} /> : null}
 				<main className="flex min-h-0 flex-1 flex-col">{children}</main>
 			</div>
 		</div>

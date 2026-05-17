@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import Enum
 
 from .intent import Intent, IntentResult, classify_intent
+from .langfuse_tracing import trace_operation
 from .llm import generate_reply
 from .retriever import retrieve_chunks
 
@@ -60,6 +61,23 @@ async def route_and_answer(
     workspace_id: str,
     question: str,
     top_k: int | None = None,
+    conversation_id: str | None = None,
+) -> dict:
+    with trace_operation(
+        "ask",
+        workspace_id=workspace_id,
+        conversation_id=conversation_id,
+    ):
+        return await _route_and_answer_impl(
+            workspace_id, question, top_k, conversation_id
+        )
+
+
+async def _route_and_answer_impl(
+    workspace_id: str,
+    question: str,
+    top_k: int | None,
+    conversation_id: str | None,
 ) -> dict:
     intent_result: IntentResult = await classify_intent(question)
     route = decide_route(intent_result.intent, intent_result.confidence)
@@ -117,6 +135,7 @@ async def route_and_answer(
         question,
         chunks,
         workspace_id=workspace_id,
+        conversation_id=conversation_id,
     )
     handoff = result["handoff"]
     if not chunks and intent_result.confidence < 0.6:
