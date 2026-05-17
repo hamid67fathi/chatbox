@@ -9,4 +9,10 @@ export default defineConfig({
 	sourcemap: true,
 	clean: true,
 	target: "es2020",
+	esbuildOptions(options) {
+		options.loader = {
+			...options.loader,
+			".ttf": "dataurl",
+		};
+	},
 });

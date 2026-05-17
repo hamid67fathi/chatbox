@@ -50,6 +50,7 @@ export async function bundleWidgetOnTheFly(): Promise<string> {
 		platform: "browser",
 		minify: process.env.NODE_ENV === "production",
 		logLevel: "silent",
+		loader: { ".ttf": "dataurl" },
 	});
 
 	const text = result.outputFiles[0]?.text;

@@ -16,7 +16,8 @@ import {
 import { CHAT_EMOJIS } from "./emoji.js";
 import { WidgetSocket } from "./socket.js";
 import { detectTextDirection } from "./text-direction.js";
-import { WIDGET_CSS, buildWidgetFontFaces, darkenHex } from "./styles.js";
+import { WIDGET_CSS, darkenHex } from "./styles.js";
+import { WIDGET_FONT_FACES } from "./widget-fonts.js";
 
 const CHAT_ICON = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`;
 const CLOSE_ICON = "✕";
@@ -85,8 +86,7 @@ export class ChatBoxWidget {
 		this.root = host.attachShadow({ mode: "open" });
 
 		const style = document.createElement("style");
-		style.textContent =
-			buildWidgetFontFaces(this.config.apiUrl) + WIDGET_CSS;
+		style.textContent = WIDGET_FONT_FACES + WIDGET_CSS;
 		this.root.appendChild(style);
 
 		const avatarHtml = this.theme.avatar_url

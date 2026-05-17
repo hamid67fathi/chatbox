@@ -17,7 +17,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			dir="rtl"
 			className={`${vazirmatn.variable} ${dmSans.variable} ${cormorant.variable}`}
 		>
-			<body className="font-sans antialiased">
+			<body
+				className={`font-sans antialiased ${vazirmatn.className} ${dmSans.className}`}
+			>
 				<SiteHeader />
 				<main>{children}</main>
 				<SiteFooter />

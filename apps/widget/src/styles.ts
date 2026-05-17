@@ -1,23 +1,3 @@
-/** @font-face rules loaded from API /fonts/ (see apps/api/public/fonts). */
-export function buildWidgetFontFaces(apiUrl: string): string {
-	const base = apiUrl.replace(/\/$/, "");
-	const face = (file: string, weight: number, style = "normal") => `
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('${base}/fonts/${file}') format('truetype');
-  font-weight: ${weight};
-  font-style: ${style};
-  font-display: swap;
-}`;
-	return [
-		face("Vazirmatn-Light.ttf", 300),
-		face("Vazirmatn-Regular.ttf", 400),
-		face("Vazirmatn-Medium.ttf", 500),
-		face("Vazirmatn-SemiBold.ttf", 600),
-		face("Vazirmatn-Bold.ttf", 700),
-	].join("");
-}
-
 export const WIDGET_CSS = `
 :host {
   all: initial;

@@ -18,7 +18,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			suppressHydrationWarning
 			className={`${vazirmatn.variable} ${dmSans.variable} ${dmMono.variable}`}
 		>
-			<body className="min-h-screen font-sans">
+			<body
+				className={`min-h-screen font-sans ${vazirmatn.className} ${dmSans.className}`}
+			>
 				<ThemeProvider>
 					{children}
 					<BuildBadge />

@@ -4,8 +4,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --watch",
-		"build": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --minify",
+		"dev": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --loader:.ttf=dataurl --watch",
+		"build": "esbuild src/index.ts --bundle --format=iife --outfile=dist/index.global.js --target=es2020 --loader:.ttf=dataurl --minify",
 		"lint": "biome check .",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
