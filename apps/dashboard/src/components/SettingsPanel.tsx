@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	API_URL,
+	connectEmailIntegration,
 	connectTelegramBot,
 	createApiToken,
+	disconnectEmailIntegration,
 	disconnectTelegramBot,
+	testEmailIntegration,
 	fetchApiTokens,
 	fetchBannedIps,
 	fetchIntegrations,
@@ -21,6 +24,7 @@ import {
 	uploadUserAvatar,
 	publicAssetUrl,
 	type ApiTokenRow,
+	type EmailIntegrationPublic,
 	type TelegramIntegrationPublic,
 	type WidgetConfigPublic,
 } from "@/lib/api";
@@ -47,7 +51,7 @@ const TIMEZONES = [
 
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
 	const [tab, setTab] = useState<
-		"profile" | "workspace" | "widget" | "telegram" | "api" | "security"
+		"profile" | "workspace" | "widget" | "telegram" | "email" | "api" | "security"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -103,6 +107,24 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [telegramMsg, setTelegramMsg] = useState("");
 	const [telegramError, setTelegramError] = useState("");
 	const [telegramLoading, setTelegramLoading] = useState(false);
+
+	const [emailIntegration, setEmailIntegration] =
+		useState<EmailIntegrationPublic | null>(null);
+	const [emailImapHost, setEmailImapHost] = useState("");
+	const [emailImapPort, setEmailImapPort] = useState("993");
+	const [emailImapSecure, setEmailImapSecure] = useState(true);
+	const [emailImapUser, setEmailImapUser] = useState("");
+	const [emailImapPassword, setEmailImapPassword] = useState("");
+	const [emailSmtpHost, setEmailSmtpHost] = useState("");
+	const [emailSmtpPort, setEmailSmtpPort] = useState("587");
+	const [emailSmtpSecure, setEmailSmtpSecure] = useState(false);
+	const [emailSmtpUser, setEmailSmtpUser] = useState("");
+	const [emailSmtpPassword, setEmailSmtpPassword] = useState("");
+	const [emailFromAddress, setEmailFromAddress] = useState("");
+	const [emailFromName, setEmailFromName] = useState("");
+	const [emailMsg, setEmailMsg] = useState("");
+	const [emailError, setEmailError] = useState("");
+	const [emailLoading, setEmailLoading] = useState(false);
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -176,13 +198,26 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 
 	const loadTelegram = useCallback(async () => {
 		const list = await fetchIntegrations(workspaceId);
-		const tg = list.find((i) => i.type === "telegram") ?? null;
+		const tg =
+			list.find((i): i is TelegramIntegrationPublic => i.type === "telegram") ??
+			null;
 		setTelegramIntegration(tg);
+	}, [workspaceId]);
+
+	const loadEmail = useCallback(async () => {
+		const list = await fetchIntegrations(workspaceId);
+		const em =
+			list.find((i): i is EmailIntegrationPublic => i.type === "email") ?? null;
+		setEmailIntegration(em);
 	}, [workspaceId]);
 
 	useEffect(() => {
 		if (tab === "telegram") void loadTelegram();
 	}, [tab, loadTelegram]);
+
+	useEffect(() => {
+		if (tab === "email") void loadEmail();
+	}, [tab, loadEmail]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -333,7 +368,15 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			</div>
 			<div className="flex gap-2 border-b border-border px-6 pt-3">
 				{(
-					["profile", "workspace", "widget", "telegram", "api", "security"] as const
+					[
+						"profile",
+						"workspace",
+						"widget",
+						"telegram",
+						"email",
+						"api",
+						"security",
+					] as const
 				).map((t) => (
 					<button
 						key={t}
@@ -354,9 +397,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 									? "ابزارک"
 									: t === "telegram"
 										? "تلگرام"
-										: t === "api"
-											? "API"
-											: "امنیت"}
+										: t === "email"
+											? "ایمیل"
+											: t === "api"
+												? "API"
+												: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -1023,6 +1068,217 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							<p className="text-sm text-destructive">{telegramError}</p>
 						)}
 						{telegramMsg && <p className="text-sm text-primary">{telegramMsg}</p>}
+					</div>
+				)}
+				{tab === "email" && (
+					<div className="mx-auto flex max-w-2xl flex-col gap-4">
+						<p className="text-sm text-muted-foreground">
+							ایمیل ورودی (IMAP) و خروجی (SMTP) را وصل کنید. سرویس{" "}
+							<code className="text-xs">email-worker</code> باید روی سرور در حال
+							اجرا باشد.
+						</p>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر (admin/owner) می‌تواند کانال ایمیل را متصل کند.
+							</p>
+						) : emailIntegration ? (
+							<div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+								<p className="text-sm font-medium">
+									متصل: {emailIntegration.from_address}
+								</p>
+								<p className="text-xs text-muted-foreground" dir="ltr">
+									IMAP {emailIntegration.imap_host} · SMTP{" "}
+									{emailIntegration.smtp_host}
+								</p>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										disabled={emailLoading}
+										onClick={async () => {
+											setEmailLoading(true);
+											setEmailError("");
+											const ok = await testEmailIntegration(workspaceId);
+											setEmailLoading(false);
+											setEmailMsg(
+												ok ? "اتصال IMAP/SMTP سالم است." : "تست اتصال ناموفق بود.",
+											);
+										}}
+									>
+										تست اتصال
+									</Button>
+									<Button
+										type="button"
+										variant="destructive"
+										disabled={emailLoading}
+										onClick={async () => {
+											setEmailLoading(true);
+											const ok = await disconnectEmailIntegration(workspaceId);
+											setEmailLoading(false);
+											if (!ok) {
+												setEmailError("قطع اتصال ناموفق بود.");
+												return;
+											}
+											setEmailIntegration(null);
+											setEmailMsg("کانال ایمیل قطع شد.");
+										}}
+									>
+										قطع اتصال
+									</Button>
+								</div>
+							</div>
+						) : (
+							<form
+								onSubmit={async (e) => {
+									e.preventDefault();
+									setEmailMsg("");
+									setEmailError("");
+									setEmailLoading(true);
+									const result = await connectEmailIntegration(workspaceId, {
+										imap_host: emailImapHost,
+										imap_port: Number(emailImapPort) || 993,
+										imap_secure: emailImapSecure,
+										imap_user: emailImapUser,
+										imap_password: emailImapPassword,
+										smtp_host: emailSmtpHost,
+										smtp_port: Number(emailSmtpPort) || 587,
+										smtp_secure: emailSmtpSecure,
+										smtp_user: emailSmtpUser,
+										smtp_password: emailSmtpPassword,
+										from_address: emailFromAddress,
+										from_name: emailFromName || null,
+									});
+									setEmailLoading(false);
+									if (!result.ok) {
+										setEmailError(result.error ?? "اتصال ناموفق بود.");
+										return;
+									}
+									if (result.data) setEmailIntegration(result.data);
+									setEmailImapPassword("");
+									setEmailSmtpPassword("");
+									setEmailMsg("کانال ایمیل متصل شد.");
+									void loadEmail();
+								}}
+								className="grid gap-3 sm:grid-cols-2"
+							>
+								<p className="sm:col-span-2 text-sm font-medium">IMAP (دریافت)</p>
+								<label className="flex flex-col gap-1 text-sm">
+									Host
+									<Input
+										value={emailImapHost}
+										onChange={(e) => setEmailImapHost(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm">
+									Port
+									<Input
+										value={emailImapPort}
+										onChange={(e) => setEmailImapPort(e.target.value)}
+										dir="ltr"
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									User
+									<Input
+										value={emailImapUser}
+										onChange={(e) => setEmailImapUser(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									Password
+									<Input
+										type="password"
+										value={emailImapPassword}
+										onChange={(e) => setEmailImapPassword(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex items-center gap-2 text-sm sm:col-span-2">
+									<input
+										type="checkbox"
+										checked={emailImapSecure}
+										onChange={(e) => setEmailImapSecure(e.target.checked)}
+									/>
+									IMAP SSL/TLS
+								</label>
+								<p className="sm:col-span-2 text-sm font-medium">SMTP (ارسال)</p>
+								<label className="flex flex-col gap-1 text-sm">
+									Host
+									<Input
+										value={emailSmtpHost}
+										onChange={(e) => setEmailSmtpHost(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm">
+									Port
+									<Input
+										value={emailSmtpPort}
+										onChange={(e) => setEmailSmtpPort(e.target.value)}
+										dir="ltr"
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									User
+									<Input
+										value={emailSmtpUser}
+										onChange={(e) => setEmailSmtpUser(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									Password
+									<Input
+										type="password"
+										value={emailSmtpPassword}
+										onChange={(e) => setEmailSmtpPassword(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex items-center gap-2 text-sm sm:col-span-2">
+									<input
+										type="checkbox"
+										checked={emailSmtpSecure}
+										onChange={(e) => setEmailSmtpSecure(e.target.checked)}
+									/>
+									SMTP SSL/TLS
+								</label>
+								<p className="sm:col-span-2 text-sm font-medium">فرستنده</p>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									From address
+									<Input
+										value={emailFromAddress}
+										onChange={(e) => setEmailFromAddress(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+									From name (اختیاری)
+									<Input
+										value={emailFromName}
+										onChange={(e) => setEmailFromName(e.target.value)}
+									/>
+								</label>
+								<div className="sm:col-span-2">
+									<Button type="submit" disabled={emailLoading}>
+										{emailLoading ? "در حال اتصال…" : "اتصال ایمیل"}
+									</Button>
+								</div>
+							</form>
+						)}
+						{emailError && (
+							<p className="text-sm text-destructive">{emailError}</p>
+						)}
+						{emailMsg && <p className="text-sm text-primary">{emailMsg}</p>}
 					</div>
 				)}
 				{tab === "security" && (

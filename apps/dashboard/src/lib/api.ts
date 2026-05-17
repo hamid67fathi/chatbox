@@ -863,16 +863,87 @@ export interface TelegramIntegrationPublic {
 	token_masked: string;
 }
 
+export interface EmailIntegrationPublic {
+	type: "email";
+	enabled: boolean;
+	from_address: string;
+	from_name: string | null;
+	imap_host: string;
+	smtp_host: string;
+	connected_at: string;
+	imap_user_masked: string;
+}
+
+export type IntegrationPublic = TelegramIntegrationPublic | EmailIntegrationPublic;
+
 export async function fetchIntegrations(
 	workspaceId: string,
-): Promise<TelegramIntegrationPublic[]> {
+): Promise<IntegrationPublic[]> {
 	const res = await authFetch(`${API_URL}/v1/integrations`, {
 		headers: authHeaders(workspaceId),
 		cache: "no-store",
 	});
 	if (!res.ok) return [];
-	const json = (await res.json()) as { data?: TelegramIntegrationPublic[] };
+	const json = (await res.json()) as { data?: IntegrationPublic[] };
 	return json.data ?? [];
+}
+
+export interface EmailConnectPayload {
+	imap_host: string;
+	imap_port: number;
+	imap_secure: boolean;
+	imap_user: string;
+	imap_password: string;
+	smtp_host: string;
+	smtp_port: number;
+	smtp_secure: boolean;
+	smtp_user: string;
+	smtp_password: string;
+	from_address: string;
+	from_name?: string | null;
+}
+
+export async function connectEmailIntegration(
+	workspaceId: string,
+	payload: EmailConnectPayload,
+): Promise<{ ok: boolean; data?: EmailIntegrationPublic; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/integrations/email`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify(payload),
+	});
+	if (!res.ok) {
+		const json = (await res.json().catch(() => ({}))) as {
+			error?: { message?: string };
+		};
+		return {
+			ok: false,
+			error: json.error?.message ?? "اتصال ایمیل ناموفق بود.",
+		};
+	}
+	const json = (await res.json()) as { data?: EmailIntegrationPublic };
+	return { ok: true, data: json.data };
+}
+
+export async function testEmailIntegration(workspaceId: string): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/integrations/email/test`, {
+		method: "POST",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
+export async function disconnectEmailIntegration(
+	workspaceId: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/integrations/email`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
 }
 
 export async function connectTelegramBot(
