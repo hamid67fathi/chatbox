@@ -1,13 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { BookOpen, CreditCard, Inbox, Settings, Users, Zap } from "lucide-react";
+import {
+	BookOpen,
+	CreditCard,
+	FileBarChart,
+	Inbox,
+	Settings,
+	Users,
+	Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
 	{ href: "/", label: "صندوق ورودی", icon: Inbox },
 	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
+	{ href: "/reports", label: "گزارش‌ها", icon: FileBarChart },
 	{ href: "/billing", label: "اشتراک", icon: CreditCard },
 	{ href: "/settings", label: "تنظیمات", icon: Settings },
 	{ href: "/team", label: "تیم", icon: Users },

@@ -1226,4 +1226,116 @@ export async function revokeApiToken(
 	return res.ok;
 }
 
+export interface ConversationReportRow {
+	id: string;
+	status: string;
+	channel: string;
+	subject: string | null;
+	created_at: string;
+	last_message_at: string | null;
+	closed_at: string | null;
+	csat_score: number | null;
+	first_response_sec: number | null;
+	message_count: number;
+	archived: boolean;
+	contact: {
+		full_name?: string | null;
+		fullName?: string | null;
+		email?: string | null;
+		phone?: string | null;
+	} | null;
+	assigned_agent: {
+		email?: string | null;
+		full_name?: string | null;
+		fullName?: string | null;
+	} | null;
+	tags: string[];
+}
+
+export interface ConversationReportFilters {
+	from: string;
+	to: string;
+	status?: string;
+	channel?: string;
+	assignedTo?: string;
+	archived?: "true" | "false" | "all";
+	tag?: string;
+	q?: string;
+	limit?: number;
+	offset?: number;
+}
+
+function reportSearchParams(filters: ConversationReportFilters): URLSearchParams {
+	const params = new URLSearchParams({
+		from: filters.from,
+		to: filters.to,
+	});
+	if (filters.status) params.set("status", filters.status);
+	if (filters.channel) params.set("channel", filters.channel);
+	if (filters.assignedTo) params.set("assigned_to", filters.assignedTo);
+	if (filters.archived) params.set("archived", filters.archived);
+	if (filters.tag) params.set("tag", filters.tag);
+	if (filters.q) params.set("q", filters.q);
+	if (filters.limit != null) params.set("limit", String(filters.limit));
+	if (filters.offset != null) params.set("offset", String(filters.offset));
+	return params;
+}
+
+export async function fetchConversationReport(
+	workspaceId: string,
+	filters: ConversationReportFilters,
+): Promise<{
+	data: ConversationReportRow[];
+	total: number;
+	hasMore: boolean;
+	error?: string;
+}> {
+	const params = reportSearchParams(filters);
+	const res = await authFetch(
+		`${API_URL}/v1/reports/conversations?${params}`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return {
+			data: [],
+			total: 0,
+			hasMore: false,
+			error: body?.error?.message ?? `HTTP ${res.status}`,
+		};
+	}
+	return {
+		data: body.data ?? [],
+		total: body.page?.total ?? 0,
+		hasMore: Boolean(body.page?.has_more),
+	};
+}
+
+export async function downloadConversationReportCsv(
+	workspaceId: string,
+	filters: ConversationReportFilters,
+): Promise<{ ok: boolean; truncated?: boolean; error?: string }> {
+	const params = reportSearchParams(filters);
+	params.set("format", "csv");
+	const res = await authFetch(
+		`${API_URL}/v1/reports/conversations/export?${params}`,
+		{ headers: authHeaders(workspaceId) },
+	);
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return { ok: false, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	const truncated = res.headers.get("X-Export-Truncated") === "true";
+	const blob = await res.blob();
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	const from = filters.from.slice(0, 10);
+	const to = filters.to.slice(0, 10);
+	a.download = `chatbox-conversations-${from}_${to}.csv`;
+	a.click();
+	URL.revokeObjectURL(url);
+	return { ok: true, truncated };
+}
+
 export { API_URL };
