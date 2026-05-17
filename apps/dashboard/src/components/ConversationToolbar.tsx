@@ -9,6 +9,7 @@ import {
 	archiveConversation,
 	assignConversation,
 	banConversationContact,
+	banConversationIp,
 	fetchConversationDetail,
 	fetchWorkspaceMembers,
 	isContactBanned,
@@ -113,6 +114,8 @@ export function ConversationToolbar({
 			: null;
 	const isArchived = Boolean(meta?.archivedAt);
 	const contactBannedFlag = isContactBanned(detail.contact?.metadata);
+	const visitorIp =
+		typeof detail.visitor?.ip === "string" ? detail.visitor.ip : null;
 
 	const visitorLabel =
 		detail.contact?.fullName ?? `Visitor · ${detail.id.slice(0, 8)}`;
@@ -291,6 +294,36 @@ export function ConversationToolbar({
 						}}
 					>
 						{contactBannedFlag ? "رفع مسدودیت" : "مسدود کردن"}
+					</Button>
+				)}
+				{canBan && visitorIp && detail.channel === "widget" && (
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						disabled={saving}
+						onClick={() => {
+							if (
+								!window.confirm(
+									`IP ${visitorIp} به لیست مسدود اضافه شود؟ هر بازدیدکننده با این IP نمی‌تواند چت کند.`,
+								)
+							) {
+								return;
+							}
+							void run(async () => {
+								const result = await banConversationIp(
+									workspaceId,
+									conversationId,
+								);
+								if (!result.ok) {
+									window.alert(result.error ?? "مسدود کردن IP ناموفق بود.");
+									return;
+								}
+								window.alert(`IP ${result.ip ?? visitorIp} مسدود شد.`);
+							});
+						}}
+					>
+						مسدود IP
 					</Button>
 				)}
 				<Button

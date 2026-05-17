@@ -764,6 +764,52 @@ export function isContactBanned(metadata: unknown): boolean {
 	return typeof m.bannedAt === "string" && m.bannedAt.length > 0;
 }
 
+export async function fetchBannedIps(workspaceId: string): Promise<string[]> {
+	const res = await authFetch(`${API_URL}/v1/security/banned-ips`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: string[] };
+	return json.data ?? [];
+}
+
+export async function updateBannedIps(
+	workspaceId: string,
+	ips: string[],
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/security/banned-ips`, {
+		method: "PUT",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify({ ips }),
+	});
+	return res.ok;
+}
+
+export async function banConversationIp(
+	workspaceId: string,
+	conversationId: string,
+): Promise<{ ok: boolean; ip?: string; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/ban-ip`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	if (!res.ok) {
+		const json = (await res.json().catch(() => ({}))) as {
+			error?: { message?: string };
+		};
+		return { ok: false, error: json.error?.message ?? "مسدود کردن IP ناموفق بود." };
+	}
+	const json = (await res.json()) as { ip?: string };
+	return { ok: true, ip: json.ip };
+}
+
 export async function fetchPresence(
 	workspaceId: string,
 ): Promise<PresenceCounts | null> {

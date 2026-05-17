@@ -6,9 +6,11 @@ import {
 	API_URL,
 	createApiToken,
 	fetchApiTokens,
+	fetchBannedIps,
 	fetchWidgetConfig,
 	fetchWorkspaceDetail,
 	revokeApiToken,
+	updateBannedIps,
 	updateProfile,
 	updateWidgetConfig,
 	updateWorkspace,
@@ -37,7 +39,7 @@ const TIMEZONES = [
 
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
 	const [tab, setTab] = useState<
-		"profile" | "workspace" | "widget" | "api"
+		"profile" | "workspace" | "widget" | "api" | "security"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -78,6 +80,10 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [newTokenRaw, setNewTokenRaw] = useState<string | null>(null);
 	const [apiMsg, setApiMsg] = useState("");
 	const [apiError, setApiError] = useState("");
+
+	const [bannedIpsText, setBannedIpsText] = useState("");
+	const [securityMsg, setSecurityMsg] = useState("");
+	const [securityError, setSecurityError] = useState("");
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -128,6 +134,12 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		setApiTokens(rows);
 	}, [workspaceId, canEditWorkspace]);
 
+	const loadSecurity = useCallback(async () => {
+		if (!canEditWorkspace) return;
+		const ips = await fetchBannedIps(workspaceId);
+		setBannedIpsText(ips.join("\n"));
+	}, [workspaceId, canEditWorkspace]);
+
 	useEffect(() => {
 		loadProfile();
 		loadWorkspace();
@@ -137,6 +149,10 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	useEffect(() => {
 		if (tab === "api") void loadApiTokens();
 	}, [tab, loadApiTokens]);
+
+	useEffect(() => {
+		if (tab === "security") void loadSecurity();
+	}, [tab, loadSecurity]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -213,6 +229,23 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		await loadApiTokens();
 	}
 
+	async function saveSecurity(e: React.FormEvent) {
+		e.preventDefault();
+		setSecurityMsg("");
+		setSecurityError("");
+		const ips = bannedIpsText
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+		const ok = await updateBannedIps(workspaceId, ips);
+		if (!ok) {
+			setSecurityError("ذخیره لیست IP ناموفق بود. فرمت را بررسی کنید.");
+			return;
+		}
+		setSecurityMsg("لیست IPهای مسدود ذخیره شد.");
+		await loadSecurity();
+	}
+
 	async function saveWidget(e: React.FormEvent) {
 		e.preventDefault();
 		setWidgetMsg("");
@@ -258,7 +291,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 				<h1 className="text-lg font-semibold">تنظیمات</h1>
 			</div>
 			<div className="flex gap-2 border-b border-border px-6 pt-3">
-				{(["profile", "workspace", "widget", "api"] as const).map((t) => (
+				{(
+					["profile", "workspace", "widget", "api", "security"] as const
+				).map((t) => (
 					<button
 						key={t}
 						type="button"
@@ -276,7 +311,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 								? "ورک‌اسپیس"
 								: t === "widget"
 									? "ویجت"
-									: "API"}
+									: t === "api"
+										? "API"
+										: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -709,6 +746,45 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						<Button type="submit" disabled={!canEditWorkspace}>
 							ذخیره ورک‌اسپیس
 						</Button>
+					</form>
+				)}
+				{tab === "security" && (
+					<form
+						onSubmit={saveSecurity}
+						className="mx-auto flex max-w-lg flex-col gap-4"
+					>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر (admin/owner) می‌تواند IP مسدود کند.
+							</p>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground">
+									هر خط یک IP، محدوده wildcard (مثل{" "}
+									<span dir="ltr">192.168.1.*</span>) یا CIDR (مثل{" "}
+									<span dir="ltr">10.0.0.0/8</span>). بازدیدکنندگان با این IP
+									نمی‌توانند چت کنند.
+								</p>
+								<label className="flex flex-col gap-1 text-sm font-medium">
+									IPهای مسدود
+									<textarea
+										value={bannedIpsText}
+										onChange={(e) => setBannedIpsText(e.target.value)}
+										rows={10}
+										dir="ltr"
+										className="rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+										placeholder={"1.2.3.4\n192.168.1.*\n10.0.0.0/8"}
+									/>
+								</label>
+								{securityError && (
+									<p className="text-sm text-destructive">{securityError}</p>
+								)}
+								{securityMsg && (
+									<p className="text-sm text-primary">{securityMsg}</p>
+								)}
+								<Button type="submit">ذخیره لیست IP</Button>
+							</>
+						)}
 					</form>
 				)}
 			</div>

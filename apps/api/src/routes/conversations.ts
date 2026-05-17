@@ -4,6 +4,7 @@ import {
 	banWorkspaceContact,
 	unbanWorkspaceContact,
 } from "../lib/contact-ban.js";
+import { addWorkspaceBannedIp, visitorIpFromMetadata } from "../lib/ip-ban.js";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
@@ -417,6 +418,49 @@ export async function conversationRoutes(app: FastifyInstance) {
 			}
 
 			return { contact, banned: false };
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/ban-ip",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+				with: { contact: true },
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			const role = await assertConversationAccess(existing, wsId, user.id);
+			if (!isSupervisorRole(role)) {
+				throw forbidden("Only workspace admins can ban IPs.");
+			}
+
+			const ip = visitorIpFromMetadata(existing.contact?.metadata);
+			if (!ip) {
+				throw validationError(
+					"Visitor IP is not available for this conversation yet.",
+					"ip",
+				);
+			}
+
+			const banned_ips = await addWorkspaceBannedIp(wsId, ip);
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`).emit("security:ip_banned", {
+					ip,
+					conversation_id: request.params.id,
+				});
+			} catch {
+				/* socket not ready */
+			}
+
+			return { ip, banned_ips };
 		},
 	);
 

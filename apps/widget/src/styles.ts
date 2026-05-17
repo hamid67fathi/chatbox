@@ -334,6 +334,30 @@ export const WIDGET_CSS = `
   margin: 0;
 }
 
+.cb-blocked-banner {
+  display: none;
+  margin: 12px 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cb-blocked-banner.visible {
+  display: block;
+}
+
+.cb-window.is-blocked .cb-input-area,
+.cb-window.is-blocked .cb-typing,
+.cb-window.is-blocked .cb-emoji-picker,
+.cb-window.is-blocked .cb-prechat {
+  display: none !important;
+}
+
 .cb-prechat-submit {
   margin-top: 4px;
   background: var(--cb-primary);

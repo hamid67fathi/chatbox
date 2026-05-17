@@ -28,6 +28,7 @@ import { workspaceRoutes } from "./routes/workspaces.js";
 import { widgetConfigRoutes } from "./routes/widget-config.js";
 import { apiTokenRoutes } from "./routes/api-tokens.js";
 import { reportRoutes } from "./routes/reports.js";
+import { securityRoutes } from "./routes/security.js";
 
 export function buildApp() {
 	const app = Fastify({ logger: false, trustProxy: true });
@@ -139,6 +140,7 @@ export function buildApp() {
 		instance.register(billingRoutes);
 		instance.register(apiTokenRoutes);
 		instance.register(reportRoutes);
+		instance.register(securityRoutes);
 	});
 
 	return app;

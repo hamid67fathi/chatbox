@@ -34,6 +34,7 @@ import {
 	serializeVisitorForApi,
 	visitorFromMetadata,
 } from "../lib/visitor-context.js";
+import { assertWorkspaceIpAllowed } from "../lib/workspace-ip-guard.js";
 import { getIO } from "../ws/broadcast.js";
 
 async function assertVisitorNotBanned(contactId: string, workspaceId: string) {
@@ -60,6 +61,7 @@ async function requireVisitorToken(
 			conversationId: payload.cid,
 		};
 		await assertVisitorNotBanned(payload.sub, payload.wid);
+		await assertWorkspaceIpAllowed(request, payload.wid);
 	} catch (err) {
 		if (err instanceof Error && "statusCode" in err) throw err;
 		throw unauthorized("Invalid or expired visitor token.");
@@ -150,6 +152,8 @@ export async function widgetRoutes(app: FastifyInstance) {
 				where: eq(workspaces.slug, workspace_slug),
 			});
 			if (!ws) throw notFound("Workspace not found.");
+
+			await assertWorkspaceIpAllowed(request, ws.id);
 
 			let contact = visitor_id
 				? await db.query.contacts.findFirst({

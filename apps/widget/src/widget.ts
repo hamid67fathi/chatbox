@@ -4,10 +4,12 @@ import {
 	type WidgetConfig,
 	type SessionResponse,
 	type WidgetTheme,
+	VISITOR_BLOCKED_MESSAGE,
 	attachmentFullUrl,
 	createSession,
 	fetchMessages,
 	fetchWidgetTheme,
+	isVisitorBlockedError,
 	sendMessageHttp,
 	setApiBaseUrl,
 	updateContactProfile,
@@ -78,6 +80,8 @@ export class ChatBoxWidget {
 	private unbindPageNav: (() => void) | null = null;
 	private pageContextTimer: ReturnType<typeof setInterval> | null = null;
 	private brandingEl: HTMLElement | null = null;
+	private blockedBannerEl!: HTMLElement;
+	private isBlocked = false;
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
@@ -119,6 +123,7 @@ export class ChatBoxWidget {
 						<form id="cb-prechat-form"></form>
 						<p class="cb-prechat-error" id="cb-prechat-error"></p>
 					</div>
+					<div class="cb-blocked-banner" id="cb-blocked-banner"></div>
 					<div class="cb-messages" id="cb-messages">
 						<div class="cb-welcome" id="cb-welcome"></div>
 					</div>
@@ -162,6 +167,9 @@ export class ChatBoxWidget {
 			"cb-emoji-picker",
 		) as HTMLElement;
 		this.brandingEl = this.root.getElementById("cb-branding");
+		this.blockedBannerEl = this.root.getElementById(
+			"cb-blocked-banner",
+		) as HTMLElement;
 
 		this.buildPrechatForm();
 		this.applyTheme();
@@ -381,6 +389,26 @@ export class ChatBoxWidget {
 		this.pageContextTimer = setInterval(() => this.pushPageContext(), 60_000);
 	}
 
+	private showBlockedState(message = VISITOR_BLOCKED_MESSAGE) {
+		this.isBlocked = true;
+		this.chatStarted = false;
+		this.ws.disconnect();
+		this.unbindPageNav?.();
+		this.unbindPageNav = null;
+		if (this.pageContextTimer) {
+			clearInterval(this.pageContextTimer);
+			this.pageContextTimer = null;
+		}
+		this.blockedBannerEl.textContent = message;
+		this.blockedBannerEl.classList.add("visible");
+		this.windowEl.classList.add("is-blocked");
+		this.prechatEl.style.display = "none";
+		this.welcomeEl.style.display = "none";
+		this.messagesEl.style.display = "none";
+		this.inputEl.disabled = true;
+		this.sendBtn.disabled = true;
+	}
+
 	private async initSession() {
 		try {
 			const session = await createSession(this.config, pageContextPayload());
@@ -398,6 +426,10 @@ export class ChatBoxWidget {
 
 			await this.startChat();
 		} catch (err) {
+			if (isVisitorBlockedError(err)) {
+				this.showBlockedState(err.message);
+				return;
+			}
 			console.error("[ChatBox] Init failed:", err);
 		}
 	}
@@ -632,6 +664,7 @@ export class ChatBoxWidget {
 	}
 
 	private async sendFile(file: File) {
+		if (this.isBlocked) return;
 		this.hideWelcome();
 		this.sendBtn.disabled = true;
 		try {
@@ -644,15 +677,22 @@ export class ChatBoxWidget {
 			this.inputEl.value = "";
 			this.appendMessage(msg);
 		} catch (err) {
+			if (isVisitorBlockedError(err)) {
+				this.showBlockedState(err.message);
+				return;
+			}
 			console.error("[ChatBox] Upload failed:", err);
 		} finally {
-			this.sendBtn.disabled = false;
-			this.fileInputEl.value = "";
-			this.inputEl.focus();
+			if (!this.isBlocked) {
+				this.sendBtn.disabled = false;
+				this.fileInputEl.value = "";
+				this.inputEl.focus();
+			}
 		}
 	}
 
 	private async send() {
+		if (this.isBlocked) return;
 		const body = this.inputEl.value.trim();
 		if (!body) return;
 
@@ -664,10 +704,16 @@ export class ChatBoxWidget {
 			const msg = await sendMessageHttp(this.config, body);
 			this.appendMessage(msg);
 		} catch (err) {
+			if (isVisitorBlockedError(err)) {
+				this.showBlockedState(err.message);
+				return;
+			}
 			console.error("[ChatBox] Send failed:", err);
 		} finally {
-			this.sendBtn.disabled = false;
-			this.inputEl.focus();
+			if (!this.isBlocked) {
+				this.sendBtn.disabled = false;
+				this.inputEl.focus();
+			}
 		}
 	}
 

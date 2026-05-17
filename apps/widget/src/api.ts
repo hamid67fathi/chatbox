@@ -95,6 +95,45 @@ export function attachmentFullUrl(apiUrl: string, path: string) {
 	return `${apiUrl.replace(/\/$/, "")}${path}`;
 }
 
+export const VISITOR_BLOCKED_MESSAGE =
+	"شما مسدود شدید و امکان ارسال پیام ندارید";
+
+export const BANNED_ERROR_CODES = new Set(["contact_banned", "ip_banned"]);
+
+export class WidgetApiError extends Error {
+	code: string;
+
+	constructor(code: string, message: string) {
+		super(message);
+		this.name = "WidgetApiError";
+		this.code = code;
+	}
+}
+
+async function readApiError(res: Response): Promise<WidgetApiError> {
+	let code = "unknown";
+	let message = `Request failed: ${res.status}`;
+	try {
+		const err = (await res.json()) as {
+			error?: { code?: string; message?: string };
+		};
+		if (err.error?.code) code = err.error.code;
+		if (err.error?.message) message = err.error.message;
+	} catch {
+		/* ignore */
+	}
+	if (BANNED_ERROR_CODES.has(code)) {
+		message = VISITOR_BLOCKED_MESSAGE;
+	}
+	return new WidgetApiError(code, message);
+}
+
+export function isVisitorBlockedError(err: unknown): err is WidgetApiError {
+	return (
+		err instanceof WidgetApiError && BANNED_ERROR_CODES.has(err.code)
+	);
+}
+
 export interface SessionResponse {
 	workspace_id: string;
 	conversation_id: string;
@@ -154,18 +193,7 @@ export async function createSession(
 			metadata: page?.metadata ?? {},
 		}),
 	});
-	if (!res.ok) {
-		let message = `Session failed: ${res.status}`;
-		try {
-			const err = (await res.json()) as {
-				error?: { code?: string; message?: string };
-			};
-			if (err.error?.message) message = err.error.message;
-		} catch {
-			/* ignore */
-		}
-		throw new Error(message);
-	}
+	if (!res.ok) throw await readApiError(res);
 	const data = (await res.json()) as SessionResponse;
 	setVisitorToken(data.token);
 	if (data.visitor_id) {
@@ -219,13 +247,7 @@ export async function updateContactProfile(data: {
 		headers: authHeaders(),
 		body: JSON.stringify(data),
 	});
-	if (!res.ok) {
-		const err = await res.json().catch(() => ({}));
-		throw new Error(
-			(err as { error?: { message?: string } })?.error?.message ??
-				`Profile update failed: ${res.status}`,
-		);
-	}
+	if (!res.ok) throw await readApiError(res);
 	return res.json();
 }
 
@@ -262,13 +284,7 @@ export async function uploadWidgetFile(file: File): Promise<MessageAttachment> {
 		headers: visitorToken ? { Authorization: `Bearer ${visitorToken}` } : {},
 		body: form,
 	});
-	if (!res.ok) {
-		const err = await res.json().catch(() => ({}));
-		throw new Error(
-			(err as { error?: { message?: string } })?.error?.message ??
-				`Upload failed: ${res.status}`,
-		);
-	}
+	if (!res.ok) throw await readApiError(res);
 	const data = (await res.json()).data as Record<string, unknown>;
 	return {
 		id: String(data.id ?? ""),
@@ -296,6 +312,6 @@ export async function sendMessageHttp(
 				: {}),
 		}),
 	});
-	if (!res.ok) throw new Error(`Send failed: ${res.status}`);
+	if (!res.ok) throw await readApiError(res);
 	return normalizeMessageRow((await res.json()) as Record<string, unknown>);
 }

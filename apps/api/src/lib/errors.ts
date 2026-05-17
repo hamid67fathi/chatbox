@@ -48,11 +48,20 @@ export function conflict(message: string) {
 	return new ApiError({ code: "conflict", message, statusCode: 409 });
 }
 
-export function contactBanned(
-	message = "دسترسی شما به چت مسدود شده است. در صورت اشتباه با پشتیبانی تماس بگیرید.",
-) {
+export const VISITOR_BLOCKED_MESSAGE =
+	"شما مسدود شدید و امکان ارسال پیام ندارید";
+
+export function contactBanned(message = VISITOR_BLOCKED_MESSAGE) {
 	return new ApiError({
 		code: "contact_banned",
+		message,
+		statusCode: 403,
+	});
+}
+
+export function ipBanned(message = VISITOR_BLOCKED_MESSAGE) {
+	return new ApiError({
+		code: "ip_banned",
 		message,
 		statusCode: 403,
 	});
