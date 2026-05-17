@@ -7,6 +7,10 @@ import type { AuthenticatedRequest } from "../lib/auth.js";
 import { forbidden, hashPassword } from "../lib/auth.js";
 import { conflict, notFound, validationError } from "../lib/errors.js";
 import { getAiBudgetStatus } from "../lib/ai-budget.js";
+import {
+	assertCanInviteMember,
+	getPlanUsageStatus,
+} from "../lib/plan-limits.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,6 +90,16 @@ export async function workspaceRoutes(app: FastifyInstance) {
 		{ preHandler: [requireWorkspace("viewer")] },
 		async (request) => {
 			const status = await getAiBudgetStatus(request.params.id);
+			if (!status) throw notFound("Workspace not found.");
+			return { data: status };
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/workspaces/:id/plan-usage",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const status = await getPlanUsageStatus(request.params.id);
 			if (!status) throw notFound("Workspace not found.");
 			return { data: status };
 		},
@@ -190,6 +204,8 @@ export async function workspaceRoutes(app: FastifyInstance) {
 			if (existingMember) {
 				throw conflict("User is already a member of this workspace.");
 			}
+
+			await assertCanInviteMember(wsId);
 
 			await db.insert(workspaceMembers).values({
 				workspaceId: wsId,

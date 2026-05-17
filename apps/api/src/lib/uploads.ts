@@ -3,6 +3,11 @@ import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { validationError } from "./errors.js";
+import {
+	assertCanUpload,
+	notifyPlanUsageIfNeeded,
+	recordUploadBytes,
+} from "./plan-limits.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -72,6 +77,8 @@ export async function saveWorkspaceUpload(
 		);
 	}
 
+	await assertCanUpload(workspaceId, file.buffer.length);
+
 	const safeBase = (file.filename || "file")
 		.replace(/[^\w.\-()\s]/g, "_")
 		.slice(0, 120);
@@ -82,6 +89,8 @@ export async function saveWorkspaceUpload(
 	const absDir = join(UPLOAD_ROOT, relDir);
 	await mkdir(absDir, { recursive: true });
 	await writeFile(join(absDir, storedName), file.buffer);
+	await recordUploadBytes(workspaceId, file.buffer.length);
+	void notifyPlanUsageIfNeeded(workspaceId);
 
 	const type = attachmentMessageType(mime);
 	return {

@@ -15,6 +15,10 @@ import {
 	verifyToken,
 } from "../lib/auth.js";
 import { validateMessagePayload } from "../lib/attachments.js";
+import {
+	assertCanCreateConversation,
+	notifyPlanUsageIfNeeded,
+} from "../lib/plan-limits.js";
 import { saveWorkspaceUpload } from "../lib/uploads.js";
 import { notFound, validationError } from "../lib/errors.js";
 import {
@@ -108,6 +112,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			let conv = existingConv;
 			if (!conv) {
+				await assertCanCreateConversation(ws.id);
 				[conv] = await db
 					.insert(conversations)
 					.values({
@@ -118,6 +123,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 					})
 					.returning();
 				broadcastNewConversation(conv, contact);
+				void notifyPlanUsageIfNeeded(ws.id);
 			}
 
 			const token = await signVisitorToken(contact.id, ws.id, conv.id);

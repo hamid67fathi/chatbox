@@ -2,16 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import {
-	type AiBudgetStatus,
 	type BillingPlan,
 	type BillingStatus,
 	type PaymentRow,
+	type PlanUsageStatus,
+	type UsageMetric,
 	cancelSubscription,
 	downloadInvoicePdf,
-	fetchAiUsage,
 	fetchBillingPayments,
 	fetchBillingPlans,
 	fetchBillingStatus,
+	fetchPlanUsage,
 	startBillingCheckout,
 	startProTrial,
 } from "@/lib/api";
@@ -30,7 +31,7 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 	const paymentRef = searchParams.get("ref");
 
 	const [plans, setPlans] = useState<BillingPlan[]>([]);
-	const [usage, setUsage] = useState<AiBudgetStatus | null>(null);
+	const [planUsage, setPlanUsage] = useState<PlanUsageStatus | null>(null);
 	const [billing, setBilling] = useState<BillingStatus | null>(null);
 	const [payments, setPayments] = useState<PaymentRow[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -45,12 +46,12 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 		setLoading(true);
 		const [p, u, b, pay] = await Promise.all([
 			fetchBillingPlans(workspaceId),
-			fetchAiUsage(workspaceId),
+			fetchPlanUsage(workspaceId),
 			fetchBillingStatus(workspaceId),
 			fetchBillingPayments(workspaceId),
 		]);
 		setPlans(p);
-		setUsage(u);
+		setPlanUsage(u);
 		setBilling(b);
 		setPayments(pay);
 		setLoading(false);
@@ -123,8 +124,38 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 		);
 	}
 
-	const workspacePlan = billing?.workspace_plan ?? usage?.plan ?? "free";
+	const workspacePlan = billing?.workspace_plan ?? planUsage?.plan ?? "free";
 	const trialEnds = billing?.trial_ends_at;
+	const ai = planUsage?.ai;
+
+	function usageRow(m: UsageMetric) {
+		if (m.limit == null) return null;
+		const pct = m.percentUsed ?? 0;
+		const barColor =
+			m.level === "exhausted"
+				? "bg-destructive"
+				: m.level === "warning"
+					? "bg-amber-500"
+					: "bg-primary";
+		const display =
+			m.unit === "bytes"
+				? `${(m.used / (1024 * 1024)).toFixed(1)} / ${Math.round(m.limit / (1024 * 1024))} MB`
+				: `${m.used} / ${m.limit}`;
+		return (
+			<div key={m.key} className="space-y-1">
+				<div className="flex justify-between text-sm">
+					<span className="text-muted-foreground">{m.label}</span>
+					<span className="font-medium">{display}</span>
+				</div>
+				<div className="h-2 overflow-hidden rounded-full bg-muted">
+					<div
+						className={`h-full transition-all ${barColor}`}
+						style={{ width: `${Math.min(100, pct)}%` }}
+					/>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="mx-auto max-w-4xl space-y-8 p-6">
@@ -172,23 +203,42 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 							</dd>
 						</div>
 					)}
-					{usage && usage.totalLimit != null && (
+					{ai && ai.totalLimit != null && (
 						<>
 							<div>
 								<dt className="text-muted-foreground">اعتبار AI</dt>
 								<dd className="font-medium">
-									{usage.usedCredits} / {usage.totalLimit}
+									{ai.usedCredits} / {ai.totalLimit}
 								</dd>
 							</div>
 							<div>
-								<dt className="text-muted-foreground">باقی‌مانده</dt>
+								<dt className="text-muted-foreground">باقی‌مانده AI</dt>
 								<dd className="font-medium">
-									{usage.remainingCredits ?? "—"}
+									{ai.remainingCredits ?? "—"}
 								</dd>
 							</div>
 						</>
 					)}
 				</dl>
+
+				{planUsage && (
+					<div className="mt-6 space-y-4 border-t border-border pt-6">
+						<h3 className="text-sm font-semibold">مصرف ماه جاری</h3>
+						{usageRow(planUsage.members)}
+						{usageRow(planUsage.conversationsMonth)}
+						{usageRow(planUsage.uploadBytesMonth)}
+						{ai && ai.totalLimit != null && usageRow({
+							key: "ai_credits",
+							label: "اعتبار AI",
+							used: ai.usedCredits,
+							limit: ai.totalLimit,
+							remaining: ai.remainingCredits,
+							percentUsed: ai.percentUsed,
+							level: ai.level,
+							unit: "credits",
+						})}
+					</div>
+				)}
 
 				{canManage && workspacePlan === "free" && (
 					<Button

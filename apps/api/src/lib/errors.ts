@@ -58,6 +58,19 @@ export function aiBudgetExhausted(details: Record<string, unknown>) {
 	});
 }
 
+export function planLimitExceeded(details: Record<string, unknown>) {
+	const custom =
+		typeof details.message === "string" ? details.message : undefined;
+	return new ApiError({
+		code: "plan_limit_exceeded",
+		message:
+			custom ??
+			"سقف پلن فعلی workspace پر شده است. لطفاً پلن را ارتقا دهید.",
+		statusCode: 402,
+		details,
+	});
+}
+
 export function errorHandler(
 	error: Error,
 	request: FastifyRequest,

@@ -15,6 +15,10 @@ import {
 	isSupervisorRole,
 } from "../lib/conversation-access.js";
 import { notFound, validationError } from "../lib/errors.js";
+import {
+	assertCanCreateConversation,
+	notifyPlanUsageIfNeeded,
+} from "../lib/plan-limits.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 import { refreshConversationSummary } from "../lib/conversation-insights.js";
 import { getIO } from "../ws/broadcast.js";
@@ -154,6 +158,8 @@ export async function conversationRoutes(app: FastifyInstance) {
 			throw validationError("contact_id is required.", "contact_id");
 		if (!channel) throw validationError("channel is required.", "channel");
 
+		await assertCanCreateConversation(wsId);
+
 		const [conv] = await db
 			.insert(conversations)
 			.values({
@@ -163,6 +169,8 @@ export async function conversationRoutes(app: FastifyInstance) {
 				subject,
 			})
 			.returning();
+
+		void notifyPlanUsageIfNeeded(wsId);
 
 		if (first_message?.body) {
 			await db.insert(messages).values({

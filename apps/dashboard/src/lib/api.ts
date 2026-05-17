@@ -76,6 +76,29 @@ export interface AiBudgetStatus {
 	allowAi: boolean;
 }
 
+export interface UsageMetric {
+	key: string;
+	label: string;
+	used: number;
+	limit: number | null;
+	remaining: number | null;
+	percentUsed: number | null;
+	level: "ok" | "warning" | "exhausted" | "unlimited";
+	unit: "count" | "bytes" | "credits";
+}
+
+export interface PlanUsageStatus {
+	plan: string;
+	periodStart: string;
+	members: UsageMetric;
+	conversationsMonth: UsageMetric;
+	uploadBytesMonth: UsageMetric;
+	ai: AiBudgetStatus | null;
+	allowInviteMember: boolean;
+	allowNewConversation: boolean;
+	allowUpload: boolean;
+}
+
 export interface MessageAttachment {
 	id?: string;
 	url: string;
@@ -504,6 +527,33 @@ export async function fetchAiUsage(
 	if (!res.ok) return null;
 	const json = (await res.json()) as { data?: AiBudgetStatus };
 	return json.data ?? null;
+}
+
+export async function fetchPlanUsage(
+	workspaceId: string,
+): Promise<PlanUsageStatus | null> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/plan-usage`,
+		{
+			headers: authHeaders(workspaceId),
+			cache: "no-store",
+		},
+	);
+	if (!res.ok) return null;
+	const json = (await res.json()) as {
+		data?: PlanUsageStatus & {
+			conversations_month?: UsageMetric;
+			upload_bytes_month?: UsageMetric;
+		};
+	};
+	const raw = json.data;
+	if (!raw) return null;
+	return {
+		...raw,
+		conversationsMonth:
+			raw.conversationsMonth ?? raw.conversations_month!,
+		uploadBytesMonth: raw.uploadBytesMonth ?? raw.upload_bytes_month!,
+	};
 }
 
 export async function updateWorkspace(
