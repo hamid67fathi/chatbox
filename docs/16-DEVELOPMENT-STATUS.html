@@ -1,95 +1,102 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>۱۶ · وضعیت مراحل توسعه — Chat-Box</title>
-<meta name="description" content="مستندات Chat-Box — وضعیت مراحل توسعه">
-<link rel="stylesheet" href="_shared.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>۱۶ · وضعیت مراحل توسعه — Chat-Box</title>
+  <meta name="description" content="مستندات Chat-Box — وضعیت مراحل توسعه">
+  <link rel="stylesheet" href="_shared.css">
 
-<script src="_shared.js" defer></script>
+  <script src="_shared.js" defer></script>
 </head>
+
 <body>
-<div class="app">
+  <div class="app">
 
-<aside class="sidebar">
-    <a class="brand" href="index.html">
-      <span class="brand-logo">CB</span>
-      <span>Chat-Box Docs</span>
-    </a>
+    <aside class="sidebar">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">CB</span>
+        <span>Chat-Box Docs</span>
+      </a>
 
-    <h2>شروع</h2>
-    <nav>
-      <a href="index.html"><span class="num">🏠</span> خانه</a>
-    </nav>
+      <h2>شروع</h2>
+      <nav>
+        <a href="index.html"><span class="num">🏠</span> خانه</a>
+      </nav>
 
-    <h2>حکمرانی</h2>
-    <nav>
-      <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
-    </nav>
+      <h2>حکمرانی</h2>
+      <nav>
+        <a href="00-GOVERNANCE-ROLES.html"><span class="num">۰۰</span> نقش‌ها و قواعد</a>
+      </nav>
 
-    <h2>مستندات اصلی</h2>
-    <nav>
-      <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
-      <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
-      <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
-      <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
-      <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
-      <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
-      <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
-      <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
-      <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
-      <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
-      <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
-      <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
-      <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
-      <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
-      <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
-      <a href="16-DEVELOPMENT-STATUS.html" class="active"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
-    </nav>
-    <h2>فهرست این صفحه</h2>
-    <ul class="toc-list">
-      <li><a href="#sec-1">Machine-readable (برای Agent)</a></li>
-      <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
-      <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
-      <li><a href="#sec-3b">جدول وضعیت (مراحل P4 → P10 — تولید)</a></li>
-      <li><a href="#sec-feature-list">فیچر لیست (بک‌لاگ محصول)</a></li>
-      <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
-    </ul>
-  </aside>
+      <h2>مستندات اصلی</h2>
+      <nav>
+        <a href="01-PRD.html"><span class="num">۰۱</span> PRD — نیازمندی محصول</a>
+        <a href="02-ARCHITECTURE.html"><span class="num">۰۲</span> معماری سیستم</a>
+        <a href="03-TECH-STACK.html"><span class="num">۰۳</span> Tech Stack</a>
+        <a href="04-DATABASE-SCHEMA.html"><span class="num">۰۴</span> Database Schema</a>
+        <a href="05-API-SPEC.html"><span class="num">۰۵</span> API Spec</a>
+        <a href="06-AI-ARCHITECTURE.html"><span class="num">۰۶</span> معماری AI</a>
+        <a href="07-PROJECT-STRUCTURE.html"><span class="num">۰۷</span> ساختار پروژه</a>
+        <a href="08-ROADMAP.html"><span class="num">۰۸</span> Roadmap</a>
+        <a href="09-AI-AGENT-GUIDE.html"><span class="num">۰۹</span> راهنمای AI Agent</a>
+        <a href="10-GTM-PRICING-MARKETING.html"><span class="num">۱۰</span> GTM و قیمت‌گذاری</a>
+        <a href="11-SECURITY-PRIVACY.html"><span class="num">۱۱</span> امنیت و حریم خصوصی</a>
+        <a href="12-OPERATIONS-SUPPORT.html"><span class="num">۱۲</span> عملیات و پشتیبانی</a>
+        <a href="13-ARCHITECTURE-DECISION-RECORDS.html"><span class="num">۱۳</span> ADR</a>
+        <a href="14-INFRASTRUCTURE.html"><span class="num">۱۴</span> زیرساخت و سرورها</a>
+        <a href="15-DEVELOPMENT-GUIDE-FA.html"><span class="num">۱۵</span> راهنمای توسعه فارسی</a>
+        <a href="16-DEVELOPMENT-STATUS.html" class="active"><span class="num">۱۶</span> وضعیت مراحل توسعه</a>
+      </nav>
+      <h2>فهرست این صفحه</h2>
+      <ul class="toc-list">
+        <li><a href="#sec-1">Machine-readable (برای Agent)</a></li>
+        <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
+        <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
+        <li><a href="#sec-3b">جدول وضعیت (مراحل P4 → P10 — تولید)</a></li>
+        <li><a href="#sec-feature-list">فیچر لیست (بک‌لاگ محصول)</a></li>
+        <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
+      </ul>
+    </aside>
 
-  <main>
-    <div class="topbar">
-      <div class="crumbs">
-        <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
-        <a href="index.html">Docs</a>
-        <span class="sep">/</span>
-        <span>۱۶ — وضعیت مراحل توسعه</span>
+    <main>
+      <div class="topbar">
+        <div class="crumbs">
+          <button id="menu-toggle" class="iconbtn menu-toggle" aria-label="menu">☰</button>
+          <a href="index.html">Docs</a>
+          <span class="sep">/</span>
+          <span>۱۶ — وضعیت مراحل توسعه</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+        </div>
       </div>
-      <div class="topbar-actions">
-        <button class="iconbtn" onclick="window.__cbToggleTheme()" aria-label="theme">◐</button>
+
+      <h1><span class="emoji">📊</span> وضعیت اجرای مراحل توسعه (ردیاب)</h1>
+
+      <div class="doc-meta">
+        <span class="pill">ورژن ۱.۰</span>
+        <span class="pill">مه ۲۰۲۶</span>
+        <span class="pill">Status: Active</span>
+        <span class="pill">نسخهٔ فارسی — همراه <a href="16-DEVELOPMENT-STATUS.md">16-DEVELOPMENT-STATUS.md</a></span>
+
       </div>
-    </div>
 
-<h1><span class="emoji">📊</span> وضعیت اجرای مراحل توسعه (ردیاب)</h1>
-
-    <div class="doc-meta">
-      <span class="pill">ورژن ۱.۰</span>
-      <span class="pill">مه ۲۰۲۶</span>
-      <span class="pill">Status: Active</span>
-      <span class="pill">نسخهٔ فارسی — همراه <a href="16-DEVELOPMENT-STATUS.md">16-DEVELOPMENT-STATUS.md</a></span>
-
-    </div>
-
-<blockquote>
-<p><strong>نسخه:</strong> 1.0 · مه 2026<br />
-<strong>مالک سند (نقش):</strong> Engineering (به‌روزرسانی همراه با PR هر مرحله)<br />
-<strong>هم‌راستا با:</strong> <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> (بسته‌های پرامپت)، <a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a>، <a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a></p>
-</blockquote>
-<p>این فایل <strong>تنها جدول وضعیت</strong> برای مراحل تعریف‌شده در <code>roadmap_machine.md</code> است. بعد از اتمام یا شروع هر مرحله، <strong>همین جدول را در همان PR یا PR بلافاصله بعدی</strong> به‌روز کنید تا تیم و Agent بعدی بدانند کجای مسیر هستید.</p>
-<hr />
-<h2 id="sec-1">Machine-readable (برای Agent)</h2>
-<pre><code class="language-yaml">doc_id: 16-DEVELOPMENT-STATUS
+      <blockquote>
+        <p><strong>نسخه:</strong> 1.0 · مه 2026<br />
+          <strong>مالک سند (نقش):</strong> Engineering (به‌روزرسانی همراه با PR هر مرحله)<br />
+          <strong>هم‌راستا با:</strong> <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a> (بسته‌های
+          پرامپت)، <a href="08-ROADMAP.html"><code>08-ROADMAP.md</code></a>، <a
+            href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a>
+        </p>
+      </blockquote>
+      <p>این فایل <strong>تنها جدول وضعیت</strong> برای مراحل تعریف‌شده در <code>roadmap_machine.md</code> است. بعد از
+        اتمام یا شروع هر مرحله، <strong>همین جدول را در همان PR یا PR بلافاصله بعدی</strong> به‌روز کنید تا تیم و Agent
+        بعدی بدانند کجای مسیر هستید.</p>
+      <hr />
+      <h2 id="sec-1">Machine-readable (برای Agent)</h2>
+      <pre><code class="language-yaml">doc_id: 16-DEVELOPMENT-STATUS
 version: 1.0.0
 tracker_for: roadmap_machine_phases
 status_enum:
@@ -101,627 +108,780 @@ rule: &gt;
   When a phase from roadmap_machine is completed or started, update this table
   in the same PR as the code/docs change, or in a follow-up PR within 24h.
 </code></pre>
-<hr />
-<h2 id="sec-2">قرارداد ستون «وضعیت»</h2>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>مقدار در جدول (فارسی)</th>
-<th>معادل enum</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>شروع نشده</td>
-<td><code>not_started</code></td>
-</tr>
-<tr>
-<td>در حال انجام</td>
-<td><code>in_progress</code></td>
-</tr>
-<tr>
-<td>مسدود</td>
-<td><code>blocked</code></td>
-</tr>
-<tr>
-<td>انجام شد</td>
-<td><code>done</code></td>
-</tr>
-</tbody>
-</table></div>
-<hr />
-<h2 id="sec-3">جدول وضعیت (مراحل P0 → P3)</h2>
-<blockquote>
-<p><strong>الان:</strong> فاز 0 تا 3 کامل شد (MVP). فاز 4 (احراز هویت) آماده شروع — مسیر تولید P4→P10.</p>
-</blockquote>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>کد</th>
-<th>عنوان کوتاه</th>
-<th>Agent (مرجع)</th>
-<th>وضعیت</th>
-<th>تاریخ به‌روزرسانی</th>
-<th>PR / شاخه</th>
-<th>یادداشت</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>P0.1</td>
-<td>قواعد PR و branch</td>
-<td>AGT-GOV-01</td>
-<td>انجام شد</td>
-<td>2026-05-12</td>
-<td>—</td>
-<td><code>.github/PULL_REQUEST_TEMPLATE.md</code>، <code>CONTRIBUTING.md</code>، <code>docs/BRANCHING.md</code></td>
-</tr>
-<tr>
-<td>P0.2</td>
-<td>Monorepo + API خالی + compose</td>
-<td>AGT-DEVX-01</td>
-<td>انجام شد</td>
-<td>2026-05-12</td>
-<td>—</td>
-<td><code>apps/api</code>، <code>packages/config</code>، <code>docker-compose.yml</code>، <code>pnpm-workspace</code> + turbo</td>
-</tr>
-<tr>
-<td>P0.3</td>
-<td>README محلی + <code>.env.example</code></td>
-<td>AGT-INF-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>README با جدول پورت‌ها، prerequisites، ساختار پروژه</td>
-</tr>
-<tr>
-<td>P0.4</td>
-<td>CI سبز (lint/typecheck)</td>
-<td>AGT-QA-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td><code>.github/workflows/ci.yml</code> — lint + typecheck + build</td>
-</tr>
-<tr>
-<td>P1.1</td>
-<td>Schema + migration + RLS پایه</td>
-<td>AGT-DB-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>Drizzle schema (9 tables) + RLS policies + triggers + seed</td>
-</tr>
-<tr>
-<td>P1.2</td>
-<td>REST مکالمه/پیام حداقلی</td>
-<td>AGT-API-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>Workspaces, Contacts, Conversations, Messages CRUD + error format</td>
-</tr>
-<tr>
-<td>P1.3</td>
-<td>WebSocket + Redis adapter</td>
-<td>AGT-RT-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>Socket.io 4 + Redis adapter + events + REST broadcast</td>
-</tr>
-<tr>
-<td>P1.4</td>
-<td>ویجت vanilla</td>
-<td>AGT-WGT-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>apps/widget (tsup IIFE 7.97 KB) + widget API route + demo.html + CORS</td>
-</tr>
-<tr>
-<td>P1.5</td>
-<td>داشبورد inbox ساده</td>
-<td>AGT-FE-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>Next.js 14 App Router, RTL, conversation list + message thread + Socket.io real-time</td>
-</tr>
-<tr>
-<td>P1.6</td>
-<td>تست یک happy path</td>
-<td>AGT-QA-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>vitest + supertest, 8 tests (health→widget session), CI with Postgres+Redis services</td>
-</tr>
-<tr>
-<td>P2.1</td>
-<td>جداول KB در DB</td>
-<td>AGT-DB-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>knowledge_bases, kb_documents, kb_chunks (pgvector), ai_interactions + RLS + HNSW index</td>
-</tr>
-<tr>
-<td>P2.2</td>
-<td>سرویس AI + RAG حداقلی</td>
-<td>AGT-AI-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>FastAPI: ingest+chunk+embed, retrieve top-k, LLM reply+confidence, PII redaction, stub mode</td>
-</tr>
-<tr>
-<td>P2.3</td>
-<td>اتصال API به AI</td>
-<td>AGT-API-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>AI client with timeout+circuit breaker, auto-reply on contact message, ai_interactions log</td>
-</tr>
-<tr>
-<td>P2.4</td>
-<td>UI وضعیت AI / escalation</td>
-<td>AGT-FE-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>AI vs human badges on messages, needs_human badge on conv list, real-time conv:needs_human</td>
-</tr>
-<tr>
-<td>P2.5</td>
-<td>مرور امنیتی PR</td>
-<td>AGT-SEC-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>helmet + rate-limit on widget, security review doc PASS</td>
-</tr>
-<tr>
-<td>P2.6</td>
-<td>fixture / eval سبک</td>
-<td>AGT-QA-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>10 Persian FAQ fixtures + smoke eval script</td>
-</tr>
-<tr>
-<td>P3.1</td>
-<td>Billing webhook حداقلی</td>
-<td>AGT-API-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>subscriptions + payments schema, Zarinpal sandbox webhook, checkout + verify routes</td>
-</tr>
-<tr>
-<td>P3.2</td>
-<td>Runbook + بکاپ spec</td>
-<td>AGT-INF-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>docs/ops/RUNBOOK.md — backup schedule, restore drill, env var table</td>
-</tr>
-<tr>
-<td>P3.3</td>
-<td>پروفایل observability dev</td>
-<td>AGT-DEVX-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>docker-compose.observability.yml — Prometheus + Grafana + Loki</td>
-</tr>
-<tr>
-<td>P3.4</td>
-<td>متن لندینگ قیمت</td>
-<td>AGT-GTM-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>docs/marketing/ — hero, features, pricing (Persian)</td>
-</tr>
-<tr>
-<td>P3.5</td>
-<td>چک‌لیست pre-prod</td>
-<td>AGT-SEC-01</td>
-<td>انجام شد</td>
-<td>2026-05-13</td>
-<td>—</td>
-<td>docs/security/preprod-checklist.md — 16 PASS, 7 P4, 3 OPS, 3 WARN</td>
-</tr>
-</tbody>
-</table></div>
+      <hr />
+      <h2 id="sec-2">قرارداد ستون «وضعیت»</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>مقدار در جدول (فارسی)</th>
+              <th>معادل enum</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>شروع نشده</td>
+              <td><code>not_started</code></td>
+            </tr>
+            <tr>
+              <td>در حال انجام</td>
+              <td><code>in_progress</code></td>
+            </tr>
+            <tr>
+              <td>مسدود</td>
+              <td><code>blocked</code></td>
+            </tr>
+            <tr>
+              <td>انجام شد</td>
+              <td><code>done</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <hr />
+      <h2 id="sec-3">جدول وضعیت (مراحل P0 → P3)</h2>
+      <blockquote>
+        <p><strong>الان:</strong> فاز 0 تا 3 کامل شد (MVP). فاز 4 (احراز هویت) آماده شروع — مسیر تولید P4→P10.</p>
+      </blockquote>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>کد</th>
+              <th>عنوان کوتاه</th>
+              <th>Agent (مرجع)</th>
+              <th>وضعیت</th>
+              <th>تاریخ به‌روزرسانی</th>
+              <th>PR / شاخه</th>
+              <th>یادداشت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>P0.1</td>
+              <td>قواعد PR و branch</td>
+              <td>AGT-GOV-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-12</td>
+              <td>—</td>
+              <td><code>.github/PULL_REQUEST_TEMPLATE.md</code>، <code>CONTRIBUTING.md</code>،
+                <code>docs/BRANCHING.md</code></td>
+            </tr>
+            <tr>
+              <td>P0.2</td>
+              <td>Monorepo + API خالی + compose</td>
+              <td>AGT-DEVX-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-12</td>
+              <td>—</td>
+              <td><code>apps/api</code>، <code>packages/config</code>، <code>docker-compose.yml</code>،
+                <code>pnpm-workspace</code> + turbo</td>
+            </tr>
+            <tr>
+              <td>P0.3</td>
+              <td>README محلی + <code>.env.example</code></td>
+              <td>AGT-INF-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>README با جدول پورت‌ها، prerequisites، ساختار پروژه</td>
+            </tr>
+            <tr>
+              <td>P0.4</td>
+              <td>CI سبز (lint/typecheck)</td>
+              <td>AGT-QA-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td><code>.github/workflows/ci.yml</code> — lint + typecheck + build</td>
+            </tr>
+            <tr>
+              <td>P1.1</td>
+              <td>Schema + migration + RLS پایه</td>
+              <td>AGT-DB-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>Drizzle schema (9 tables) + RLS policies + triggers + seed</td>
+            </tr>
+            <tr>
+              <td>P1.2</td>
+              <td>REST مکالمه/پیام حداقلی</td>
+              <td>AGT-API-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>Workspaces, Contacts, Conversations, Messages CRUD + error format</td>
+            </tr>
+            <tr>
+              <td>P1.3</td>
+              <td>WebSocket + Redis adapter</td>
+              <td>AGT-RT-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>Socket.io 4 + Redis adapter + events + REST broadcast</td>
+            </tr>
+            <tr>
+              <td>P1.4</td>
+              <td>ویجت vanilla</td>
+              <td>AGT-WGT-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>apps/widget (tsup IIFE 7.97 KB) + widget API route + demo.html + CORS</td>
+            </tr>
+            <tr>
+              <td>P1.5</td>
+              <td>داشبورد inbox ساده</td>
+              <td>AGT-FE-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>Next.js 14 App Router, RTL, conversation list + message thread + Socket.io real-time</td>
+            </tr>
+            <tr>
+              <td>P1.6</td>
+              <td>تست یک happy path</td>
+              <td>AGT-QA-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>vitest + supertest, 8 tests (health→widget session), CI with Postgres+Redis services</td>
+            </tr>
+            <tr>
+              <td>P2.1</td>
+              <td>جداول KB در DB</td>
+              <td>AGT-DB-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>knowledge_bases, kb_documents, kb_chunks (pgvector), ai_interactions + RLS + HNSW index</td>
+            </tr>
+            <tr>
+              <td>P2.2</td>
+              <td>سرویس AI + RAG حداقلی</td>
+              <td>AGT-AI-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>FastAPI: ingest+chunk+embed, retrieve top-k, LLM reply+confidence, PII redaction, stub mode</td>
+            </tr>
+            <tr>
+              <td>P2.3</td>
+              <td>اتصال API به AI</td>
+              <td>AGT-API-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>AI client with timeout+circuit breaker, auto-reply on contact message, ai_interactions log</td>
+            </tr>
+            <tr>
+              <td>P2.4</td>
+              <td>UI وضعیت AI / escalation</td>
+              <td>AGT-FE-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>AI vs human badges on messages, needs_human badge on conv list, real-time conv:needs_human</td>
+            </tr>
+            <tr>
+              <td>P2.5</td>
+              <td>مرور امنیتی PR</td>
+              <td>AGT-SEC-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>helmet + rate-limit on widget, security review doc PASS</td>
+            </tr>
+            <tr>
+              <td>P2.6</td>
+              <td>fixture / eval سبک</td>
+              <td>AGT-QA-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>10 Persian FAQ fixtures + smoke eval script</td>
+            </tr>
+            <tr>
+              <td>P3.1</td>
+              <td>Billing webhook حداقلی</td>
+              <td>AGT-API-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>subscriptions + payments schema, Zarinpal sandbox webhook, checkout + verify routes</td>
+            </tr>
+            <tr>
+              <td>P3.2</td>
+              <td>Runbook + بکاپ spec</td>
+              <td>AGT-INF-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>docs/ops/RUNBOOK.md — backup schedule, restore drill, env var table</td>
+            </tr>
+            <tr>
+              <td>P3.3</td>
+              <td>پروفایل observability dev</td>
+              <td>AGT-DEVX-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>docker-compose.observability.yml — Prometheus + Grafana + Loki</td>
+            </tr>
+            <tr>
+              <td>P3.4</td>
+              <td>متن لندینگ قیمت</td>
+              <td>AGT-GTM-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>docs/marketing/ — hero, features, pricing (Persian)</td>
+            </tr>
+            <tr>
+              <td>P3.5</td>
+              <td>چک‌لیست pre-prod</td>
+              <td>AGT-SEC-01</td>
+              <td>انجام شد</td>
+              <td>2026-05-13</td>
+              <td>—</td>
+              <td>docs/security/preprod-checklist.md — 16 PASS, 7 P4, 3 OPS, 3 WARN</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-<hr />
-<h2 id="sec-3b">جدول وضعیت (مراحل P4 → P10 — مسیر تولید)</h2>
-<blockquote>
-<p><strong>هدف:</strong> تبدیل MVP به محصول قابل عرضه عمومی با احراز هویت، داشبورد کامل، AI پیشرفته، لندینگ، billing واقعی و زیرساخت تولید.</p>
-</blockquote>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>کد</th>
-<th>عنوان کوتاه</th>
-<th>توضیح</th>
-<th>وضعیت</th>
-<th>تاریخ</th>
-<th>یادداشت</th>
-</tr>
-</thead>
-<tbody>
-<tr><td colspan="6"><strong>فاز ۴ — احراز هویت و امنیت</strong></td></tr>
-<tr>
-<td>P4.1</td>
-<td>سیستم Auth سمت API</td>
-<td>JWT (jose) + bcrypt + جداول sessions/otp + endpointهای register/login/refresh/logout + auth middleware</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-13</td>
-<td>auth lib, routes, migration 0003</td>
-</tr>
-<tr>
-<td>P4.2</td>
-<td>RBAC و Workspace Isolation</td>
-<td>استخراج workspace از JWT، role check (owner/admin/agent/viewer)، جلوگیری cross-workspace</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-13</td>
-<td>rbac.ts؛ inbox isolation (shared pool + auto-assign)</td>
-</tr>
-<tr>
-<td>P4.2+</td>
-<td>سطوح دسترسی آینده</td>
-<td>دسترسی‌های تفصیلی per-permission، صف تیم، محدودیت گزارش/تنظیمات</td>
-<td>برنامه‌ریزی</td>
-<td>—</td>
-<td>فعلاً owner/admin همه inbox؛ agent صف باز + مکالمات خود</td>
-</tr>
-<tr>
-<td>P4.3</td>
-<td>Widget Visitor Token</td>
-<td>visitor_token (JWT 24h) از session endpoint، ذخیره در ویجت، اعتبارسنجی Socket.IO</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-13</td>
-<td>signVisitorToken + requireVisitorToken</td>
-</tr>
-<tr>
-<td>P4.4</td>
-<td>Login/Signup داشبورد</td>
-<td>صفحات login + signup، auth context/provider، httpOnly cookie، redirect guard</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-13</td>
-<td>/login, /register, AuthGuard, auth-store</td>
-</tr>
-<tr>
-<td>P4.5</td>
-<td>امنیت تکمیلی</td>
-<td>unauthorized/forbidden errors، فیلتر PII از لاگ، CSRF، محدود کردن CORS origin</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-13</td>
-<td>CORS credentials, cookie plugin, seed bcrypt</td>
-</tr>
+      <hr />
+      <h2 id="sec-3b">جدول وضعیت (مراحل P4 → P10 — مسیر تولید)</h2>
+      <blockquote>
+        <p><strong>هدف:</strong> تبدیل MVP به محصول قابل عرضه عمومی با احراز هویت، داشبورد کامل، AI پیشرفته، لندینگ،
+          billing واقعی و زیرساخت تولید.</p>
+      </blockquote>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>کد</th>
+              <th>عنوان کوتاه</th>
+              <th>توضیح</th>
+              <th>وضعیت</th>
+              <th>تاریخ</th>
+              <th>یادداشت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="6"><strong>فاز ۴ — احراز هویت و امنیت</strong></td>
+            </tr>
+            <tr>
+              <td>P4.1</td>
+              <td>سیستم Auth سمت API</td>
+              <td>JWT (jose) + bcrypt + جداول sessions/otp + endpointهای register/login/refresh/logout + auth middleware
+              </td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-13</td>
+              <td>auth lib, routes, migration 0003</td>
+            </tr>
+            <tr>
+              <td>P4.2</td>
+              <td>RBAC و Workspace Isolation</td>
+              <td>استخراج workspace از JWT، role check (owner/admin/agent/viewer)، جلوگیری cross-workspace</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-13</td>
+              <td>rbac.ts؛ inbox isolation (shared pool + auto-assign)</td>
+            </tr>
+            <tr>
+              <td>P4.2+</td>
+              <td>سطوح دسترسی آینده</td>
+              <td>دسترسی‌های تفصیلی per-permission، صف تیم، محدودیت گزارش/تنظیمات</td>
+              <td>برنامه‌ریزی</td>
+              <td>—</td>
+              <td>فعلاً owner/admin همه inbox؛ agent صف باز + مکالمات خود</td>
+            </tr>
+            <tr>
+              <td>P4.3</td>
+              <td>Widget Visitor Token</td>
+              <td>visitor_token (JWT 24h) از session endpoint، ذخیره در ویجت، اعتبارسنجی Socket.IO</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-13</td>
+              <td>signVisitorToken + requireVisitorToken</td>
+            </tr>
+            <tr>
+              <td>P4.4</td>
+              <td>Login/Signup داشبورد</td>
+              <td>صفحات login + signup، auth context/provider، httpOnly cookie، redirect guard</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-13</td>
+              <td>/login, /register, AuthGuard, auth-store</td>
+            </tr>
+            <tr>
+              <td>P4.5</td>
+              <td>امنیت تکمیلی</td>
+              <td>unauthorized/forbidden errors، فیلتر PII از لاگ، CSRF، محدود کردن CORS origin</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-13</td>
+              <td>CORS credentials, cookie plugin, seed bcrypt</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۵ — داشبورد محصول</strong></td></tr>
-<tr>
-<td>P5.1</td>
-<td>UI Framework Setup</td>
-<td>Tailwind CSS + RTL plugin + shadcn/ui، layout اصلی (sidebar + header)، dark mode</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>Tailwind v3، AppShell/Sidebar/Header، dark mode</td>
-</tr>
-<tr>
-<td>P5.2</td>
-<td>Inbox کامل</td>
-<td>جستجو، فیلتر (status/channel/agent)، مرتب‌سازی، pagination، typing indicator، read receipts</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>infinite scroll، typing، read receipts</td>
-</tr>
-<tr>
-<td>P5.3</td>
-<td>مدیریت مکالمه</td>
-<td>Assignment اپراتور، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>ConversationToolbar + reply-to</td>
-</tr>
-<tr>
-<td>P5.4</td>
-<td>پاسخ‌های آماده</td>
-<td>CRUD canned responses، جستجوی /shortcut، متغیرها ({{name}})</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>CRUD + /shortcut picker</td>
-</tr>
-<tr>
-<td>P5.5</td>
-<td>تنظیمات و مدیریت تیم</td>
-<td>Settings (پروفایل، workspace، notifications)، invite اعضا، تغییر role</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>/settings + /team</td>
-</tr>
-<tr>
-<td>P5.6</td>
-<td>Knowledge Base UI</td>
-<td>آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>/knowledge، txt/md</td>
-</tr>
+            <tr>
+              <td colspan="6"><strong>فاز ۵ — داشبورد محصول</strong></td>
+            </tr>
+            <tr>
+              <td>P5.1</td>
+              <td>UI Framework Setup</td>
+              <td>Tailwind CSS + RTL plugin + shadcn/ui، layout اصلی (sidebar + header)، dark mode</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>Tailwind v3، AppShell/Sidebar/Header، dark mode</td>
+            </tr>
+            <tr>
+              <td>P5.2</td>
+              <td>Inbox کامل</td>
+              <td>جستجو، فیلتر (status/channel/agent)، مرتب‌سازی، pagination، typing indicator، read receipts</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>infinite scroll، typing، read receipts</td>
+            </tr>
+            <tr>
+              <td>P5.3</td>
+              <td>مدیریت مکالمه</td>
+              <td>Assignment اپراتور، تغییر وضعیت، Tags/Notes UI، Priority، Reply-to/Quote</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>ConversationToolbar + reply-to</td>
+            </tr>
+            <tr>
+              <td>P5.4</td>
+              <td>پاسخ‌های آماده</td>
+              <td>CRUD canned responses، جستجوی /shortcut، متغیرها ({{name}})</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>CRUD + /shortcut picker</td>
+            </tr>
+            <tr>
+              <td>P5.5</td>
+              <td>تنظیمات و مدیریت تیم</td>
+              <td>Settings (پروفایل، workspace، notifications)، invite اعضا، تغییر role</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>/settings + /team</td>
+            </tr>
+            <tr>
+              <td>P5.6</td>
+              <td>Knowledge Base UI</td>
+              <td>آپلود اسناد، لیست KB/docs، وضعیت indexing، حذف و re-index</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>/knowledge، txt/md</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۶ — ویجت و تجربه چت</strong></td></tr>
-<tr>
-<td>P6.1</td>
-<td>Theming و سفارشی‌سازی</td>
-<td>Config: color/position/welcome/avatar/title، CSS variables، widget config API</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>تب ویجت در settings</td>
-</tr>
-<tr>
-<td>P6.2</td>
-<td>Pre-chat Form</td>
-<td>فرم اطلاعات اولیه (نام/ایمیل/تلفن)، ذخیره در contact، قابل تنظیم از داشبورد</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>تب ویجت در settings</td>
-</tr>
-<tr>
-<td>P6.3</td>
-<td>File Upload</td>
-<td>آپلود تصویر/فایل (ویجت + داشبورد)، ذخیره local، پیش‌نمایش</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>POST uploads + attachments</td>
-</tr>
-<tr>
-<td>P6.4</td>
-<td>تجربه چت پیشرفته</td>
-<td>Emoji picker، وضعیت پیام، welcome message، triggers، mobile responsive، auto RTL/LTR</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>UI build 12، triggers در تب ویجت</td>
-</tr>
+            <tr>
+              <td colspan="6"><strong>فاز ۶ — ویجت و تجربه چت</strong></td>
+            </tr>
+            <tr>
+              <td>P6.1</td>
+              <td>Theming و سفارشی‌سازی</td>
+              <td>Config: color/position/welcome/avatar/title، CSS variables، widget config API</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>تب ویجت در settings</td>
+            </tr>
+            <tr>
+              <td>P6.2</td>
+              <td>Pre-chat Form</td>
+              <td>فرم اطلاعات اولیه (نام/ایمیل/تلفن)، ذخیره در contact، قابل تنظیم از داشبورد</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>تب ویجت در settings</td>
+            </tr>
+            <tr>
+              <td>P6.3</td>
+              <td>File Upload</td>
+              <td>آپلود تصویر/فایل (ویجت + داشبورد)، ذخیره local، پیش‌نمایش</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>POST uploads + attachments</td>
+            </tr>
+            <tr>
+              <td>P6.4</td>
+              <td>تجربه چت پیشرفته</td>
+              <td>Emoji picker، وضعیت پیام، welcome message، triggers، mobile responsive، auto RTL/LTR</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>UI build 12، triggers در تب ویجت</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۷ — ارتقاء سرویس AI</strong></td></tr>
-<tr>
-<td>P7.1</td>
-<td>Intent Classifier + Router</td>
-<td>کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>POST /v1/classify، route در ask</td>
-</tr>
-<tr>
-<td>P7.2</td>
-<td>Copilot (پیشنهاد پاسخ)</td>
-<td>endpoint /v1/copilot، ۳ پیشنهاد (مختصر/دوستانه/مفصل)، SSE streaming، UI داشبورد</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>POST …/copilot/stream + دکمه ✨</td>
-</tr>
-<tr>
-<td>P7.3</td>
-<td>Summarizer و Sentiment</td>
-<td>خلاصه مکالمه، امتیاز sentiment [-1..+1]، mood indicator در inbox</td>
-<td class="done">انجام شد ✅</td>
-<td>2026-05-16</td>
-<td>UI build 14</td>
-</tr>
-<tr>
-<td>P7.4</td>
-<td>بهبود RAG</td>
-<td>Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback</td>
-<td>انجام شد</td>
-<td>2026-05-16</td>
-<td>retrieve 20→rerank 5، OpenAI→Anthropic→template</td>
-</tr>
-<tr>
-<td>P7.5</td>
-<td>هزینه و مانیتورینگ AI</td>
-<td>per-workspace credits، budget enforcement، Langfuse integration</td>
-<td>انجام شد</td>
-<td>2026-05-16</td>
-<td>ai-usage API، بنر داشبورد، Langfuse اختیاری</td>
-</tr>
+            <tr>
+              <td colspan="6"><strong>فاز ۷ — ارتقاء سرویس AI</strong></td>
+            </tr>
+            <tr>
+              <td>P7.1</td>
+              <td>Intent Classifier + Router</td>
+              <td>کلاسیفایر ۵ کلاس، router به RAG/tool-use/escalation</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>POST /v1/classify، route در ask</td>
+            </tr>
+            <tr>
+              <td>P7.2</td>
+              <td>Copilot (پیشنهاد پاسخ)</td>
+              <td>endpoint /v1/copilot، ۳ پیشنهاد (مختصر/دوستانه/مفصل)، SSE streaming، UI داشبورد</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>POST …/copilot/stream + دکمه ✨</td>
+            </tr>
+            <tr>
+              <td>P7.3</td>
+              <td>Summarizer و Sentiment</td>
+              <td>خلاصه مکالمه، امتیاز sentiment [-1..+1]، mood indicator در inbox</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-16</td>
+              <td>UI build 14</td>
+            </tr>
+            <tr>
+              <td>P7.4</td>
+              <td>بهبود RAG</td>
+              <td>Cohere reranker، Persian normalization، کش ۴ سطحی، multi-model fallback</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>retrieve 20→rerank 5، OpenAI→Anthropic→template</td>
+            </tr>
+            <tr>
+              <td>P7.5</td>
+              <td>هزینه و مانیتورینگ AI</td>
+              <td>per-workspace credits، budget enforcement، Langfuse integration</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>ai-usage API، بنر داشبورد، Langfuse اختیاری</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۸ — لندینگ پیج و Billing واقعی</strong></td></tr>
-<tr>
-<td>P8.1</td>
-<td>اپلیکیشن لندینگ پیج</td>
-<td>apps/landing (Next.js static)، صفحات Home/Pricing/About/Contact، دمو ویجت زنده</td>
-<td>انجام شد</td>
-<td>2026-05-16</td>
-<td>پورت 3002، static export</td>
-</tr>
-<tr>
-<td>P8.2</td>
-<td>Billing واقعی (Zarinpal)</td>
-<td>SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook واقعی</td>
-<td>انجام شد</td>
-<td>2026-05-16</td>
-<td>verify عمومی، PDF، trial، cancel، webhook</td>
-</tr>
-<tr>
-<td>P8.3</td>
-<td>اعمال محدودیت پلن‌ها</td>
-<td>محدودیت agent/مکالمه/AI credits بر اساس پلن، نمایش usage، هشدار سقف</td>
-<td>انجام شد</td>
-<td>2026-05-16</td>
-<td>plan-limits؛ invite/chat/upload؛ plan-usage API؛ بنر داشبورد</td>
-</tr>
+            <tr>
+              <td colspan="6"><strong>فاز ۸ — لندینگ پیج و Billing واقعی</strong></td>
+            </tr>
+            <tr>
+              <td>P8.1</td>
+              <td>اپلیکیشن لندینگ پیج</td>
+              <td>apps/landing (Next.js static)، صفحات Home/Pricing/About/Contact، دمو ویجت زنده</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>پورت 3002، static export</td>
+            </tr>
+            <tr>
+              <td>P8.2</td>
+              <td>Billing واقعی (Zarinpal)</td>
+              <td>SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook واقعی</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>verify عمومی، PDF، trial، cancel، webhook</td>
+            </tr>
+            <tr>
+              <td>P8.3</td>
+              <td>اعمال محدودیت پلن‌ها</td>
+              <td>محدودیت agent/مکالمه/AI credits بر اساس پلن، نمایش usage، هشدار سقف</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>plan-limits؛ invite/chat/upload؛ plan-usage API؛ بنر داشبورد</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۹ — زیرساخت و Deploy تولید</strong></td></tr>
-<tr>
-<td>P9.1</td>
-<td>Dockerfiles</td>
-<td>Dockerfile multi-stage برای api/dashboard/widget/ai-service/landing + .dockerignore</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P9.2</td>
-<td>Production Compose</td>
-<td>docker-compose.prod.yml، Nginx reverse proxy + SSL (Let's Encrypt)، health checks</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P9.3</td>
-<td>CI/CD کامل</td>
-<td>Docker build+push GHCR، تست Python، E2E Playwright، dependency audit، deploy trigger</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P9.4</td>
-<td>Backup خودکار</td>
-<td>cron pg_dump هر ۶ ساعت، rotation ۳۰ روز، script بازیابی، Redis snapshot</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P9.5</td>
-<td>Monitoring و Alerting</td>
-<td>Prometheus alerting rules، Grafana dashboards، uptime monitoring، Loki log aggregation</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
+            <tr>
+              <td colspan="6"><strong>فاز ۹ — زیرساخت و Deploy تولید</strong> (موکول — اولویت: بک‌لاگ FL)</td>
+            </tr>
+            <tr>
+              <td>P9.1</td>
+              <td>Dockerfiles</td>
+              <td>Dockerfile multi-stage برای api/dashboard/widget/ai-service/landing + .dockerignore</td>
+              <td>موکول</td>
+              <td>—</td>
+              <td>بعد از بک‌لاگ</td>
+            </tr>
+            <tr>
+              <td>P9.2</td>
+              <td>Production Compose</td>
+              <td>docker-compose.prod.yml، Nginx reverse proxy + SSL (Let's Encrypt)، health checks</td>
+              <td>موکول</td>
+              <td>—</td>
+              <td>بعد از بک‌لاگ</td>
+            </tr>
+            <tr>
+              <td>P9.3</td>
+              <td>CI/CD کامل</td>
+              <td>Docker build+push GHCR، تست Python، E2E Playwright، dependency audit، deploy trigger</td>
+              <td>موکول</td>
+              <td>—</td>
+              <td>بعد از بک‌لاگ</td>
+            </tr>
+            <tr>
+              <td>P9.4</td>
+              <td>Backup خودکار</td>
+              <td>cron pg_dump هر ۶ ساعت، rotation ۳۰ روز، script بازیابی، Redis snapshot</td>
+              <td>موکول</td>
+              <td>—</td>
+              <td>بعد از بک‌لاگ</td>
+            </tr>
+            <tr>
+              <td>P9.5</td>
+              <td>Monitoring و Alerting</td>
+              <td>Prometheus alerting rules، Grafana dashboards، uptime monitoring، Loki log aggregation</td>
+              <td>موکول</td>
+              <td>—</td>
+              <td>بعد از بک‌لاگ</td>
+            </tr>
 
-<tr><td colspan="6"><strong>فاز ۱۰ — پولیش و آمادگی لانچ</strong></td></tr>
-<tr>
-<td>P10.1</td>
-<td>i18n (چندزبانگی)</td>
-<td>next-intl، فایل‌های FA + EN، تغییر زبان از settings، auto-detect در ویجت</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P10.2</td>
-<td>Accessibility</td>
-<td>ARIA attributes، focus management، keyboard navigation، screen reader، WCAG 2.1 AA</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P10.3</td>
-<td>Performance</td>
-<td>Widget bundle &lt;30KB، API P95 &lt;300ms، query optimization، asset optimization</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P10.4</td>
-<td>تست جامع</td>
-<td>E2E Playwright، load test k6 (1000 concurrent)، AI eval gate در CI، security pentest</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td>P10.5</td>
-<td>مستندات نهایی</td>
-<td>OpenAPI/Swagger، user guide فارسی، developer onboarding، changelog</td>
-<td>شروع نشده</td>
-<td>—</td>
-<td>—</td>
-</tr>
-</tbody>
-</table></div>
+            <tr>
+              <td colspan="6"><strong>فاز ۱۰ — پولیش و آمادگی لانچ</strong></td>
+            </tr>
+            <tr>
+              <td>P10.1</td>
+              <td>i18n (چندزبانگی)</td>
+              <td>next-intl، فایل‌های FA + EN، تغییر زبان از settings، auto-detect در ویجت</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>P10.2</td>
+              <td>Accessibility</td>
+              <td>ARIA attributes، focus management، keyboard navigation، screen reader، WCAG 2.1 AA</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>P10.3</td>
+              <td>Performance</td>
+              <td>Widget bundle &lt;30KB، API P95 &lt;300ms، query optimization، asset optimization</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>P10.4</td>
+              <td>تست جامع</td>
+              <td>E2E Playwright، load test k6 (1000 concurrent)، AI eval gate در CI، security pentest</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>P10.5</td>
+              <td>مستندات نهایی</td>
+              <td>OpenAPI/Swagger، user guide فارسی، developer onboarding، changelog</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-<hr />
-<h2 id="sec-feature-list">فیچر لیست (بک‌لاگ محصول)</h2>
-<p>قابلیت‌های درخواست‌شده برای توسعه آینده — خارج از جدول فازهای P0–P10.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>کد</th>
-<th>عنوان</th>
-<th>توضیح</th>
-<th>دسته</th>
-<th>وضعیت</th>
-<th>فاز مرتبط</th>
-</tr>
-</thead>
-<tbody>
-<tr><td>FL-01</td><td>مستندات API</td><td>مستندات عمومی REST (OpenAPI/Swagger، مثال‌ها، auth)</td><td>توسعه‌دهندگان</td><td>برنامه‌ریزی</td><td>P10.5</td></tr>
-<tr><td>FL-02</td><td>توکن API برای برنامه‌نویسان</td><td>ساخت/لغو توکن شخصی workspace برای API و webhook</td><td>توسعه‌دهندگان</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
-<tr><td>FL-03</td><td>لیست پلن‌های شارژ اکانت</td><td>پلن‌های افزایش اعتبار/شارژ و خرید از پنل</td><td>Billing</td><td>برنامه‌ریزی</td><td>P8</td></tr>
-<tr><td>FL-04</td><td>محدودیت پلن</td><td>سقف اپراتور، مکالمه فعال، حجم آپلود بر اساس پلن + هشدار</td><td>Billing</td><td>برنامه‌ریزی</td><td>P8.3</td></tr>
-<tr><td>FL-05</td><td>ابزارک (ویجت + پلاگین)</td><td>ویجت embed + پلاگین CMS (وردپرس و …) با برند «ابزارک»</td><td>ابزارک</td><td>برنامه‌ریزی</td><td>P6 / P8</td></tr>
-<tr><td>FL-06</td><td>آرشیو گفتگوها</td><td>آرشیو مکالمات، بازیابی و فیلتر archived</td><td>Inbox</td><td>برنامه‌ریزی</td><td>P5+</td></tr>
-<tr><td>FL-07</td><td>گزارش گفتگوها</td><td>گزارش بازه تاریخ، export، جستجو</td><td>گزارش</td><td>برنامه‌ریزی</td><td>P5+</td></tr>
-<tr><td>FL-08</td><td>بازدیدکننده آنلاین</td><td>نمایش live تعداد مشتری/بازدیدکننده آنلاین</td><td>ریل‌تایم</td><td>برنامه‌ریزی</td><td>P1.3+</td></tr>
-<tr><td>FL-09</td><td>اپراتور آنلاین</td><td>نمایش live تعداد اپراتورهای آنلاین</td><td>ریل‌تایم</td><td>برنامه‌ریزی</td><td>P1.3+</td></tr>
-<tr><td>FL-10</td><td>اطلاعات بازدیدکننده</td><td>IP، صفحه فعلی، کشور، دستگاه و نسخه در پنل</td><td>Visitor</td><td>برنامه‌ریزی</td><td>P6+</td></tr>
-<tr><td>FL-11</td><td>سابقه بازدید صفحات</td><td>تاریخچه صفحات بازدیدشده توسط مشتری</td><td>Visitor</td><td>برنامه‌ریزی</td><td>P6+</td></tr>
-<tr><td>FL-12</td><td>آواتار اپراتور</td><td>آپلود/تنظیم آواتار برای هر اپراتور</td><td>تیم</td><td>برنامه‌ریزی</td><td>P5.5+</td></tr>
-<tr><td>FL-13</td><td>Ban کاربر</td><td>مسدود کردن contact خاطی</td><td>امنیت</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
-<tr><td>FL-14</td><td>Ban بر اساس IP</td><td>مسدود کردن IP یا محدوده IP</td><td>امنیت</td><td>برنامه‌ریزی</td><td>P4+</td></tr>
-</tbody>
-</table></div>
+      <hr />
+      <h2 id="sec-feature-list">فیچر لیست (بک‌لاگ محصول)</h2>
+      <p><strong>اولویت فعلی توسعه</strong> (فاز ۹ موکول). قالب جدول مشابه مسیر تولید P4→P10: کد، عنوان، توضیح، وضعیت، تاریخ، یادداشت.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>کد</th>
+              <th>عنوان</th>
+              <th>توضیح</th>
+              <th>وضعیت</th>
+              <th>تاریخ</th>
+              <th>یادداشت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="6"><strong>دسته — توسعه‌دهندگان و API</strong></td>
+            </tr>
+            <tr>
+              <td>FL-01</td>
+              <td>مستندات API</td>
+              <td>مستندات عمومی REST (OpenAPI/Swagger، مثال‌ها، auth)</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P10.5</td>
+            </tr>
+            <tr>
+              <td>FL-02</td>
+              <td>توکن API برای برنامه‌نویسان</td>
+              <td>ساخت/لغو توکن شخصی workspace برای API و webhook</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P4+</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — Billing و پلن</strong></td>
+            </tr>
+            <tr>
+              <td>FL-03</td>
+              <td>لیست پلن‌های شارژ اکانت</td>
+              <td>پلن‌های افزایش اعتبار/شارژ (AI credits) و خرید از پنل</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P8؛ billing پایه موجود است</td>
+            </tr>
+            <tr>
+              <td>FL-04</td>
+              <td>محدودیت پلن</td>
+              <td>سقف اپراتور، مکالمه/ماه، آپلود/ماه + هشدار نزدیک سقف</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>plan-limits.ts؛ GET plan-usage؛ /billing</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — ابزارک (ویجت)</strong></td>
+            </tr>
+            <tr>
+              <td>FL-05</td>
+              <td>ابزارک (ویجت + پلاگین)</td>
+              <td>ویجت embed + پلاگین CMS (وردپرس و …) با برند «ابزارک»</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P6 / P8؛ ویجت embed موجود است</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — Inbox و مکالمه</strong></td>
+            </tr>
+            <tr>
+              <td>FL-06</td>
+              <td>آرشیو گفتگوها</td>
+              <td>آرشیو مکالمات خارج از inbox فعال، بازیابی و فیلتر archived</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>metadata.archivedAt؛ تب فعال/آرشیو؛ archive/unarchive API</td>
+            </tr>
+            <tr>
+              <td>FL-07</td>
+              <td>گزارش گفتگوها</td>
+              <td>گزارش بازه تاریخ، export، جستجو در متن/فیلترها</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P5+</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — ریل‌تایم و حضور</strong></td>
+            </tr>
+            <tr>
+              <td>FL-08</td>
+              <td>بازدیدکننده آنلاین</td>
+              <td>نمایش live تعداد مشتری/بازدیدکننده آنلاین در داشبورد</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>Redis presence؛ GET /presence؛ PresenceStats در inbox</td>
+            </tr>
+            <tr>
+              <td>FL-09</td>
+              <td>اپراتور آنلاین</td>
+              <td>نمایش live تعداد اپراتورهای آنلاین (presence)</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>socket client_type=agent؛ همان شمارنده inbox</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — بازدیدکننده (Visitor)</strong></td>
+            </tr>
+            <tr>
+              <td>FL-10</td>
+              <td>اطلاعات بازدیدکننده</td>
+              <td>IP، URL صفحه، GeoIP، دستگاه و مرورگر/OS در پنل اپراتور</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P6+</td>
+            </tr>
+            <tr>
+              <td>FL-11</td>
+              <td>سابقه بازدید صفحات</td>
+              <td>تاریخچه صفحاتی که مشتری در سایت بازدید کرده</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P6+؛ وابسته به FL-10</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — تیم</strong></td>
+            </tr>
+            <tr>
+              <td>FL-12</td>
+              <td>آواتار اپراتور</td>
+              <td>آپلود/تنظیم آواتار برای هر اپراتور (چت + لیست تیم)</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P5.5+</td>
+            </tr>
+            <tr>
+              <td colspan="6"><strong>دسته — امنیت</strong></td>
+            </tr>
+            <tr>
+              <td>FL-13</td>
+              <td>Ban کاربر</td>
+              <td>مسدود کردن contact خاطی (عدم چت جدید از همان هویت)</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P4+</td>
+            </tr>
+            <tr>
+              <td>FL-14</td>
+              <td>Ban بر اساس IP</td>
+              <td>مسدود کردن IP یا محدوده IP برای جلوگیری از سوءاستفاده</td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>مرجع: P4+</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-<hr />
-<h2 id="sec-4">چک‌لیست‌های دیگر کجا هستند؟</h2>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>نوع</th>
-<th>محل</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>خروجی دقیق هر بستهٔ AI</td>
-<td>بخش <strong>«خروجی مورد انتظار»</strong> زیر هر <code>P…</code> در <a href="./roadmap_machine.md"><code>roadmap_machine.md</code></a></td>
-</tr>
-<tr>
-<td>قبل از باز کردن PR</td>
-<td><a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a> — «چک‌لیست یک‌صفحه‌ای»</td>
-</tr>
-<tr>
-<td>امنیت MVP</td>
-<td><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a></td>
-</tr>
-<tr>
-<td>نصب سرور Ubuntu (اینترنت آزاد)</td>
-<td><a href="./SERVER-DEV-FIRST-INSTALL-FA.md"><code>SERVER-DEV-FIRST-INSTALL-FA.md</code></a></td>
-</tr>
-<tr>
-<td>قبل از اولین production</td>
-<td><a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a> بخش ۱۳</td>
-</tr>
-</tbody>
-</table></div>
-<hr />
-<p><strong>پایان سند.</strong> با اتمام هر مرحله، این جدول را به‌روز نگه دارید.</p>
+      <hr />
+      <h2 id="sec-4">چک‌لیست‌های دیگر کجا هستند؟</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>نوع</th>
+              <th>محل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>خروجی دقیق هر بستهٔ AI</td>
+              <td>بخش <strong>«خروجی مورد انتظار»</strong> زیر هر <code>P…</code> در <a
+                  href="./roadmap_machine.md"><code>roadmap_machine.md</code></a></td>
+            </tr>
+            <tr>
+              <td>قبل از باز کردن PR</td>
+              <td><a href="15-DEVELOPMENT-GUIDE-FA.html"><code>15-DEVELOPMENT-GUIDE-FA.md</code></a> — «چک‌لیست
+                یک‌صفحه‌ای»</td>
+            </tr>
+            <tr>
+              <td>امنیت MVP</td>
+              <td><a href="11-SECURITY-PRIVACY.html"><code>11-SECURITY-PRIVACY.md</code></a></td>
+            </tr>
+            <tr>
+              <td>نصب سرور Ubuntu (اینترنت آزاد)</td>
+              <td><a href="./SERVER-DEV-FIRST-INSTALL-FA.md"><code>SERVER-DEV-FIRST-INSTALL-FA.md</code></a></td>
+            </tr>
+            <tr>
+              <td>قبل از اولین production</td>
+              <td><a href="14-INFRASTRUCTURE.html"><code>14-INFRASTRUCTURE.md</code></a> بخش ۱۳</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <hr />
+      <p><strong>پایان سند.</strong> با اتمام هر مرحله، این جدول را به‌روز نگه دارید.</p>
 
-    <nav class="doc-nav">
-      <a class="prev" href="15-DEVELOPMENT-GUIDE-FA.html">
-        <div class="label">← سند قبلی</div>
-        <div class="title">۱۵ — راهنمای توسعه فارسی</div>
-      </a>
-      <a class="next" href="index.html">
-        <div class="label">سند بعدی →</div>
-        <div class="title">خانه</div>
-      </a>
-    </nav>
-  </main>
-</div>
+      <nav class="doc-nav">
+        <a class="prev" href="15-DEVELOPMENT-GUIDE-FA.html">
+          <div class="label">← سند قبلی</div>
+          <div class="title">۱۵ — راهنمای توسعه فارسی</div>
+        </a>
+        <a class="next" href="index.html">
+          <div class="label">سند بعدی →</div>
+          <div class="title">خانه</div>
+        </a>
+      </nav>
+    </main>
+  </div>
 </body>
+
 </html>
