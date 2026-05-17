@@ -73,6 +73,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [triggerScrollPct, setTriggerScrollPct] = useState("");
 	const [widgetMsg, setWidgetMsg] = useState("");
 	const [widgetError, setWidgetError] = useState("");
+	const [embedCopied, setEmbedCopied] = useState(false);
 
 	const [apiTokens, setApiTokens] = useState<ApiTokenRow[]>([]);
 	const [apiTokenName, setApiTokenName] = useState("");
@@ -277,13 +278,24 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			setWidgetError(result.error ?? "ذخیره ناموفق بود.");
 			return;
 		}
-		setWidgetMsg("تنظیمات ویجت ذخیره شد.");
+		setWidgetMsg("تنظیمات ابزارک ذخیره شد.");
 		await loadWidget();
 	}
 
 	const embedSnippet = wsSlug
 		? `<script src="${API_URL}/widget-demo/dist/index.global.js"\n  data-api-url="${API_URL}"\n  data-workspace-slug="${wsSlug}"></script>`
 		: "";
+
+	async function copyEmbedSnippet() {
+		if (!embedSnippet) return;
+		try {
+			await navigator.clipboard.writeText(embedSnippet);
+			setEmbedCopied(true);
+			window.setTimeout(() => setEmbedCopied(false), 2000);
+		} catch {
+			setWidgetError("کپی در مرورگر ممکن نشد — متن را دستی انتخاب کنید.");
+		}
+	}
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -310,7 +322,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							: t === "workspace"
 								? "ورک‌اسپیس"
 								: t === "widget"
-									? "ویجت"
+									? "ابزارک"
 									: t === "api"
 										? "API"
 										: "امنیت"}
@@ -383,9 +395,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						onSubmit={saveWidget}
 						className="mx-auto flex max-w-lg flex-col gap-4"
 					>
+						<p className="text-sm text-muted-foreground">
+							<strong className="text-foreground">ابزارک ChatBox</strong> — ویجت چت
+							روی سایت شما (اسکریپت embed یا پلاگین وردپرس).
+						</p>
 						{!canEditWorkspace && (
 							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-								فقط مدیر می‌تواند ظاهر ویجت را ویرایش کند.
+								فقط مدیر می‌تواند ظاهر ابزارک را ویرایش کند.
 							</p>
 						)}
 						<label className="flex flex-col gap-1 text-sm font-medium">
@@ -549,19 +565,71 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						)}
 						{widgetMsg && <p className="text-sm text-primary">{widgetMsg}</p>}
 						<Button type="submit" disabled={!canEditWorkspace}>
-							ذخیره ویجت
+							ذخیره ابزارک
 						</Button>
 						{wsSlug && (
-							<div className="mt-4 rounded-lg border border-border bg-muted/50 p-4">
-								<p className="mb-2 text-sm font-medium">کد نصب</p>
-								<pre
-									className="overflow-x-auto whitespace-pre-wrap break-all text-xs text-muted-foreground"
-									dir="ltr"
-								>
-									{embedSnippet}
-								</pre>
-								<p className="mt-2 text-xs text-muted-foreground">
-									دمو: <code className="rounded bg-muted px-1">/widget-demo/demo.html</code>
+							<div className="mt-4 space-y-4">
+								<div className="rounded-lg border border-border bg-muted/50 p-4">
+									<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+										<p className="text-sm font-medium">نصب دستی (HTML)</p>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => void copyEmbedSnippet()}
+										>
+											{embedCopied ? "کپی شد" : "کپی کد"}
+										</Button>
+									</div>
+									<pre
+										className="overflow-x-auto whitespace-pre-wrap break-all text-xs text-muted-foreground"
+										dir="ltr"
+									>
+										{embedSnippet}
+									</pre>
+									<p className="mt-2 text-xs text-muted-foreground">
+										اسکریپت را قبل از{" "}
+										<code className="rounded bg-muted px-1" dir="ltr">
+											&lt;/body&gt;
+										</code>{" "}
+										قرار دهید.
+									</p>
+								</div>
+								<div className="rounded-lg border border-border bg-muted/50 p-4">
+									<p className="mb-2 text-sm font-medium">وردپرس (پلاگین ابزارک)</p>
+									<ol className="list-decimal space-y-1 pr-4 text-xs text-muted-foreground">
+										<li>
+											پوشه{" "}
+											<code className="rounded bg-muted px-1" dir="ltr">
+												integrations/wordpress/chatbox-abzar
+											</code>{" "}
+											را در{" "}
+											<code className="rounded bg-muted px-1" dir="ltr">
+												wp-content/plugins/
+											</code>{" "}
+											کپی کنید، یا از ریشه مخزن:{" "}
+											<code className="rounded bg-muted px-1" dir="ltr">
+												pnpm zip:wordpress
+											</code>
+										</li>
+										<li>افزونه «ابزارک ChatBox» را فعال کنید.</li>
+										<li>
+											تنظیمات → ابزارک ChatBox — API:{" "}
+											<code className="rounded bg-muted px-1" dir="ltr">
+												{API_URL}
+											</code>
+											، Slug:{" "}
+											<code className="rounded bg-muted px-1" dir="ltr">
+												{wsSlug}
+											</code>
+										</li>
+									</ol>
+								</div>
+								<p className="text-xs text-muted-foreground">
+									دمو:{" "}
+									<code className="rounded bg-muted px-1" dir="ltr">
+										/widget-demo/demo.html
+									</code>
 								</p>
 							</div>
 						)}

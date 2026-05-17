@@ -736,9 +736,9 @@ rule: &gt;
               <td>FL-05</td>
               <td>ابزارک (ویجت + پلاگین)</td>
               <td>ویجت embed + پلاگین CMS (وردپرس و …) با برند «ابزارک»</td>
-              <td>شروع نشده</td>
-              <td>—</td>
-              <td>ویجت embed موجود؛ تبلیغ ChatBox پایین چت برای workspace بدون اشتراک پرداخت‌شده</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-17</td>
+              <td>embed + تب ابزارک در تنظیمات؛ پلاگین <code>integrations/wordpress/chatbox-abzar</code>؛ <code>pnpm zip:wordpress</code>؛ branding رایگان</td>
             </tr>
             <tr>
               <td colspan="6"><strong>دسته — Inbox و مکالمه</strong></td>
@@ -815,17 +815,17 @@ rule: &gt;
               <td>FL-13</td>
               <td>Ban کاربر</td>
               <td>مسدود کردن contact خاطی (عدم چت جدید از همان هویت)</td>
-              <td>شروع نشده</td>
-              <td>—</td>
-              <td>مرجع: P4+</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-17</td>
+              <td><code>metadata.bannedAt</code>؛ ban/unban از toolbar؛ ویجت پیام «شما مسدود شدید…»؛ <code>POST …/ban-contact</code></td>
             </tr>
             <tr>
               <td>FL-14</td>
               <td>Ban بر اساس IP</td>
               <td>مسدود کردن IP یا محدوده IP برای جلوگیری از سوءاستفاده</td>
-              <td>شروع نشده</td>
-              <td>—</td>
-              <td>مرجع: P4+</td>
+              <td class="done">انجام شد ✅</td>
+              <td>2026-05-17</td>
+              <td><code>settings.security.banned_ips</code> (IP، wildcard، CIDR)؛ تب امنیت؛ <code>GET/PUT /v1/security/banned-ips</code>؛ مسدود IP از مکالمه</td>
             </tr>
           </tbody>
         </table>
