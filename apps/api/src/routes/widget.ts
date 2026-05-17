@@ -73,15 +73,25 @@ export async function widgetRoutes(app: FastifyInstance) {
 		workspaceId: string,
 		conversationId: string,
 		request: FastifyRequest,
-		input?: { pageUrl?: string | null; metadata?: Record<string, unknown> | null },
+		input?: {
+			pageUrl?: string | null;
+			pageTitle?: string | null;
+			metadata?: Record<string, unknown> | null;
+		},
 	) {
 		const existing = await db.query.contacts.findFirst({
 			where: and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
 		});
 		if (!existing) return;
 
+		const pageTitle =
+			typeof input?.pageTitle === "string" ? input.pageTitle : null;
 		const ctx = captureVisitorContext(request, input);
-		const metadata = mergeVisitorMetadata(existing.metadata, ctx);
+		const metadata = mergeVisitorMetadata(
+			existing.metadata,
+			ctx,
+			pageTitle,
+		);
 
 		const [updated] = await db
 			.update(contacts)
@@ -95,13 +105,14 @@ export async function widgetRoutes(app: FastifyInstance) {
 			)
 			.returning();
 
-		const visitor = visitorFromMetadata(updated?.metadata ?? metadata);
+		const finalMeta = updated?.metadata ?? metadata;
+		const visitor = visitorFromMetadata(finalMeta);
 		try {
 			const io = getIO();
 			io.to(`workspace:${workspaceId}`).emit("visitor:context", {
 				conversation_id: conversationId,
 				contact_id: contactId,
-				visitor: serializeVisitorForApi(visitor),
+				visitor: serializeVisitorForApi(visitor, finalMeta),
 			});
 		} catch {
 			/* socket not ready */
@@ -113,13 +124,15 @@ export async function widgetRoutes(app: FastifyInstance) {
 			workspace_slug: string;
 			visitor_id?: string | null;
 			page_url?: string | null;
+			page_title?: string | null;
 			metadata?: Record<string, unknown> | null;
 		};
 	}>(
 		"/widget/v1/sessions",
 		{ config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
 		async (request, reply) => {
-			const { workspace_slug, visitor_id, page_url, metadata } = request.body ?? {};
+			const { workspace_slug, visitor_id, page_url, page_title, metadata } =
+				request.body ?? {};
 			if (!workspace_slug)
 				throw validationError("workspace_slug is required.", "workspace_slug");
 
@@ -143,13 +156,18 @@ export async function widgetRoutes(app: FastifyInstance) {
 					pageUrl: page_url,
 					metadata,
 				});
+				const initialMeta = mergeVisitorMetadata(
+					{},
+					initialCtx,
+					typeof page_title === "string" ? page_title : null,
+				);
 				const [created] = await db
 					.insert(contacts)
 					.values({
 						workspaceId: ws.id,
 						externalId: newVisitorId,
 						fullName: "Visitor",
-						metadata: { visitor: initialCtx },
+						metadata: initialMeta,
 					})
 					.returning();
 				contact = created;
@@ -182,6 +200,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			await persistVisitorContext(contact.id, ws.id, conv.id, request, {
 				pageUrl: page_url,
+				pageTitle: typeof page_title === "string" ? page_title : null,
 				metadata,
 			});
 
@@ -212,6 +231,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 	app.patch<{
 		Body: {
 			page_url?: string | null;
+			page_title?: string | null;
 			metadata?: Record<string, unknown> | null;
 		};
 	}>(
@@ -220,13 +240,17 @@ export async function widgetRoutes(app: FastifyInstance) {
 		async (request) => {
 			const { contactId, workspaceId, conversationId } = (request as VisitorRequest)
 				.visitor;
-			const { page_url, metadata } = request.body ?? {};
+			const { page_url, page_title, metadata } = request.body ?? {};
 			await persistVisitorContext(
 				contactId,
 				workspaceId,
 				conversationId,
 				request,
-				{ pageUrl: page_url, metadata },
+				{
+					pageUrl: page_url,
+					pageTitle: typeof page_title === "string" ? page_title : null,
+					metadata,
+				},
 			);
 			const contact = await db.query.contacts.findFirst({
 				where: and(
@@ -237,6 +261,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 			return {
 				visitor: serializeVisitorForApi(
 					visitorFromMetadata(contact?.metadata),
+					contact?.metadata,
 				),
 			};
 		},

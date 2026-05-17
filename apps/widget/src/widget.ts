@@ -77,6 +77,7 @@ export class ChatBoxWidget {
 	private readonly renderedIds = new Set<string>();
 	private unbindPageNav: (() => void) | null = null;
 	private pageContextTimer: ReturnType<typeof setInterval> | null = null;
+	private brandingEl: HTMLElement | null = null;
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
@@ -130,6 +131,7 @@ export class ChatBoxWidget {
 						<input class="cb-input" id="cb-input" placeholder="پیام بنویسید..." />
 						<button class="cb-send" id="cb-send" type="button">ارسال</button>
 					</div>
+					<div class="cb-branding hidden" id="cb-branding"></div>
 				</div>
 				<button class="cb-launcher" id="cb-launcher" type="button" aria-label="باز کردن چت">${CHAT_ICON}</button>
 			</div>
@@ -159,6 +161,7 @@ export class ChatBoxWidget {
 		this.emojiPickerEl = this.root.getElementById(
 			"cb-emoji-picker",
 		) as HTMLElement;
+		this.brandingEl = this.root.getElementById("cb-branding");
 
 		this.buildPrechatForm();
 		this.applyTheme();
@@ -347,6 +350,23 @@ export class ChatBoxWidget {
 		if (this.headerAvatarEl && this.theme.avatar_url) {
 			this.headerAvatarEl.src = this.theme.avatar_url;
 			this.headerAvatarEl.alt = this.theme.title;
+		}
+
+		this.applyBranding();
+	}
+
+	private applyBranding() {
+		if (!this.brandingEl) return;
+		if (this.theme.show_branding) {
+			const label = this.theme.branding_label ?? "قدرت گرفته از ChatBox";
+			const url = this.theme.branding_url ?? "";
+			this.brandingEl.innerHTML = url
+				? `<a href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${this.escapeHtml(label)}</a>`
+				: this.escapeHtml(label);
+			this.brandingEl.classList.remove("hidden");
+		} else {
+			this.brandingEl.classList.add("hidden");
+			this.brandingEl.textContent = "";
 		}
 	}
 

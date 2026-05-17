@@ -217,6 +217,32 @@ export const WIDGET_CSS = `
   align-items: center;
 }
 
+.cb-branding {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  border-top: 1px solid var(--cb-border);
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.cb-branding.hidden {
+  display: none;
+}
+
+.cb-branding a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.cb-branding a:hover {
+  text-decoration: underline;
+  color: var(--cb-primary);
+}
+
 .cb-input {
   flex: 1;
   border: 1px solid var(--cb-border);

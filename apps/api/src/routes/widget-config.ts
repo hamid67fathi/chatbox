@@ -24,6 +24,10 @@ import {
 	widgetConfigToPublic,
 } from "../lib/widget-settings.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import {
+	DEFAULT_WIDGET_BRANDING,
+	shouldShowWidgetBranding,
+} from "../lib/widget-branding.js";
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -202,9 +206,14 @@ export async function publicWidgetConfigHandler(
 	});
 	if (!ws) throw notFound("Workspace not found.");
 
+	const showBranding = await shouldShowWidgetBranding(ws.id);
+
 	return {
 		workspace_id: ws.id,
 		slug: ws.slug,
 		...publicWidgetData(ws.settings),
+		show_branding: showBranding,
+		branding_label: DEFAULT_WIDGET_BRANDING.label,
+		branding_url: DEFAULT_WIDGET_BRANDING.url,
 	};
 }

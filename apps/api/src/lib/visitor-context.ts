@@ -1,5 +1,14 @@
 import type { FastifyRequest } from "fastify";
 
+export interface PageViewEntry {
+	url: string;
+	title?: string | null;
+	at: string;
+}
+
+const MAX_PAGE_VIEWS = 50;
+const PAGE_VIEW_DEDUPE_MS = 30_000;
+
 export interface VisitorContext {
 	ip?: string | null;
 	country?: string | null;
@@ -140,9 +149,63 @@ export function captureVisitorContext(
 	};
 }
 
+export function pageViewsFromMetadata(
+	metadata: unknown,
+): PageViewEntry[] {
+	if (!metadata || typeof metadata !== "object") return [];
+	const raw = (metadata as { pageViews?: unknown }).pageViews;
+	if (!Array.isArray(raw)) return [];
+	const out: PageViewEntry[] = [];
+	for (const item of raw) {
+		if (!item || typeof item !== "object") continue;
+		const o = item as Record<string, unknown>;
+		if (typeof o.url !== "string" || typeof o.at !== "string") continue;
+		out.push({
+			url: o.url,
+			title: typeof o.title === "string" ? o.title : null,
+			at: o.at,
+		});
+	}
+	return out.reverse();
+}
+
+export function appendPageView(
+	metadata: Record<string, unknown>,
+	pageUrl: string | null,
+	pageTitle?: string | null,
+): Record<string, unknown> {
+	if (!pageUrl) return metadata;
+
+	const views: PageViewEntry[] = Array.isArray(metadata.pageViews)
+		? (metadata.pageViews as PageViewEntry[]).map((v) => ({ ...v }))
+		: [];
+
+	const now = new Date().toISOString();
+	const last = views[views.length - 1];
+	if (last?.url === pageUrl) {
+		const prevAt = new Date(last.at).getTime();
+		if (!Number.isNaN(prevAt) && Date.now() - prevAt < PAGE_VIEW_DEDUPE_MS) {
+			last.at = now;
+			if (pageTitle) last.title = pageTitle;
+			metadata.pageViews = views;
+			return metadata;
+		}
+	}
+
+	views.push({
+		url: pageUrl,
+		title: pageTitle ?? null,
+		at: now,
+	});
+	while (views.length > MAX_PAGE_VIEWS) views.shift();
+	metadata.pageViews = views;
+	return metadata;
+}
+
 export function mergeVisitorMetadata(
 	existing: unknown,
 	incoming: VisitorContext,
+	pageTitle?: string | null,
 ): Record<string, unknown> {
 	const base =
 		existing && typeof existing === "object"
@@ -168,6 +231,9 @@ export function mergeVisitorMetadata(
 	}
 
 	base.visitor = merged;
+	if (incoming.currentPageUrl) {
+		appendPageView(base, incoming.currentPageUrl, pageTitle);
+	}
 	return base;
 }
 
@@ -198,8 +264,14 @@ export function visitorFromMetadata(metadata: unknown): VisitorContext | null {
 
 export function serializeVisitorForApi(
 	visitor: VisitorContext | null,
+	metadata?: unknown,
 ): Record<string, unknown> | null {
 	if (!visitor) return null;
+	const pageViews = pageViewsFromMetadata(metadata).map((p) => ({
+		url: p.url,
+		title: p.title,
+		at: p.at,
+	}));
 	return {
 		ip: visitor.ip,
 		country: visitor.country,
@@ -211,5 +283,6 @@ export function serializeVisitorForApi(
 		device: visitor.device,
 		utm: visitor.utm,
 		updated_at: visitor.updatedAt,
+		page_views: pageViews,
 	};
 }

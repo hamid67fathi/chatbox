@@ -29,6 +29,9 @@ export interface WidgetTheme {
 		auto_open_delay_ms: number;
 		auto_open_on_scroll_percent: number | null;
 	};
+	show_branding?: boolean;
+	branding_label?: string;
+	branding_url?: string;
 }
 
 export interface MessageAttachment {
@@ -133,7 +136,11 @@ export async function fetchWidgetTheme(
 
 export async function createSession(
 	config: WidgetConfig,
-	page?: { page_url?: string | null; metadata?: Record<string, string> },
+	page?: {
+		page_url?: string | null;
+		page_title?: string | null;
+		metadata?: Record<string, string>;
+	},
 ): Promise<SessionResponse> {
 	setApiBaseUrl(config.apiUrl);
 	const res = await fetch(`${config.apiUrl}/widget/v1/sessions`, {
@@ -143,6 +150,7 @@ export async function createSession(
 			workspace_slug: config.workspaceSlug,
 			visitor_id: config.visitorId ?? null,
 			page_url: page?.page_url ?? null,
+			page_title: page?.page_title ?? null,
 			metadata: page?.metadata ?? {},
 		}),
 	});
@@ -170,6 +178,7 @@ function authHeaders(): HeadersInit {
 
 export async function updateVisitorContext(page?: {
 	page_url?: string | null;
+	page_title?: string | null;
 	metadata?: Record<string, string>;
 }): Promise<void> {
 	const res = await fetch(`${apiBaseUrl}/widget/v1/visitor-context`, {
@@ -177,6 +186,7 @@ export async function updateVisitorContext(page?: {
 		headers: authHeaders(),
 		body: JSON.stringify({
 			page_url: page?.page_url ?? null,
+			page_title: page?.page_title ?? null,
 			metadata: page?.metadata ?? {},
 		}),
 	});

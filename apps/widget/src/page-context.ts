@@ -24,13 +24,21 @@ export function utmMetadataFromLocation(): Record<string, string> {
 	}
 }
 
+export function currentPageTitle(): string | null {
+	if (typeof document === "undefined" || !document.title) return null;
+	const t = document.title.trim();
+	return t ? t.slice(0, 256) : null;
+}
+
 export function pageContextPayload(): {
 	page_url: string | null;
+	page_title: string | null;
 	metadata: Record<string, string>;
 } {
 	const utm = utmMetadataFromLocation();
 	return {
 		page_url: currentPageUrl(),
+		page_title: currentPageTitle(),
 		metadata: Object.keys(utm).length > 0 ? utm : {},
 	};
 }

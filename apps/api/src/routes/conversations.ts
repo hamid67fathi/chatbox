@@ -147,7 +147,7 @@ export async function conversationRoutes(app: FastifyInstance) {
 				: null;
 			return {
 				...conv,
-				visitor: serializeVisitorForApi(visitor),
+				visitor: serializeVisitorForApi(visitor, contact?.metadata),
 				contact,
 				tags: tags.map((t) => t.tag),
 				notes: notes.map((n) => ({

@@ -38,6 +38,12 @@ export interface ConversationNote {
 	} | null;
 }
 
+export interface VisitorPageView {
+	url: string;
+	title?: string | null;
+	at: string;
+}
+
 export interface VisitorInfo {
 	ip?: string | null;
 	country?: string | null;
@@ -53,6 +59,7 @@ export interface VisitorInfo {
 	utm?: Record<string, string>;
 	updated_at?: string | null;
 	updatedAt?: string | null;
+	page_views?: VisitorPageView[];
 }
 
 export interface ConversationDetail extends Conversation {
