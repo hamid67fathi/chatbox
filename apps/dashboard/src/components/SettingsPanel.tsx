@@ -11,15 +11,19 @@ import {
 	fetchWorkspaceDetail,
 	revokeApiToken,
 	updateBannedIps,
+	removeUserAvatar,
 	updateProfile,
 	updateWidgetConfig,
 	updateWorkspace,
+	uploadUserAvatar,
 	type ApiTokenRow,
 	type WidgetConfigPublic,
 } from "@/lib/api";
 import { refreshAuthUser } from "@/lib/auth-store";
+import { publicAssetUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useState } from "react";
+import { AgentAvatar } from "@/components/AgentAvatar";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
 	workspaceId: string;
@@ -49,6 +53,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [newPassword, setNewPassword] = useState("");
 	const [profileMsg, setProfileMsg] = useState("");
 	const [profileError, setProfileError] = useState("");
+	const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+	const [avatarUploading, setAvatarUploading] = useState(false);
+	const avatarInputRef = useRef<HTMLInputElement>(null);
 
 	const [wsName, setWsName] = useState("");
 	const [wsLocale, setWsLocale] = useState("fa-IR");
@@ -91,6 +98,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		if (auth?.user) {
 			setFullName(auth.user.full_name ?? "");
 			setLocale(auth.user.locale ?? "fa-IR");
+			setProfileAvatarUrl(auth.user.avatar_url ?? null);
 		}
 	}, []);
 
@@ -335,6 +343,88 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						onSubmit={saveProfile}
 						className="mx-auto flex max-w-md flex-col gap-4"
 					>
+						<div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-muted/30 p-4">
+							<AgentAvatar
+								avatarUrl={profileAvatarUrl}
+								fullName={fullName}
+								email={userEmail}
+								size="md"
+							/>
+							<div className="flex min-w-0 flex-1 flex-col gap-2">
+								<p className="text-sm font-medium">آواتار اپراتور</p>
+								<p className="text-xs text-muted-foreground">
+									در چت و لیست تیم نمایش داده می‌شود. JPEG، PNG، GIF یا WebP
+									(حداکثر ۲ مگابایت).
+								</p>
+								<div className="flex flex-wrap gap-2">
+									<input
+										ref={avatarInputRef}
+										type="file"
+										accept="image/jpeg,image/png,image/gif,image/webp"
+										className="hidden"
+										onChange={(e) => {
+											const file = e.target.files?.[0];
+											if (!file) return;
+											setProfileError("");
+											setAvatarUploading(true);
+											void uploadUserAvatar(file).then(async (result) => {
+												setAvatarUploading(false);
+												e.target.value = "";
+												if (!result.ok) {
+													setProfileError(
+														result.error ?? "آپلود آواتار ناموفق بود.",
+													);
+													return;
+												}
+												setProfileAvatarUrl(result.avatar_url ?? null);
+												await refreshAuthUser();
+												setProfileMsg("آواتار به‌روز شد.");
+											});
+										}}
+									/>
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										disabled={avatarUploading}
+										onClick={() => avatarInputRef.current?.click()}
+									>
+										{avatarUploading ? "در حال آپلود…" : "انتخاب تصویر"}
+									</Button>
+									{profileAvatarUrl && (
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											disabled={avatarUploading}
+											onClick={() => {
+												setProfileError("");
+												setAvatarUploading(true);
+												void removeUserAvatar().then(async (result) => {
+													setAvatarUploading(false);
+													if (!result.ok) {
+														setProfileError(
+															result.error ?? "حذف آواتار ناموفق بود.",
+														);
+														return;
+													}
+													setProfileAvatarUrl(null);
+													await refreshAuthUser();
+													setProfileMsg("آواتار حذف شد.");
+												});
+											}}
+										>
+											حذف آواتار
+										</Button>
+									)}
+								</div>
+								{profileAvatarUrl && (
+									<p className="truncate text-xs text-muted-foreground" dir="ltr">
+										{publicAssetUrl(profileAvatarUrl)}
+									</p>
+								)}
+							</div>
+						</div>
 						<label className="flex flex-col gap-1 text-sm font-medium">
 							ایمیل
 							<Input value={userEmail} disabled dir="ltr" />

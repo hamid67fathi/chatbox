@@ -155,6 +155,7 @@ export async function workspaceRoutes(app: FastifyInstance) {
 					status: m.status,
 					email: m.user?.email ?? null,
 					fullName: m.user?.fullName ?? null,
+					avatarUrl: m.user?.avatarUrl ?? null,
 					joinedAt: m.joinedAt,
 				})),
 			};

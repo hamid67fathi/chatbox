@@ -20,8 +20,48 @@ import {
 	verifyToken,
 } from "../lib/auth.js";
 import { ApiError, validationError } from "../lib/errors.js";
+import { saveUserAvatar } from "../lib/user-avatar.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function serializeAuthUser(
+	user: {
+		id: string;
+		email: string | null;
+		fullName: string | null;
+		avatarUrl?: string | null;
+		locale?: string | null;
+		createdAt?: Date;
+	},
+	workspaces: { workspaceId: string; role: string }[],
+) {
+	return {
+		id: user.id,
+		email: user.email,
+		full_name: user.fullName,
+		avatar_url: user.avatarUrl ?? null,
+		locale: user.locale,
+		...(user.createdAt ? { created_at: user.createdAt } : {}),
+		workspaces: workspaces.map((m) => ({
+			id: m.workspaceId,
+			role: m.role,
+		})),
+	};
+}
+
+async function readUploadBuffer(
+	data: { filename: string; mimetype: string; file: NodeJS.ReadableStream },
+) {
+	const chunks: Buffer[] = [];
+	for await (const chunk of data.file) {
+		chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+	}
+	return {
+		filename: data.filename,
+		mimetype: data.mimetype,
+		buffer: Buffer.concat(chunks),
+	};
+}
 const REFRESH_DAYS = 7;
 
 export async function authRoutes(app: FastifyInstance) {
@@ -231,19 +271,62 @@ export async function authRoutes(app: FastifyInstance) {
 			const memberships = await ensureDemoWorkspaceMembership(id);
 
 			return reply.send({
-				user: {
-					id: user.id,
-					email: user.email,
-					full_name: user.fullName,
-					avatar_url: user.avatarUrl,
-					locale: user.locale,
-					created_at: user.createdAt,
-					workspaces: memberships.map((m) => ({
-						id: m.workspaceId,
-						role: m.role,
-					})),
-				},
+				user: serializeAuthUser(user, memberships),
 			});
+		},
+	);
+
+	app.post(
+		"/v1/auth/me/avatar",
+		{
+			preHandler: [requireAuth],
+			config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+		},
+		async (request) => {
+			const authUser = (request as AuthenticatedRequest).user;
+			const data = await request.file();
+			if (!data) throw validationError("file is required.", "file");
+
+			const file = await readUploadBuffer(data);
+			const avatarUrl = await saveUserAvatar(authUser.id, file);
+
+			const [user] = await db
+				.update(users)
+				.set({ avatarUrl, updatedAt: new Date() })
+				.where(eq(users.id, authUser.id))
+				.returning({
+					id: users.id,
+					email: users.email,
+					fullName: users.fullName,
+					avatarUrl: users.avatarUrl,
+					locale: users.locale,
+				});
+
+			const memberships = await loadUserWorkspaces(authUser.id);
+			return { user: serializeAuthUser(user, memberships) };
+		},
+	);
+
+	app.delete(
+		"/v1/auth/me/avatar",
+		{ preHandler: [requireAuth] },
+		async (request) => {
+			const authUser = (request as AuthenticatedRequest).user;
+
+			const [user] = await db
+				.update(users)
+				.set({ avatarUrl: null, updatedAt: new Date() })
+				.where(eq(users.id, authUser.id))
+				.returning({
+					id: users.id,
+					email: users.email,
+					fullName: users.fullName,
+					avatarUrl: users.avatarUrl,
+					locale: users.locale,
+				});
+
+			const memberships = await loadUserWorkspaces(authUser.id);
+			return { user: serializeAuthUser(user, memberships) };
 		},
 	);
 
@@ -316,16 +399,13 @@ export async function authRoutes(app: FastifyInstance) {
 					id: users.id,
 					email: users.email,
 					fullName: users.fullName,
+					avatarUrl: users.avatarUrl,
 					locale: users.locale,
 				});
 
+			const memberships = await loadUserWorkspaces(authUser.id);
 			return reply.send({
-				user: {
-					id: user.id,
-					email: user.email,
-					full_name: user.fullName,
-					locale: user.locale,
-				},
+				user: serializeAuthUser(user, memberships),
 			});
 		},
 	);

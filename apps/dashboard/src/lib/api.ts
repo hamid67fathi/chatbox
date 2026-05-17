@@ -2,6 +2,13 @@ import { clearAuth, getAccessToken, refreshAccessToken } from "./auth-store";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+export function publicAssetUrl(path: string | null | undefined): string | null {
+	if (!path) return null;
+	if (path.startsWith("http://") || path.startsWith("https://")) return path;
+	const base = API_URL.replace(/\/$/, "");
+	return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export interface Conversation {
 	id: string;
 	contactId: string;
@@ -77,6 +84,7 @@ export interface WorkspaceMember {
 	status?: string;
 	email: string | null;
 	fullName: string | null;
+	avatarUrl?: string | null;
 	joinedAt?: string | null;
 }
 
@@ -601,6 +609,47 @@ export async function updateWorkspace(
 		body: JSON.stringify(data),
 	});
 	return res.ok;
+}
+
+export async function uploadUserAvatar(
+	file: File,
+): Promise<{ ok: boolean; avatar_url?: string | null; error?: string }> {
+	const token = getAccessToken();
+	const form = new FormData();
+	form.append("file", file);
+	const res = await authFetch(`${API_URL}/v1/auth/me/avatar`, {
+		method: "POST",
+		headers: token ? { Authorization: `Bearer ${token}` } : {},
+		body: form,
+	});
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return {
+			ok: false,
+			error: (body as { error?: { message?: string } })?.error?.message,
+		};
+	}
+	const user = (body as { user?: { avatar_url?: string | null } }).user;
+	return { ok: true, avatar_url: user?.avatar_url ?? null };
+}
+
+export async function removeUserAvatar(): Promise<{
+	ok: boolean;
+	error?: string;
+}> {
+	const token = getAccessToken();
+	const res = await authFetch(`${API_URL}/v1/auth/me/avatar`, {
+		method: "DELETE",
+		headers: token ? { Authorization: `Bearer ${token}` } : {},
+	});
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return {
+			ok: false,
+			error: (body as { error?: { message?: string } })?.error?.message,
+		};
+	}
+	return { ok: true };
 }
 
 export async function updateProfile(data: {

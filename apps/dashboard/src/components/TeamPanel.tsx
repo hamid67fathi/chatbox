@@ -1,5 +1,6 @@
 "use client";
 
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkspaceMember } from "@/lib/api";
@@ -160,18 +161,26 @@ export function TeamPanel({ workspaceId, userId, workspaceRole }: Props) {
 								key={m.userId}
 								className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card p-4"
 							>
-								<div>
-									<p className="font-medium">
-										{m.fullName || m.email || m.userId.slice(0, 8)}
-										{m.userId === userId && (
-											<span className="ms-1 text-xs text-muted-foreground">
-												(شما)
-											</span>
-										)}
-									</p>
-									<p className="text-sm text-muted-foreground" dir="ltr">
-										{m.email}
-									</p>
+								<div className="flex min-w-0 items-center gap-3">
+									<AgentAvatar
+										avatarUrl={m.avatarUrl}
+										fullName={m.fullName}
+										email={m.email}
+										size="sm"
+									/>
+									<div className="min-w-0">
+										<p className="font-medium">
+											{m.fullName || m.email || m.userId.slice(0, 8)}
+											{m.userId === userId && (
+												<span className="ms-1 text-xs text-muted-foreground">
+													(شما)
+												</span>
+											)}
+										</p>
+										<p className="text-sm text-muted-foreground" dir="ltr">
+											{m.email}
+										</p>
+									</div>
 								</div>
 								<div className="flex items-center gap-2">
 									{canManage && m.role !== "owner" ? (

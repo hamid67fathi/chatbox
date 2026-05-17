@@ -1,5 +1,6 @@
 "use client";
 
+import { AgentAvatar } from "@/components/AgentAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CannedResponsePicker } from "@/components/CannedResponsePicker";
@@ -11,7 +12,9 @@ import { MessageStatus } from "@/components/MessageStatus";
 import {
 	fetchCannedResponses,
 	fetchMessages,
+	fetchWorkspaceMembers,
 	normalizeMessage,
+	type WorkspaceMember,
 	sendMessage,
 	uploadMessageFile,
 	useCannedResponse,
@@ -61,6 +64,9 @@ export function MessageThread({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadError, setUploadError] = useState("");
 	const [copilotOpen, setCopilotOpen] = useState(false);
+	const [membersById, setMembersById] = useState<
+		Map<string, WorkspaceMember>
+	>(new Map());
 
 	const markAsRead = useCallback(
 		(messageId: string) => {
@@ -92,6 +98,12 @@ export function MessageThread({
 
 	useEffect(() => {
 		fetchCannedResponses(workspaceId).then(setCannedItems);
+	}, [workspaceId]);
+
+	useEffect(() => {
+		fetchWorkspaceMembers(workspaceId).then((rows) => {
+			setMembersById(new Map(rows.map((m) => [m.userId, m])));
+		});
 	}, [workspaceId]);
 
 	useEffect(() => {
@@ -292,23 +304,47 @@ export function MessageThread({
 					const quoted = msg.replyToId
 						? messages.find((m) => m.id === msg.replyToId)
 						: null;
+					const agentMember =
+						msg.senderType === "agent" && msg.senderUserId
+							? membersById.get(msg.senderUserId)
+							: undefined;
 					return (
 					<div
 						key={msg.id}
 						className={cn(
-							"group relative max-w-[75%] rounded-xl px-3 py-2 text-sm shadow-sm",
+							"group flex gap-2",
+							msg.senderType === "ai" || msg.senderType === "agent"
+								? "ms-auto max-w-[85%] flex-row-reverse"
+								: "me-auto max-w-[75%]",
+							msg.senderType === "system" && "mx-auto max-w-[85%]",
+						)}
+					>
+						{msg.senderType === "agent" && (
+							<AgentAvatar
+								avatarUrl={agentMember?.avatarUrl}
+								fullName={agentMember?.fullName}
+								email={agentMember?.email}
+								size="sm"
+								className="mt-1"
+							/>
+						)}
+					<div
+						className={cn(
+							"relative min-w-0 flex-1 rounded-xl px-3 py-2 text-sm shadow-sm",
 							msg.senderType === "ai" &&
-								"ms-auto bg-violet-100 text-violet-950 dark:bg-violet-950 dark:text-violet-100",
+								"bg-violet-100 text-violet-950 dark:bg-violet-950 dark:text-violet-100",
 							msg.senderType === "agent" &&
-								"ms-auto bg-primary text-primary-foreground",
-							msg.senderType === "contact" && "me-auto bg-muted text-foreground",
+								"bg-primary text-primary-foreground",
+							msg.senderType === "contact" && "bg-muted text-foreground",
 							msg.senderType === "system" &&
-								"mx-auto bg-secondary text-center text-xs text-muted-foreground",
+								"bg-secondary text-center text-xs text-muted-foreground",
 						)}
 					>
 						{(msg.senderType === "ai" || msg.senderType === "agent") && (
 							<span className="mb-1 block text-[10px] font-medium opacity-80">
-								{msg.senderType === "ai" ? "🤖 AI" : "👤 اپراتور"}
+								{msg.senderType === "ai"
+									? "🤖 AI"
+									: agentMember?.fullName ?? "👤 اپراتور"}
 							</span>
 						)}
 						{quoted && (
@@ -351,6 +387,7 @@ export function MessageThread({
 								<MessageStatus msg={msg} />
 							)}
 						</div>
+					</div>
 					</div>
 					);
 				})}
