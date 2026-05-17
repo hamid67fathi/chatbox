@@ -1,8 +1,15 @@
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { conversations, messages } from "../db/schema/index.js";
+import {
+	contacts,
+	conversationTags,
+	conversations,
+	messages,
+	users,
+} from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
+import { getWorkspaceRole } from "../lib/conversation-access.js";
 import {
 	conversationsToCsv,
 	type ReportRow,
@@ -12,7 +19,6 @@ import {
 	SORT_AT,
 	type ReportQueryParams,
 } from "../lib/conversation-report-filters.js";
-import { getWorkspaceRole } from "../lib/conversation-access.js";
 import { validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
 import { getWorkspaceId } from "../lib/workspace.js";
@@ -34,36 +40,68 @@ async function fetchReportRows(
 		query,
 	);
 
-	const rows = await db.query.conversations.findMany({
-		where: and(...conditions),
-		limit: opts.limit,
-		offset: opts.offset,
-		orderBy: [desc(SORT_AT)],
-		with: {
-			contact: true,
-			assignedAgent: true,
-			tags: true,
-		},
-	});
+	const rows = await db
+		.select({
+			id: conversations.id,
+			createdAt: conversations.createdAt,
+			lastMessageAt: conversations.lastMessageAt,
+			closedAt: conversations.closedAt,
+			status: conversations.status,
+			channel: conversations.channel,
+			subject: conversations.subject,
+			csatScore: conversations.csatScore,
+			firstResponseSec: conversations.firstResponseSec,
+			metadata: conversations.metadata,
+			contactFullName: contacts.fullName,
+			contactEmail: contacts.email,
+			contactPhone: contacts.phone,
+			agentEmail: users.email,
+			agentFullName: users.fullName,
+		})
+		.from(conversations)
+		.leftJoin(contacts, eq(conversations.contactId, contacts.id))
+		.leftJoin(users, eq(conversations.assignedAgentId, users.id))
+		.where(and(...conditions))
+		.orderBy(sql`${SORT_AT} DESC`)
+		.limit(opts.limit)
+		.offset(opts.offset);
 
 	if (rows.length === 0) return [];
 
 	const ids = rows.map((r) => r.id);
-	const counts = await db
-		.select({
-			conversationId: messages.conversationId,
-			n: count(),
-		})
-		.from(messages)
-		.where(
-			and(
-				eq(messages.workspaceId, workspaceId),
-				inArray(messages.conversationId, ids),
-			),
-		)
-		.groupBy(messages.conversationId);
 
-	const countMap = new Map(counts.map((c) => [c.conversationId, Number(c.n)]));
+	const [counts, tagRows] = await Promise.all([
+		db
+			.select({
+				conversationId: messages.conversationId,
+				n: sql<number>`count(*)::int`,
+			})
+			.from(messages)
+			.where(
+				and(
+					eq(messages.workspaceId, workspaceId),
+					inArray(messages.conversationId, ids),
+				),
+			)
+			.groupBy(messages.conversationId),
+		db
+			.select({
+				conversationId: conversationTags.conversationId,
+				tag: conversationTags.tag,
+			})
+			.from(conversationTags)
+			.where(inArray(conversationTags.conversationId, ids)),
+	]);
+
+	const countMap = new Map(
+		counts.map((c) => [c.conversationId, Number(c.n)]),
+	);
+	const tagsByConv = new Map<string, { tag: string }[]>();
+	for (const t of tagRows) {
+		const list = tagsByConv.get(t.conversationId) ?? [];
+		list.push({ tag: t.tag });
+		tagsByConv.set(t.conversationId, list);
+	}
 
 	return rows.map((r) => ({
 		id: r.id,
@@ -76,20 +114,22 @@ async function fetchReportRows(
 		csatScore: r.csatScore,
 		firstResponseSec: r.firstResponseSec,
 		metadata: r.metadata,
-		contact: r.contact
-			? {
-					fullName: r.contact.fullName,
-					email: r.contact.email,
-					phone: r.contact.phone,
-				}
-			: null,
-		assignedAgent: r.assignedAgent
-			? {
-					email: r.assignedAgent.email,
-					fullName: r.assignedAgent.fullName,
-				}
-			: null,
-		tags: r.tags.map((t) => ({ tag: t.tag })),
+		contact:
+			r.contactFullName || r.contactEmail || r.contactPhone
+				? {
+						fullName: r.contactFullName,
+						email: r.contactEmail,
+						phone: r.contactPhone,
+					}
+				: null,
+		assignedAgent:
+			r.agentEmail || r.agentFullName
+				? {
+						email: r.agentEmail,
+						fullName: r.agentFullName,
+					}
+				: null,
+		tags: tagsByConv.get(r.id) ?? [],
 		messageCount: countMap.get(r.id) ?? 0,
 	}));
 }
@@ -106,11 +146,10 @@ function mapRowForJson(r: ReportRow) {
 		csat_score: r.csatScore,
 		first_response_sec: r.firstResponseSec,
 		message_count: r.messageCount,
-		archived: r.metadata && typeof r.metadata === "object"
-			? Boolean(
-					(r.metadata as { archivedAt?: string }).archivedAt,
-				)
-			: false,
+		archived:
+			r.metadata && typeof r.metadata === "object"
+				? Boolean((r.metadata as { archivedAt?: string }).archivedAt)
+				: false,
 		contact: r.contact
 			? {
 					full_name: r.contact.fullName,
@@ -126,6 +165,25 @@ function mapRowForJson(r: ReportRow) {
 			: null,
 		tags: r.tags.map((t) => t.tag),
 	};
+}
+
+async function countMatching(
+	workspaceId: string,
+	userId: string,
+	query: ReportQueryParams,
+): Promise<number> {
+	const role = await getWorkspaceRole(workspaceId, userId);
+	const conditions = buildConversationReportConditions(
+		workspaceId,
+		userId,
+		role,
+		query,
+	);
+	const [totalRow] = await db
+		.select({ n: sql<number>`count(*)::int` })
+		.from(conversations)
+		.where(and(...conditions));
+	return Number(totalRow?.n ?? 0);
 }
 
 export async function reportRoutes(app: FastifyInstance) {
@@ -146,31 +204,18 @@ export async function reportRoutes(app: FastifyInstance) {
 			);
 			const offset = Math.max(Number(request.query.offset) || 0, 0);
 
-			const role = await getWorkspaceRole(wsId, user.id);
-			const conditions = buildConversationReportConditions(
-				wsId,
-				user.id,
-				role,
-				request.query,
-			);
-
-			const [totalRow] = await db
-				.select({ n: count() })
-				.from(conversations)
-				.where(and(...conditions));
-
-			const rows = await fetchReportRows(wsId, user.id, request.query, {
-				limit,
-				offset,
-			});
+			const [total, rows] = await Promise.all([
+				countMatching(wsId, user.id, request.query),
+				fetchReportRows(wsId, user.id, request.query, { limit, offset }),
+			]);
 
 			return {
 				data: rows.map(mapRowForJson),
 				page: {
 					limit,
 					offset,
-					total: Number(totalRow?.n ?? 0),
-					has_more: offset + rows.length < Number(totalRow?.n ?? 0),
+					total,
+					has_more: offset + rows.length < total,
 				},
 			};
 		},
@@ -189,7 +234,6 @@ export async function reportRoutes(app: FastifyInstance) {
 
 			const wsId = getWorkspaceId(request);
 			const user = (request as AuthenticatedRequest).user;
-			const role = await getWorkspaceRole(wsId, user.id);
 
 			if (!request.query.from || !request.query.to) {
 				throw validationError(
@@ -198,24 +242,15 @@ export async function reportRoutes(app: FastifyInstance) {
 				);
 			}
 
-			const rows = await fetchReportRows(wsId, user.id, request.query, {
-				limit: MAX_EXPORT,
-				offset: 0,
-			});
+			const [total, rows] = await Promise.all([
+				countMatching(wsId, user.id, request.query),
+				fetchReportRows(wsId, user.id, request.query, {
+					limit: MAX_EXPORT,
+					offset: 0,
+				}),
+			]);
 
-			const conditions = buildConversationReportConditions(
-				wsId,
-				user.id,
-				role,
-				request.query,
-			);
-			const [totalRow] = await db
-				.select({ n: count() })
-				.from(conversations)
-				.where(and(...conditions));
-			const total = Number(totalRow?.n ?? 0);
 			const truncated = total > MAX_EXPORT;
-
 			const csv = conversationsToCsv(rows);
 			const fromSlug = request.query.from.slice(0, 10);
 			const toSlug = request.query.to.slice(0, 10);
