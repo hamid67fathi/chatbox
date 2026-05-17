@@ -85,6 +85,7 @@ export class WidgetSocket {
 
 		this.socket.on("connected", () => {
 			this.socket?.emit("conv:join", { conv_id: conversationId });
+			this.socket?.emit("presence:heartbeat");
 		});
 
 		this.socket.on("message:new", (data: unknown) => {
@@ -114,6 +115,14 @@ export class WidgetSocket {
 	emitTyping(convId: string, isTyping: boolean) {
 		this.socket?.emit(isTyping ? "typing:start" : "typing:stop", {
 			conv_id: convId,
+		});
+	}
+
+	emitVisitorPresence(page?: { page_url?: string | null; page_title?: string | null }) {
+		this.socket?.emit("presence:heartbeat");
+		this.socket?.emit("visitor:presence", {
+			page_url: page?.page_url ?? null,
+			page_title: page?.page_title ?? null,
 		});
 	}
 

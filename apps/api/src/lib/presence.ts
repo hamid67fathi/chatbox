@@ -49,6 +49,58 @@ export async function presenceHeartbeat(
 	await redis().expire(socketsKey(workspaceId, type, memberId), TTL_SEC);
 }
 
+export interface VisitorPresenceMeta {
+	contact_id: string;
+	connected_at: string;
+	last_seen_at: string;
+	ip?: string | null;
+	country?: string | null;
+	country_code?: string | null;
+	device?: string | null;
+	browser?: string | null;
+	page_url?: string | null;
+	page_title?: string | null;
+	visit_count?: number;
+	conversation_id?: string | null;
+}
+
+function visitorMetaKey(workspaceId: string, contactId: string) {
+	return `presence:${workspaceId}:visitor:${contactId}:meta`;
+}
+
+export async function getOnlineVisitorIds(workspaceId: string): Promise<string[]> {
+	return redis().smembers(membersSetKey(workspaceId, "visitor"));
+}
+
+export async function getVisitorPresenceMeta(
+	workspaceId: string,
+	contactId: string,
+): Promise<VisitorPresenceMeta | null> {
+	const raw = await redis().get(visitorMetaKey(workspaceId, contactId));
+	if (!raw) return null;
+	try {
+		return JSON.parse(raw) as VisitorPresenceMeta;
+	} catch {
+		return null;
+	}
+}
+
+export async function setVisitorPresenceMeta(
+	workspaceId: string,
+	contactId: string,
+	meta: VisitorPresenceMeta,
+): Promise<void> {
+	const key = visitorMetaKey(workspaceId, contactId);
+	await redis().set(key, JSON.stringify(meta), "EX", TTL_SEC);
+}
+
+export async function removeVisitorPresenceMeta(
+	workspaceId: string,
+	contactId: string,
+): Promise<void> {
+	await redis().del(visitorMetaKey(workspaceId, contactId));
+}
+
 export async function presenceDisconnect(
 	workspaceId: string,
 	type: "agent" | "visitor",
@@ -62,6 +114,9 @@ export async function presenceDisconnect(
 	if (remaining === 0) {
 		await r.del(sk);
 		await r.srem(membersSetKey(workspaceId, type), memberId);
+		if (type === "visitor") {
+			await removeVisitorPresenceMeta(workspaceId, memberId);
+		}
 	}
 	return presenceCounts(workspaceId);
 }

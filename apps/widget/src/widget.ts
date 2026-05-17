@@ -79,6 +79,7 @@ export class ChatBoxWidget {
 	private readonly renderedIds = new Set<string>();
 	private unbindPageNav: (() => void) | null = null;
 	private pageContextTimer: ReturnType<typeof setInterval> | null = null;
+	private presenceTimer: ReturnType<typeof setInterval> | null = null;
 	private brandingEl: HTMLElement | null = null;
 	private blockedBannerEl!: HTMLElement;
 	private isBlocked = false;
@@ -379,7 +380,9 @@ export class ChatBoxWidget {
 	}
 
 	private pushPageContext() {
-		void updateVisitorContext(pageContextPayload());
+		const page = pageContextPayload();
+		void updateVisitorContext(page);
+		this.ws.emitVisitorPresence(page);
 	}
 
 	private startPageTracking() {
@@ -387,6 +390,11 @@ export class ChatBoxWidget {
 		this.unbindPageNav = bindPageNavigation(() => this.pushPageContext());
 		if (this.pageContextTimer) clearInterval(this.pageContextTimer);
 		this.pageContextTimer = setInterval(() => this.pushPageContext(), 60_000);
+		if (this.presenceTimer) clearInterval(this.presenceTimer);
+		this.presenceTimer = setInterval(
+			() => this.ws.emitVisitorPresence(pageContextPayload()),
+			30_000,
+		);
 	}
 
 	private showBlockedState(message = VISITOR_BLOCKED_MESSAGE) {
@@ -398,6 +406,10 @@ export class ChatBoxWidget {
 		if (this.pageContextTimer) {
 			clearInterval(this.pageContextTimer);
 			this.pageContextTimer = null;
+		}
+		if (this.presenceTimer) {
+			clearInterval(this.presenceTimer);
+			this.presenceTimer = null;
 		}
 		this.blockedBannerEl.textContent = message;
 		this.blockedBannerEl.classList.add("visible");

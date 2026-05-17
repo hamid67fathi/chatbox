@@ -11,6 +11,7 @@ import { fetchConversations } from "@/lib/api";
 import { canAgentSeeConversation } from "@/lib/conversation-access";
 import { getSocket } from "@/lib/socket";
 import { Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConversationList } from "./ConversationList";
 import { ConversationToolbar } from "./ConversationToolbar";
@@ -58,6 +59,8 @@ const CHANNEL_OPTIONS = [
 ];
 
 export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
+	const searchParams = useSearchParams();
+	const deepLinkConvId = searchParams.get("c");
 	const [conversations, setConversations] = useState<Conversation[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
@@ -115,6 +118,13 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	useEffect(() => {
 		reloadConversations();
 	}, [reloadConversations]);
+
+	useEffect(() => {
+		if (!deepLinkConvId || conversations.length === 0) return;
+		if (conversations.some((c) => c.id === deepLinkConvId)) {
+			setActiveId(deepLinkConvId);
+		}
+	}, [deepLinkConvId, conversations]);
 
 	useEffect(() => {
 		if (!workspaceId) return;

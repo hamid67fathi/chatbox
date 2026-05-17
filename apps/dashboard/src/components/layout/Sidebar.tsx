@@ -5,6 +5,7 @@ import {
 	BookOpen,
 	CreditCard,
 	FileBarChart,
+	Globe,
 	Inbox,
 	Settings,
 	Users,
@@ -15,6 +16,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
 	{ href: "/", label: "صندوق ورودی", icon: Inbox },
+	{ href: "/visitors", label: "بازدیدکنندگان آنلاین", icon: Globe },
 	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
 	{ href: "/reports", label: "گزارش‌ها", icon: FileBarChart },
 	{ href: "/billing", label: "اشتراک", icon: CreditCard },

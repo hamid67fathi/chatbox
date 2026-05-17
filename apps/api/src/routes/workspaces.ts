@@ -12,6 +12,7 @@ import {
 	getPlanUsageStatus,
 } from "../lib/plan-limits.js";
 import { presenceCounts } from "../lib/presence.js";
+import { listOnlineVisitors } from "../lib/visitor-presence.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -112,6 +113,15 @@ export async function workspaceRoutes(app: FastifyInstance) {
 		async (request) => {
 			const counts = await presenceCounts(request.params.id);
 			return { data: counts };
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/workspaces/:id/presence/visitors",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const rows = await listOnlineVisitors(request.params.id);
+			return { data: rows };
 		},
 	);
 

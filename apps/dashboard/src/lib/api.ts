@@ -247,6 +247,21 @@ export interface PresenceCounts {
 	visitors_online: number;
 }
 
+export interface OnlineVisitorRow {
+	contact_id: string;
+	full_name: string | null;
+	ip: string | null;
+	country: string | null;
+	country_code: string | null;
+	device: string | null;
+	visit_count: number;
+	connected_at: string;
+	duration_sec: number;
+	current_page_url: string | null;
+	current_page_title: string | null;
+	conversation_id: string | null;
+}
+
 export async function fetchConversations(
 	workspaceId: string,
 	filters: ConversationFilters = {},
@@ -872,6 +887,21 @@ export async function fetchPresence(
 	if (!res.ok) return null;
 	const json = (await res.json()) as { data?: PresenceCounts };
 	return json.data ?? null;
+}
+
+export async function fetchOnlineVisitors(
+	workspaceId: string,
+): Promise<OnlineVisitorRow[]> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/presence/visitors`,
+		{
+			headers: authHeaders(workspaceId),
+			cache: "no-store",
+		},
+	);
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: OnlineVisitorRow[] };
+	return json.data ?? [];
 }
 
 export async function assignConversation(

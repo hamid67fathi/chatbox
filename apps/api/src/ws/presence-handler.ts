@@ -5,6 +5,12 @@ import {
 	presenceDisconnect,
 	presenceHeartbeat,
 } from "../lib/presence.js";
+import {
+	clearVisitorPresence,
+	listOnlineVisitors,
+	patchVisitorPresence,
+	syncVisitorPresenceFromContact,
+} from "../lib/visitor-presence.js";
 
 export type PresenceClientType = "agent" | "visitor";
 
@@ -43,11 +49,35 @@ export async function registerPresence(
 	socket.data.presenceMemberId = memberId;
 
 	await presenceConnect(workspaceId, type, memberId, socket.id);
+	if (type === "visitor") {
+		await syncVisitorPresenceFromContact(workspaceId, memberId);
+		const visitors = await listOnlineVisitors(workspaceId);
+		io.to(`workspace:${workspaceId}`).emit("presence:visitors", {
+			data: visitors,
+		});
+	}
 	await emitCounts(io, workspaceId);
 
 	socket.on("presence:heartbeat", async () => {
 		await presenceHeartbeat(workspaceId, type, memberId);
 	});
+
+	socket.on(
+		"visitor:presence",
+		async (data: { page_url?: string; page_title?: string }) => {
+			if (type !== "visitor") return;
+			await patchVisitorPresence(workspaceId, memberId, {
+				page_url:
+					typeof data?.page_url === "string" ? data.page_url : null,
+				page_title:
+					typeof data?.page_title === "string" ? data.page_title : null,
+			});
+			const visitors = await listOnlineVisitors(workspaceId);
+			io.to(`workspace:${workspaceId}`).emit("presence:visitors", {
+				data: visitors,
+			});
+		},
+	);
 
 	socket.on("presence:online", async () => {
 		await presenceConnect(workspaceId, type, memberId, socket.id);
@@ -68,5 +98,12 @@ export async function unregisterPresence(
 	const memberId = socket.data.presenceMemberId as string | undefined;
 	if (!type || !memberId) return;
 	await presenceDisconnect(workspaceId, type, memberId, socket.id);
+	if (type === "visitor") {
+		await clearVisitorPresence(workspaceId, memberId);
+		const visitors = await listOnlineVisitors(workspaceId);
+		io.to(`workspace:${workspaceId}`).emit("presence:visitors", {
+			data: visitors,
+		});
+	}
 	await emitCounts(io, workspaceId);
 }
