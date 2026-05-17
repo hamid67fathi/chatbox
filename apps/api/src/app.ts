@@ -14,6 +14,7 @@ import { errorHandler } from "./lib/errors.js";
 import { getWidgetBundleJs } from "./lib/widget-bundle.js";
 import { UPLOAD_ROOT } from "./lib/uploads.js";
 import { authRoutes } from "./routes/auth.js";
+import { billingPublicRoutes } from "./routes/billing-public.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { cannedResponseRoutes } from "./routes/canned-responses.js";
@@ -113,6 +114,7 @@ export function buildApp() {
 
 	app.register(authRoutes);
 	app.register(widgetRoutes);
+	app.register(billingPublicRoutes);
 
 	app.register(async function protectedRoutes(instance) {
 		instance.addHook("onRequest", requireAuth);

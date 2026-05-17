@@ -117,7 +117,7 @@ rule: >
 | کد | عنوان | توضیح | وضعیت | تاریخ | یادداشت |
 |----|-------|-------|--------|-------|---------|
 | P8.1 | اپلیکیشن لندینگ پیج | apps/landing (Next.js static)، Home/Pricing/About/Contact، دمو ویجت | انجام شد | 2026-05-16 | پورت 3002، static export |
-| P8.2 | Billing واقعی (Zarinpal) | SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook | شروع نشده | — | checkout sandbox موجود |
+| P8.2 | Billing واقعی (Zarinpal) | SDK رسمی، فاکتور PDF، مدیریت اشتراک، trial 7 روزه، webhook | انجام شد | 2026-05-16 | verify عمومی، PDF، trial، cancel، webhook |
 | P8.3 | اعمال محدودیت پلن‌ها | محدودیت agent/مکالمه/AI credits، نمایش usage، هشدار سقف | در حال انجام | 2026-05-16 | صفحه /billing + ai-usage؛ سقف agent/chat بعداً |
 
 ### فاز ۹ — زیرساخت و Deploy تولید

@@ -146,6 +146,15 @@ EOF
 cp ~/chat-box/apps/landing/.env.example ~/chat-box/apps/landing/.env.local
 ```
 
+**Billing — در `~/chat-box/.env`:**
+
+```bash
+ZARINPAL_SANDBOX=true
+ZARINPAL_CALLBACK_URL=http://192.168.1.8:3001/v1/billing/verify
+DASHBOARD_URL=http://192.168.1.8:3000
+# برای production: ZARINPAL_SANDBOX=false و ZARINPAL_MERCHANT_ID واقعی
+```
+
 **ویجت (اگر دکمه چت لود نشد):**
 
 ```bash
@@ -226,7 +235,7 @@ curl -s "http://192.168.1.8:3001/v1/billing/$WS_ID/subscription" \
 | http://192.168.1.8:3000 | داشبورد inbox |
 | http://192.168.1.8:3000/login | ورود |
 | http://192.168.1.8:3000/register | ثبت‌نام |
-| http://192.168.1.8:3000/billing | اشتراک و اعتبار AI |
+| http://192.168.1.8:3000/billing | اشتراک، پرداخت، فاکتور PDF |
 | http://192.168.1.8:3002 | لندینگ (خانه) |
 | http://192.168.1.8:3002/pricing/ | قیمت‌ها |
 | http://192.168.1.8:3001/chat.html | تست چت |

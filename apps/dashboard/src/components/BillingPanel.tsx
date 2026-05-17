@@ -4,12 +4,19 @@ import { Button } from "@/components/ui/button";
 import {
 	type AiBudgetStatus,
 	type BillingPlan,
+	type BillingStatus,
+	type PaymentRow,
+	cancelSubscription,
+	downloadInvoicePdf,
 	fetchAiUsage,
+	fetchBillingPayments,
 	fetchBillingPlans,
-	fetchSubscription,
+	fetchBillingStatus,
 	startBillingCheckout,
+	startProTrial,
 } from "@/lib/api";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Download, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 interface Props {
@@ -18,36 +25,55 @@ interface Props {
 }
 
 export function BillingPanel({ workspaceId, workspaceRole }: Props) {
+	const searchParams = useSearchParams();
+	const paymentResult = searchParams.get("payment");
+	const paymentRef = searchParams.get("ref");
+
 	const [plans, setPlans] = useState<BillingPlan[]>([]);
 	const [usage, setUsage] = useState<AiBudgetStatus | null>(null);
-	const [subscription, setSubscription] = useState<{
-		plan: string;
-		status: string;
-	} | null>(null);
+	const [billing, setBilling] = useState<BillingStatus | null>(null);
+	const [payments, setPayments] = useState<PaymentRow[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [checkoutPlan, setCheckoutPlan] = useState<string | null>(null);
+	const [busy, setBusy] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState<string | null>(null);
 
-	const canPurchase = workspaceRole === "owner" || workspaceRole === "admin";
+	const canManage = workspaceRole === "owner" || workspaceRole === "admin";
 
 	const load = useCallback(async () => {
 		setLoading(true);
-		const [p, u, s] = await Promise.all([
+		const [p, u, b, pay] = await Promise.all([
 			fetchBillingPlans(workspaceId),
 			fetchAiUsage(workspaceId),
-			fetchSubscription(workspaceId),
+			fetchBillingStatus(workspaceId),
+			fetchBillingPayments(workspaceId),
 		]);
 		setPlans(p);
 		setUsage(u);
-		setSubscription(
-			s ? { plan: s.plan, status: s.status } : null,
-		);
+		setBilling(b);
+		setPayments(pay);
 		setLoading(false);
 	}, [workspaceId]);
 
 	useEffect(() => {
 		void load();
 	}, [load]);
+
+	useEffect(() => {
+		if (paymentResult === "success") {
+			setSuccess(
+				paymentRef
+					? `پرداخت موفق — کد پیگیری: ${paymentRef}`
+					: "پرداخت با موفقیت انجام شد.",
+			);
+			void load();
+		} else if (paymentResult === "cancelled") {
+			setError("پرداخت لغو شد.");
+		} else if (paymentResult === "error") {
+			setError("خطا در تأیید پرداخت.");
+		}
+	}, [paymentResult, paymentRef, load]);
 
 	async function handleCheckout(planName: string) {
 		setCheckoutPlan(planName);
@@ -63,6 +89,32 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 		}
 	}
 
+	async function handleTrial() {
+		setBusy("trial");
+		setError(null);
+		const result = await startProTrial(workspaceId);
+		setBusy(null);
+		if (result.error) {
+			setError(result.error);
+			return;
+		}
+		setSuccess("دوره آزمایشی ۷ روزه Pro فعال شد.");
+		void load();
+	}
+
+	async function handleCancel() {
+		setBusy("cancel");
+		setError(null);
+		const result = await cancelSubscription(workspaceId);
+		setBusy(null);
+		if (result.error) {
+			setError(result.error);
+			return;
+		}
+		setSuccess("اشتراک لغو شد.");
+		void load();
+	}
+
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center p-12 text-muted-foreground">
@@ -70,6 +122,9 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 			</div>
 		);
 	}
+
+	const workspacePlan = billing?.workspace_plan ?? usage?.plan ?? "free";
+	const trialEnds = billing?.trial_ends_at;
 
 	return (
 		<div className="mx-auto max-w-4xl space-y-8 p-6">
@@ -79,10 +134,15 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 					اشتراک و اعتبار
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					پلن فعلی، مصرف AI و ارتقای اشتراک (درگاه sandbox زرین‌پال)
+					پلن workspace، مصرف AI، پرداخت زرین‌پال و فاکتور PDF
 				</p>
 			</div>
 
+			{success && (
+				<p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+					{success}
+				</p>
+			)}
 			{error && (
 				<p className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
 					{error}
@@ -94,20 +154,28 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 				<dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
 					<div>
 						<dt className="text-muted-foreground">پلن workspace</dt>
-						<dd className="font-medium">{usage?.plan ?? "—"}</dd>
+						<dd className="font-medium">{workspacePlan}</dd>
 					</div>
 					<div>
 						<dt className="text-muted-foreground">اشتراک</dt>
 						<dd className="font-medium">
-							{subscription
-								? `${subscription.plan} (${subscription.status})`
-								: "بدون اشتراک فعال"}
+							{billing?.subscription
+								? `${billing.subscription.plan} (${billing.subscription.status})`
+								: "—"}
 						</dd>
 					</div>
+					{trialEnds && (
+						<div className="sm:col-span-2">
+							<dt className="text-muted-foreground">پایان دوره آزمایشی</dt>
+							<dd className="font-medium">
+								{new Date(trialEnds).toLocaleString("fa-IR")}
+							</dd>
+						</div>
+					)}
 					{usage && usage.totalLimit != null && (
 						<>
 							<div>
-								<dt className="text-muted-foreground">اعتبار AI مصرف‌شده</dt>
+								<dt className="text-muted-foreground">اعتبار AI</dt>
 								<dd className="font-medium">
 									{usage.usedCredits} / {usage.totalLimit}
 								</dd>
@@ -115,17 +183,38 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 							<div>
 								<dt className="text-muted-foreground">باقی‌مانده</dt>
 								<dd className="font-medium">
-									{usage.remainingCredits ?? "—"} اعتبار
+									{usage.remainingCredits ?? "—"}
 								</dd>
 							</div>
 						</>
 					)}
-					{usage?.level === "unlimited" && (
-						<div className="sm:col-span-2 text-emerald-600">
-							پلن enterprise — اعتبار AI نامحدود
-						</div>
-					)}
 				</dl>
+
+				{canManage && workspacePlan === "free" && (
+					<Button
+						className="mt-4"
+						variant="outline"
+						disabled={busy === "trial"}
+						onClick={() => void handleTrial()}
+					>
+						{busy === "trial" ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							"۷ روز آزمایشی رایگان (Pro)"
+						)}
+					</Button>
+				)}
+
+				{canManage && billing?.subscription?.status === "active" && (
+					<Button
+						className="mt-4 ms-2"
+						variant="ghost"
+						disabled={busy === "cancel"}
+						onClick={() => void handleCancel()}
+					>
+						لغو اشتراک
+					</Button>
+				)}
 			</section>
 
 			<section>
@@ -138,7 +227,12 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 						>
 							<h3 className="font-bold capitalize">{plan.name}</h3>
 							<p className="mt-2 text-xl text-primary">{plan.price_display}</p>
-							{canPurchase ? (
+							{plan.trial_days ? (
+								<p className="mt-1 text-xs text-muted-foreground">
+									{plan.trial_days} روز آزمایشی
+								</p>
+							) : null}
+							{canManage && !plan.contact_sales ? (
 								<Button
 									className="mt-6 w-full"
 									disabled={checkoutPlan === plan.name}
@@ -147,18 +241,49 @@ export function BillingPanel({ workspaceId, workspaceRole }: Props) {
 									{checkoutPlan === plan.name ? (
 										<Loader2 className="h-4 w-4 animate-spin" />
 									) : (
-										"پرداخت (sandbox)"
+										"پرداخت"
 									)}
 								</Button>
-							) : (
+							) : plan.contact_sales ? (
 								<p className="mt-6 text-xs text-muted-foreground">
-									فقط owner/admin می‌توانند خرید کنند.
+									تماس با فروش
 								</p>
-							)}
+							) : null}
 						</article>
 					))}
 				</div>
 			</section>
+
+			{payments.length > 0 && (
+				<section>
+					<h2 className="mb-4 font-semibold">پرداخت‌های اخیر</h2>
+					<ul className="divide-y rounded-xl border border-border bg-card">
+						{payments.map((p) => (
+							<li
+								key={p.id}
+								className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+							>
+								<span>
+									{(p.amount_rial / 10).toLocaleString("fa-IR")} تومان —{" "}
+									<span className="text-muted-foreground">{p.status}</span>
+								</span>
+								{p.status === "paid" && p.invoice_url && (
+									<Button
+										size="sm"
+										variant="outline"
+										onClick={() =>
+											void downloadInvoicePdf(workspaceId, p.id)
+										}
+									>
+										<Download className="ms-1 h-3 w-3" />
+										فاکتور PDF
+									</Button>
+								)}
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 		</div>
 	);
 }

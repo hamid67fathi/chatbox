@@ -353,6 +353,8 @@ export interface BillingPlan {
 	name: string;
 	price_rial: number;
 	price_display: string;
+	trial_days?: number;
+	contact_sales?: boolean;
 }
 
 export interface SubscriptionInfo {
@@ -374,16 +376,94 @@ export async function fetchBillingPlans(
 	return json.plans ?? [];
 }
 
-export async function fetchSubscription(
+export interface BillingStatus {
+	subscription: SubscriptionInfo | null;
+	workspace_plan: string;
+	trial_ends_at: string | null;
+}
+
+export async function fetchBillingStatus(
 	workspaceId: string,
-): Promise<SubscriptionInfo | null> {
+): Promise<BillingStatus | null> {
 	const res = await authFetch(
 		`${API_URL}/v1/billing/${workspaceId}/subscription`,
 		{ headers: authHeaders(workspaceId), cache: "no-store" },
 	);
 	if (!res.ok) return null;
-	const json = (await res.json()) as { subscription?: SubscriptionInfo | null };
-	return json.subscription ?? null;
+	return res.json() as Promise<BillingStatus>;
+}
+
+export async function startProTrial(
+	workspaceId: string,
+): Promise<{ trial_ends_at?: string; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/${workspaceId}/trial`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	const json = (await res.json()) as {
+		trial_ends_at?: string;
+		error?: { message?: string };
+	};
+	if (!res.ok) return { error: json.error?.message ?? "خطا در فعال‌سازی آزمایشی" };
+	return { trial_ends_at: json.trial_ends_at };
+}
+
+export async function cancelSubscription(
+	workspaceId: string,
+): Promise<{ ok?: boolean; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/${workspaceId}/cancel`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	const json = (await res.json()) as { error?: { message?: string } };
+	if (!res.ok) return { error: json.error?.message ?? "خطا در لغو اشتراک" };
+	return { ok: true };
+}
+
+export interface PaymentRow {
+	id: string;
+	amount_rial: number;
+	status: string;
+	provider_ref_id: string | null;
+	paid_at: string | null;
+	invoice_url: string | null;
+}
+
+export async function fetchBillingPayments(
+	workspaceId: string,
+): Promise<PaymentRow[]> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/${workspaceId}/payments`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: PaymentRow[] };
+	return json.data ?? [];
+}
+
+export async function downloadInvoicePdf(
+	workspaceId: string,
+	paymentId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/payments/${paymentId}/invoice`,
+		{ headers: authHeaders(workspaceId) },
+	);
+	if (!res.ok) return false;
+	const blob = await res.blob();
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `chatbox-invoice-${paymentId.slice(0, 8)}.pdf`;
+	a.click();
+	URL.revokeObjectURL(url);
+	return true;
 }
 
 export async function startBillingCheckout(
