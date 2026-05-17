@@ -49,7 +49,7 @@ export function ConversationList({
 	loadingMore,
 	onLoadMore,
 }: Props) {
-	const sentinelRef = useRef<HTMLDivElement>(null);
+	const sentinelRef = useRef<HTMLLIElement>(null);
 
 	useEffect(() => {
 		if (!hasMore || !onLoadMore) return;
