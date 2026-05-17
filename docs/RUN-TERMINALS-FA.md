@@ -1,84 +1,15 @@
-# اجرای سرویس‌ها — یک دستور per ترمینال
+# اجرای کامل Chat-Box — همه دستورات
 
 > **سرور نمونه:** `192.168.1.8`  
-> هر بلوک زیر = **یک ترمینال SSH جدا** (یا یک pane در `tmux`). ترمینال‌ها را باز نگه دارید.
+> **مسیر پروژه:** `~/chat-box`  
+> هر بخش «ترمینال N» = یک SSH session جدا (یا pane در `tmux`).  
+> **sudo لازم نیست.**
 
 ---
 
-## ترمینال ۰ — دیتابیس و Redis
+## A) هر بار که سرور را روشن می‌کنید (ترتیب)
 
-اگر `docker compose ps` نشان می‌دهد Postgres و Redis بالا هستند، این مرحله را رد کنید.
-
-```bash
-cd ~/chat-box
-docker compose up -d
-docker compose ps
-```
-
----
-
-## ترمینال ۱ — API (پورت 3001)
-
-```bash
-cd ~/chat-box
-pnpm --filter api dev
-```
-
-منتظر بمانید تا ببینید: `Server listening at http://0.0.0.0:3001`
-
----
-
-## ترمینال ۲ — AI Service (پورت 8000)
-
-```bash
-cd ~/chat-box/apps/ai-service
-source .venv/bin/activate
-./dev.sh
-```
-
-اگر `./dev.sh` خطای Permission denied داد:
-
-```bash
-bash dev.sh
-```
-
-منتظر بمانید: `Uvicorn running on http://0.0.0.0:8000`
-
----
-
-## ترمینال ۳ — Dashboard (پورت 3000)
-
-```bash
-cd ~/chat-box
-pnpm --filter dashboard dev
-```
-
-منتظر بمانید: `Ready` / `compiled`
-
----
-
-## ترمینال ۴ — لندینگ پیج (پورت 3002، اختیاری)
-
-```bash
-cd ~/chat-box
-pnpm --filter landing dev
-```
-
-بعد از `pnpm install` یک‌بار:
-
-```bash
-cp apps/landing/.env.example apps/landing/.env.local
-```
-
-مرورگر: http://192.168.1.8:3002
-
-**صفحه billing در داشبورد:** http://192.168.1.8:3000/billing
-
----
-
-## بعد از هر `git pull`
-
-قبل از اجرای ترمینال‌های ۱–۳ (یک‌بار کافی است):
+### ۱. بروزرسانی کد (اختیاری ولی توصیه می‌شود)
 
 ```bash
 cd ~/chat-box
@@ -92,7 +23,7 @@ pnpm install --frozen-lockfile
 pnpm --filter api db:push
 ```
 
-بعد از pull، اگر وابستگی AI عوض شده (مثلاً langfuse):
+اگر `apps/ai-service/requirements.txt` عوض شده:
 
 ```bash
 cd ~/chat-box/apps/ai-service
@@ -102,80 +33,234 @@ pip install -r requirements.txt
 
 ---
 
-## تست سریع (ترمینال چهارم یا همان لپ‌تاپ)
+### ۲. ترمینال ۰ — Postgres + Redis
+
+```bash
+cd ~/chat-box
+docker compose up -d
+docker compose ps
+```
+
+---
+
+### ۳. ترمینال ۱ — API (پورت 3001)
+
+```bash
+cd ~/chat-box
+pnpm --filter api dev
+```
+
+✓ منتظر: `Server listening at http://0.0.0.0:3001`
+
+---
+
+### ۴. ترمینال ۲ — AI Service (پورت 8000)
+
+```bash
+cd ~/chat-box/apps/ai-service
+source .venv/bin/activate
+./dev.sh
+```
+
+اگر `Permission denied`:
+
+```bash
+bash dev.sh
+```
+
+✓ منتظر: `Uvicorn running on http://0.0.0.0:8000`
+
+---
+
+### ۵. ترمینال ۳ — Dashboard (پورت 3000)
+
+```bash
+cd ~/chat-box
+pnpm --filter dashboard dev
+```
+
+✓ منتظر: `Ready`
+
+---
+
+### ۶. ترمینال ۴ — لندینگ (پورت 3002)
+
+```bash
+cd ~/chat-box
+pnpm --filter landing dev
+```
+
+✓ مرورگر: http://192.168.1.8:3002
+
+---
+
+## B) اولین نصب (فقط یک‌بار)
+
+```bash
+cd ~/chat-box
+git clone https://github.com/hamid67fathi/chatbox.git .
+# یا اگر قبلاً clone کرده‌اید: git pull
+
+pnpm install --frozen-lockfile
+
+docker compose up -d
+
+pnpm --filter api db:push
+pnpm --filter api db:seed
+```
+
+خروجی `db:seed` را نگه دارید — **Workspace ID** را می‌خواهید.
+
+**AI Service:**
+
+```bash
+cd ~/chat-box/apps/ai-service
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# در .env در صورت نیاز OPENAI_API_KEY و ... را بگذارید
+chmod +x dev.sh
+```
+
+**env ریشه (API):**
+
+```bash
+cp ~/chat-box/.env.example ~/chat-box/.env
+```
+
+**داشبورد:**
+
+```bash
+cat > ~/chat-box/apps/dashboard/.env.local << 'EOF'
+NEXT_PUBLIC_API_URL=http://192.168.1.8:3001
+NEXT_PUBLIC_WORKSPACE_ID=WORKSPACE_ID_FROM_LOGIN_OR_SEED
+EOF
+```
+
+> **مهم:** `WORKSPACE_ID` را از خروجی login بگیرید (فیلد `user.workspaces[0].id`)، نه از docs قدیمی.
+
+**لندینگ:**
+
+```bash
+cp ~/chat-box/apps/landing/.env.example ~/chat-box/apps/landing/.env.local
+```
+
+**ویجت (اگر دکمه چت لود نشد):**
+
+```bash
+cd ~/chat-box
+pnpm build:widget
+```
+
+---
+
+## C) جدول خلاصه ترمینال‌ها
+
+| ترمینال | پورت | دستور |
+|---------|------|--------|
+| ۰ | 5432 / 6379 | `cd ~/chat-box && docker compose up -d` |
+| ۱ | 3001 | `cd ~/chat-box && pnpm --filter api dev` |
+| ۲ | 8000 | `cd ~/chat-box/apps/ai-service && source .venv/bin/activate && ./dev.sh` |
+| ۳ | 3000 | `cd ~/chat-box && pnpm --filter dashboard dev` |
+| ۴ | 3002 | `cd ~/chat-box && pnpm --filter landing dev` |
+
+---
+
+## D) تست سلامت (curl)
 
 ```bash
 curl -s http://192.168.1.8:3001/health
 curl -s http://192.168.1.8:8000/health
 ```
 
-خروجی API: `{"ok":true,"db":true}`  
-خروجی AI: `"ok": true` در JSON
+---
+
+## E) لاگین API و گرفتن TOKEN + Workspace ID
+
+```bash
+RESP=$(curl -s -X POST http://192.168.1.8:3001/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@chatbox.local","password":"chatbox123"}')
+
+echo "$RESP"
+
+TOKEN=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+WS_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['user']['workspaces'][0]['id'])")
+
+echo "TOKEN=$TOKEN"
+echo "WS_ID=$WS_ID"
+```
+
+**مصرف AI:**
+
+```bash
+curl -s \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Workspace-Id: $WS_ID" \
+  "http://192.168.1.8:3001/v1/workspaces/$WS_ID/ai-usage"
+```
+
+**پلن‌های billing:**
+
+```bash
+curl -s http://192.168.1.8:3001/v1/billing/plans \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Workspace-Id: $WS_ID"
+```
+
+**اشتراک workspace:**
+
+```bash
+curl -s "http://192.168.1.8:3001/v1/billing/$WS_ID/subscription" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Workspace-Id: $WS_ID"
+```
 
 ---
 
-## مرورگر
+## F) آدرس‌های مرورگر
 
-| آدرس | کاربرد |
+| آدرس | توضیح |
 |------|--------|
-| http://192.168.1.8:3000 | داشبورد — `admin@chatbox.local` / `chatbox123` |
-| http://192.168.1.8:3001/chat.html | تست چت / ویجت |
-| http://192.168.1.8:3001/widget-demo/demo.html | دمو embed ویجت |
+| http://192.168.1.8:3000 | داشبورد inbox |
+| http://192.168.1.8:3000/login | ورود |
+| http://192.168.1.8:3000/register | ثبت‌نام |
+| http://192.168.1.8:3000/billing | اشتراک و اعتبار AI |
+| http://192.168.1.8:3002 | لندینگ (خانه) |
+| http://192.168.1.8:3002/pricing/ | قیمت‌ها |
+| http://192.168.1.8:3001/chat.html | تست چت |
+| http://192.168.1.8:3001/widget-demo/demo.html | دمو ویجت |
 
-داشبورد: **Hard refresh** (`Ctrl+Shift+R`) بعد از deploy داشبورد.
+**ورود دمو:** `admin@chatbox.local` / `chatbox123`
 
----
-
-## خلاصه یک‌خطی
-
-| ترمینال | دستور |
-|---------|--------|
-| ۰ | `cd ~/chat-box && docker compose up -d` |
-| ۱ | `cd ~/chat-box && pnpm --filter api dev` |
-| ۲ | `cd ~/chat-box/apps/ai-service && source .venv/bin/activate && ./dev.sh` |
-| ۳ | `cd ~/chat-box && pnpm --filter dashboard dev` |
-| ۴ | `cd ~/chat-box && pnpm --filter landing dev` (اختیاری) |
-
-**نیاز به `sudo` نیست** برای هی‌کدام از این دستورات.
+بعد از تغییر UI داشبورد: **Hard refresh** (`Ctrl+Shift+R`)
 
 ---
 
-## اولین بار (فقط یک‌بار بعد از clone)
-
-```bash
-cd ~/chat-box
-pnpm install --frozen-lockfile
-docker compose up -d
-pnpm --filter api db:push
-pnpm --filter api db:seed
-
-cd apps/ai-service
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-داشبورد — `apps/dashboard/.env.local`:
-
-```bash
-cat > ~/chat-box/apps/dashboard/.env.local << 'EOF'
-NEXT_PUBLIC_API_URL=http://192.168.1.8:3001
-NEXT_PUBLIC_WORKSPACE_ID=<WORKSPACE_UUID_FROM_SEED>
-EOF
-```
-
-> `WORKSPACE_UUID` را از خروجی `db:seed` بردارید.
-
----
-
-## (اختیاری) Observability
+## G) Observability (اختیاری)
 
 ```bash
 cd ~/chat-box
 docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 ```
 
+- Prometheus: http://192.168.1.8:9090  
+- Grafana: http://192.168.1.8:3003  
+
 ---
 
-راهنمای کامل‌تر: [`STARTUP-AND-TEST.md`](./STARTUP-AND-TEST.md)
+## H) توقف سرویس‌ها
+
+در هر ترمینال dev: `Ctrl+C`
+
+Docker:
+
+```bash
+cd ~/chat-box
+docker compose down
+```
+
+---
+
+راهنمای بیشتر: [`STARTUP-AND-TEST.md`](./STARTUP-AND-TEST.md)
