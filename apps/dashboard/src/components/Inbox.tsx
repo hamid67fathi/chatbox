@@ -16,6 +16,7 @@ import { ConversationList } from "./ConversationList";
 import { ConversationToolbar } from "./ConversationToolbar";
 import { MessageThread } from "./MessageThread";
 import { PresenceStats } from "./PresenceStats";
+import { VisitorInfoPanel } from "./VisitorInfoPanel";
 
 interface Props {
 	workspaceId: string;
@@ -265,12 +266,12 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		setActiveId(id);
 	}, []);
 
-	const activeContactName = useMemo(() => {
-		if (!activeId) return null;
-		return (
-			conversations.find((c) => c.id === activeId)?.contact?.fullName ?? null
-		);
-	}, [activeId, conversations]);
+	const activeConversation = useMemo(
+		() => conversations.find((c) => c.id === activeId) ?? null,
+		[activeId, conversations],
+	);
+
+	const activeContactName = activeConversation?.contact?.fullName ?? null;
 
 	const handleConversationPatch = useCallback(
 		(id: string, patch: Partial<ConversationDetail>) => {
@@ -379,6 +380,11 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							conversationId={activeId}
 							userId={userId}
 							onUpdated={(patch) => handleConversationPatch(activeId, patch)}
+						/>
+						<VisitorInfoPanel
+							workspaceId={workspaceId}
+							conversationId={activeId}
+							channel={activeConversation?.channel ?? "widget"}
 						/>
 						<MessageThread
 							workspaceId={workspaceId}

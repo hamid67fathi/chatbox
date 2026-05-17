@@ -11,6 +11,7 @@ import {
 	sendMessageHttp,
 	setApiBaseUrl,
 	updateContactProfile,
+	updateVisitorContext,
 	uploadWidgetFile,
 } from "./api.js";
 import { CHAT_EMOJIS } from "./emoji.js";
@@ -18,6 +19,10 @@ import { WidgetSocket } from "./socket.js";
 import { detectTextDirection } from "./text-direction.js";
 import { WIDGET_CSS, darkenHex } from "./styles.js";
 import { WIDGET_FONT_FACES } from "./widget-fonts.js";
+import {
+	bindPageNavigation,
+	pageContextPayload,
+} from "./page-context.js";
 
 const CHAT_ICON = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`;
 const CLOSE_ICON = "✕";
@@ -70,6 +75,8 @@ export class ChatBoxWidget {
 	private welcomeShown = false;
 	private chatStarted = false;
 	private readonly renderedIds = new Set<string>();
+	private unbindPageNav: (() => void) | null = null;
+	private pageContextTimer: ReturnType<typeof setInterval> | null = null;
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
@@ -343,9 +350,20 @@ export class ChatBoxWidget {
 		}
 	}
 
+	private pushPageContext() {
+		void updateVisitorContext(pageContextPayload());
+	}
+
+	private startPageTracking() {
+		this.unbindPageNav?.();
+		this.unbindPageNav = bindPageNavigation(() => this.pushPageContext());
+		if (this.pageContextTimer) clearInterval(this.pageContextTimer);
+		this.pageContextTimer = setInterval(() => this.pushPageContext(), 60_000);
+	}
+
 	private async initSession() {
 		try {
-			const session = await createSession(this.config);
+			const session = await createSession(this.config, pageContextPayload());
 			this.workspaceId = session.workspace_id;
 			this.conversationId = session.conversation_id;
 			this.contactId = session.contact_id;
@@ -381,6 +399,9 @@ export class ChatBoxWidget {
 				}
 			}
 		}
+
+		this.startPageTracking();
+		this.pushPageContext();
 
 		this.ws.connect(
 			this.config.apiUrl,

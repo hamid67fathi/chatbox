@@ -133,6 +133,7 @@ export async function fetchWidgetTheme(
 
 export async function createSession(
 	config: WidgetConfig,
+	page?: { page_url?: string | null; metadata?: Record<string, string> },
 ): Promise<SessionResponse> {
 	setApiBaseUrl(config.apiUrl);
 	const res = await fetch(`${config.apiUrl}/widget/v1/sessions`, {
@@ -141,6 +142,8 @@ export async function createSession(
 		body: JSON.stringify({
 			workspace_slug: config.workspaceSlug,
 			visitor_id: config.visitorId ?? null,
+			page_url: page?.page_url ?? null,
+			metadata: page?.metadata ?? {},
 		}),
 	});
 	if (!res.ok) throw new Error(`Session failed: ${res.status}`);
@@ -163,6 +166,23 @@ function authHeaders(): HeadersInit {
 	const h: Record<string, string> = { "Content-Type": "application/json" };
 	if (visitorToken) h.Authorization = `Bearer ${visitorToken}`;
 	return h;
+}
+
+export async function updateVisitorContext(page?: {
+	page_url?: string | null;
+	metadata?: Record<string, string>;
+}): Promise<void> {
+	const res = await fetch(`${apiBaseUrl}/widget/v1/visitor-context`, {
+		method: "PATCH",
+		headers: authHeaders(),
+		body: JSON.stringify({
+			page_url: page?.page_url ?? null,
+			metadata: page?.metadata ?? {},
+		}),
+	});
+	if (!res.ok) {
+		/* non-fatal */
+	}
 }
 
 export async function updateContactProfile(data: {

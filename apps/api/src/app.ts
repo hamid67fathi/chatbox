@@ -30,7 +30,7 @@ import { apiTokenRoutes } from "./routes/api-tokens.js";
 import { reportRoutes } from "./routes/reports.js";
 
 export function buildApp() {
-	const app = Fastify({ logger: false });
+	const app = Fastify({ logger: false, trustProxy: true });
 
 	app.register(cors, {
 		origin: true,

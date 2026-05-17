@@ -27,6 +27,13 @@ import {
 	triggerAIReply,
 } from "../lib/message-delivery.js";
 import { publicWidgetConfigHandler } from "./widget-config.js";
+import {
+	captureVisitorContext,
+	mergeVisitorMetadata,
+	serializeVisitorForApi,
+	visitorFromMetadata,
+} from "../lib/visitor-context.js";
+import { getIO } from "../ws/broadcast.js";
 
 async function requireVisitorToken(
 	request: FastifyRequest,
@@ -61,16 +68,58 @@ export async function widgetRoutes(app: FastifyInstance) {
 		async (request) => publicWidgetConfigHandler(request.query.workspace_slug),
 	);
 
+	async function persistVisitorContext(
+		contactId: string,
+		workspaceId: string,
+		conversationId: string,
+		request: FastifyRequest,
+		input?: { pageUrl?: string | null; metadata?: Record<string, unknown> | null },
+	) {
+		const existing = await db.query.contacts.findFirst({
+			where: and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
+		});
+		if (!existing) return;
+
+		const ctx = captureVisitorContext(request, input);
+		const metadata = mergeVisitorMetadata(existing.metadata, ctx);
+
+		const [updated] = await db
+			.update(contacts)
+			.set({
+				metadata,
+				lastSeenAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.where(
+				and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
+			)
+			.returning();
+
+		const visitor = visitorFromMetadata(updated?.metadata ?? metadata);
+		try {
+			const io = getIO();
+			io.to(`workspace:${workspaceId}`).emit("visitor:context", {
+				conversation_id: conversationId,
+				contact_id: contactId,
+				visitor: serializeVisitorForApi(visitor),
+			});
+		} catch {
+			/* socket not ready */
+		}
+	}
+
 	app.post<{
 		Body: {
 			workspace_slug: string;
 			visitor_id?: string | null;
+			page_url?: string | null;
+			metadata?: Record<string, unknown> | null;
 		};
 	}>(
 		"/widget/v1/sessions",
 		{ config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
 		async (request, reply) => {
-			const { workspace_slug, visitor_id } = request.body ?? {};
+			const { workspace_slug, visitor_id, page_url, metadata } = request.body ?? {};
 			if (!workspace_slug)
 				throw validationError("workspace_slug is required.", "workspace_slug");
 
@@ -90,12 +139,17 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			if (!contact) {
 				const newVisitorId = visitor_id ?? randomUUID();
+				const initialCtx = captureVisitorContext(request, {
+					pageUrl: page_url,
+					metadata,
+				});
 				const [created] = await db
 					.insert(contacts)
 					.values({
 						workspaceId: ws.id,
 						externalId: newVisitorId,
 						fullName: "Visitor",
+						metadata: { visitor: initialCtx },
 					})
 					.returning();
 				contact = created;
@@ -126,6 +180,11 @@ export async function widgetRoutes(app: FastifyInstance) {
 				void notifyPlanUsageIfNeeded(ws.id);
 			}
 
+			await persistVisitorContext(contact.id, ws.id, conv.id, request, {
+				pageUrl: page_url,
+				metadata,
+			});
+
 			const token = await signVisitorToken(contact.id, ws.id, conv.id);
 			const prechat = parsePrechatConfig(ws.settings);
 			const profile = {
@@ -147,6 +206,39 @@ export async function widgetRoutes(app: FastifyInstance) {
 					phone: contact.phone,
 				},
 			});
+		},
+	);
+
+	app.patch<{
+		Body: {
+			page_url?: string | null;
+			metadata?: Record<string, unknown> | null;
+		};
+	}>(
+		"/widget/v1/visitor-context",
+		{ preHandler: [requireVisitorToken] },
+		async (request) => {
+			const { contactId, workspaceId, conversationId } = (request as VisitorRequest)
+				.visitor;
+			const { page_url, metadata } = request.body ?? {};
+			await persistVisitorContext(
+				contactId,
+				workspaceId,
+				conversationId,
+				request,
+				{ pageUrl: page_url, metadata },
+			);
+			const contact = await db.query.contacts.findFirst({
+				where: and(
+					eq(contacts.id, contactId),
+					eq(contacts.workspaceId, workspaceId),
+				),
+			});
+			return {
+				visitor: serializeVisitorForApi(
+					visitorFromMetadata(contact?.metadata),
+				),
+			};
 		},
 	);
 

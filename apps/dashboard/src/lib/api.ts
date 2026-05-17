@@ -38,11 +38,29 @@ export interface ConversationNote {
 	} | null;
 }
 
+export interface VisitorInfo {
+	ip?: string | null;
+	country?: string | null;
+	country_code?: string | null;
+	countryCode?: string | null;
+	current_page_url?: string | null;
+	currentPageUrl?: string | null;
+	current_page_url_at?: string | null;
+	currentPageUrlAt?: string | null;
+	browser?: string | null;
+	os?: string | null;
+	device?: string | null;
+	utm?: Record<string, string>;
+	updated_at?: string | null;
+	updatedAt?: string | null;
+}
+
 export interface ConversationDetail extends Conversation {
 	priority: number;
 	assignedAgentId: string | null;
 	tags: string[];
 	notes: ConversationNote[];
+	visitor?: VisitorInfo | null;
 }
 
 export interface WorkspaceMember {
@@ -354,6 +372,7 @@ export async function fetchConversationDetail(
 			typeof raw.metadata === "object" && raw.metadata
 				? (raw.metadata as Record<string, unknown>)
 				: null,
+		visitor: raw.visitor ?? null,
 	};
 }
 

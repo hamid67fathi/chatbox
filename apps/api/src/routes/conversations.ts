@@ -28,6 +28,10 @@ import {
 	unarchiveMetadataPatch,
 } from "../lib/conversation-archive.js";
 import { getIO } from "../ws/broadcast.js";
+import {
+	serializeVisitorForApi,
+	visitorFromMetadata,
+} from "../lib/visitor-context.js";
 
 export async function conversationRoutes(app: FastifyInstance) {
 	app.get<{
@@ -137,9 +141,14 @@ export async function conversationRoutes(app: FastifyInstance) {
 			const user = (request as AuthenticatedRequest).user;
 			await assertConversationAccess(row, wsId, user.id);
 
-			const { tags, notes, ...conv } = row;
+			const { tags, notes, contact, ...conv } = row;
+			const visitor = contact
+				? visitorFromMetadata(contact.metadata)
+				: null;
 			return {
 				...conv,
+				visitor: serializeVisitorForApi(visitor),
+				contact,
 				tags: tags.map((t) => t.tag),
 				notes: notes.map((n) => ({
 					id: n.id,
