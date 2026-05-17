@@ -24,6 +24,7 @@ export interface Conversation {
 		id: string;
 		fullName: string;
 		email: string | null;
+		metadata?: Record<string, unknown> | null;
 	};
 }
 
@@ -722,6 +723,45 @@ export async function unarchiveConversation(
 		},
 	);
 	return res.ok;
+}
+
+export async function banConversationContact(
+	workspaceId: string,
+	conversationId: string,
+	reason?: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/ban-contact`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				...authHeaders(workspaceId),
+			},
+			body: JSON.stringify(reason?.trim() ? { reason: reason.trim() } : {}),
+		},
+	);
+	return res.ok;
+}
+
+export async function unbanConversationContact(
+	workspaceId: string,
+	conversationId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/unban-contact`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	return res.ok;
+}
+
+export function isContactBanned(metadata: unknown): boolean {
+	if (!metadata || typeof metadata !== "object") return false;
+	const m = metadata as { bannedAt?: string };
+	return typeof m.bannedAt === "string" && m.bannedAt.length > 0;
 }
 
 export async function fetchPresence(

@@ -20,7 +20,8 @@ import {
 	notifyPlanUsageIfNeeded,
 } from "../lib/plan-limits.js";
 import { saveWorkspaceUpload } from "../lib/uploads.js";
-import { notFound, validationError } from "../lib/errors.js";
+import { isContactBanned } from "../lib/contact-ban.js";
+import { contactBanned, notFound, validationError } from "../lib/errors.js";
 import {
 	broadcastNewConversation,
 	deliverNewMessage,
@@ -34,6 +35,13 @@ import {
 	visitorFromMetadata,
 } from "../lib/visitor-context.js";
 import { getIO } from "../ws/broadcast.js";
+
+async function assertVisitorNotBanned(contactId: string, workspaceId: string) {
+	const contact = await db.query.contacts.findFirst({
+		where: and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
+	});
+	if (contact && isContactBanned(contact.metadata)) throw contactBanned();
+}
 
 async function requireVisitorToken(
 	request: FastifyRequest,
@@ -51,6 +59,7 @@ async function requireVisitorToken(
 			workspaceId: payload.wid,
 			conversationId: payload.cid,
 		};
+		await assertVisitorNotBanned(payload.sub, payload.wid);
 	} catch (err) {
 		if (err instanceof Error && "statusCode" in err) throw err;
 		throw unauthorized("Invalid or expired visitor token.");
@@ -83,6 +92,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 			where: and(eq(contacts.id, contactId), eq(contacts.workspaceId, workspaceId)),
 		});
 		if (!existing) return;
+		if (isContactBanned(existing.metadata)) throw contactBanned();
 
 		const pageTitle =
 			typeof input?.pageTitle === "string" ? input.pageTitle : null;
@@ -171,6 +181,10 @@ export async function widgetRoutes(app: FastifyInstance) {
 					})
 					.returning();
 				contact = created;
+			}
+
+			if (isContactBanned(contact.metadata)) {
+				throw contactBanned();
 			}
 
 			const existingConv = await db.query.conversations.findFirst({

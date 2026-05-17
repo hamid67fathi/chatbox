@@ -379,6 +379,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							workspaceId={workspaceId}
 							conversationId={activeId}
 							userId={userId}
+							workspaceRole={workspaceRole}
 							onUpdated={(patch) => handleConversationPatch(activeId, patch)}
 						/>
 						<VisitorInfoPanel

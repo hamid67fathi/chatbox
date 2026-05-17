@@ -8,10 +8,13 @@ import {
 	addConversationTags,
 	archiveConversation,
 	assignConversation,
+	banConversationContact,
 	fetchConversationDetail,
 	fetchWorkspaceMembers,
+	isContactBanned,
 	refreshConversationSummary,
 	unarchiveConversation,
+	unbanConversationContact,
 	updateConversationPriority,
 	updateConversationStatus,
 } from "@/lib/api";
@@ -21,6 +24,7 @@ interface Props {
 	workspaceId: string;
 	conversationId: string;
 	userId: string;
+	workspaceRole: string;
 	onUpdated?: (patch: Partial<ConversationDetail>) => void;
 }
 
@@ -42,8 +46,11 @@ export function ConversationToolbar({
 	workspaceId,
 	conversationId,
 	userId,
+	workspaceRole,
 	onUpdated,
 }: Props) {
+	const canBan =
+		workspaceRole === "owner" || workspaceRole === "admin";
 	const [detail, setDetail] = useState<ConversationDetail | null>(null);
 	const [members, setMembers] = useState<WorkspaceMember[]>([]);
 	const [tagInput, setTagInput] = useState("");
@@ -105,6 +112,7 @@ export function ConversationToolbar({
 			? (detail.metadata as { archivedAt?: string })
 			: null;
 	const isArchived = Boolean(meta?.archivedAt);
+	const contactBannedFlag = isContactBanned(detail.contact?.metadata);
 
 	const visitorLabel =
 		detail.contact?.fullName ?? `Visitor · ${detail.id.slice(0, 8)}`;
@@ -155,6 +163,7 @@ export function ConversationToolbar({
 					<p className="text-xs text-muted-foreground">
 						{detail.channel === "widget" ? "ویجت" : detail.channel}
 						{detail.subject ? ` · ${detail.subject}` : ""}
+						{contactBannedFlag ? " · مسدود" : ""}
 					</p>
 				</div>
 				<select
@@ -241,6 +250,49 @@ export function ConversationToolbar({
 				>
 					{isArchived ? "بازگردانی از آرشیو" : "آرشیو"}
 				</Button>
+				{canBan && (
+					<Button
+						type="button"
+						variant={contactBannedFlag ? "outline" : "destructive"}
+						size="sm"
+						disabled={saving}
+						onClick={() => {
+							if (contactBannedFlag) {
+								if (
+									!window.confirm(
+										"مسدودیت این بازدیدکننده برداشته شود؟",
+									)
+								) {
+									return;
+								}
+								void run(async () => {
+									await unbanConversationContact(
+										workspaceId,
+										conversationId,
+									);
+									await reload();
+								});
+								return;
+							}
+							if (
+								!window.confirm(
+									"این بازدیدکننده مسدود شود؟ دیگر نمی‌تواند چت جدید شروع کند.",
+								)
+							) {
+								return;
+							}
+							void run(async () => {
+								await banConversationContact(
+									workspaceId,
+									conversationId,
+								);
+								await reload();
+							});
+						}}
+					>
+						{contactBannedFlag ? "رفع مسدودیت" : "مسدود کردن"}
+					</Button>
+				)}
 				<Button
 					type="button"
 					variant="ghost"

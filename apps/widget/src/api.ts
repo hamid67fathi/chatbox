@@ -154,7 +154,18 @@ export async function createSession(
 			metadata: page?.metadata ?? {},
 		}),
 	});
-	if (!res.ok) throw new Error(`Session failed: ${res.status}`);
+	if (!res.ok) {
+		let message = `Session failed: ${res.status}`;
+		try {
+			const err = (await res.json()) as {
+				error?: { code?: string; message?: string };
+			};
+			if (err.error?.message) message = err.error.message;
+		} catch {
+			/* ignore */
+		}
+		throw new Error(message);
+	}
 	const data = (await res.json()) as SessionResponse;
 	setVisitorToken(data.token);
 	if (data.visitor_id) {

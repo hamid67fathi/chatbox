@@ -48,6 +48,16 @@ export function conflict(message: string) {
 	return new ApiError({ code: "conflict", message, statusCode: 409 });
 }
 
+export function contactBanned(
+	message = "دسترسی شما به چت مسدود شده است. در صورت اشتباه با پشتیبانی تماس بگیرید.",
+) {
+	return new ApiError({
+		code: "contact_banned",
+		message,
+		statusCode: 403,
+	});
+}
+
 export function aiBudgetExhausted(details: Record<string, unknown>) {
 	return new ApiError({
 		code: "ai_budget_exhausted",

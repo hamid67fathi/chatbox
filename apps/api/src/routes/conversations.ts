@@ -1,4 +1,9 @@
 import { and, desc, eq, exists, lt, sql } from "drizzle-orm";
+import { forbidden } from "../lib/auth.js";
+import {
+	banWorkspaceContact,
+	unbanWorkspaceContact,
+} from "../lib/contact-ban.js";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
@@ -339,6 +344,79 @@ export async function conversationRoutes(app: FastifyInstance) {
 			}
 
 			return updated;
+		},
+	);
+
+	app.post<{ Params: { id: string }; Body: { reason?: string } }>(
+		"/v1/conversations/:id/ban-contact",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			const role = await assertConversationAccess(existing, wsId, user.id);
+			if (!isSupervisorRole(role)) {
+				throw forbidden("Only workspace admins can ban contacts.");
+			}
+
+			const contact = await banWorkspaceContact(
+				wsId,
+				existing.contactId,
+				user.id,
+				request.body?.reason,
+			);
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`).emit("contact:banned", {
+					contact_id: contact.id,
+					conversation_id: request.params.id,
+				});
+			} catch {
+				/* socket not ready */
+			}
+
+			return { contact, banned: true };
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/unban-contact",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			const role = await assertConversationAccess(existing, wsId, user.id);
+			if (!isSupervisorRole(role)) {
+				throw forbidden("Only workspace admins can unban contacts.");
+			}
+
+			const contact = await unbanWorkspaceContact(wsId, existing.contactId);
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`).emit("contact:unbanned", {
+					contact_id: contact.id,
+					conversation_id: request.params.id,
+				});
+			} catch {
+				/* socket not ready */
+			}
+
+			return { contact, banned: false };
 		},
 	);
 
