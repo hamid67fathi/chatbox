@@ -6,9 +6,11 @@ import {
 	API_URL,
 	connectEmailIntegration,
 	connectTelegramBot,
+	connectWhatsappIntegration,
 	createApiToken,
 	disconnectEmailIntegration,
 	disconnectTelegramBot,
+	disconnectWhatsappIntegration,
 	testEmailIntegration,
 	fetchApiTokens,
 	fetchBannedIps,
@@ -26,6 +28,7 @@ import {
 	type ApiTokenRow,
 	type EmailIntegrationPublic,
 	type TelegramIntegrationPublic,
+	type WhatsappIntegrationPublic,
 	type WidgetConfigPublic,
 } from "@/lib/api";
 import { refreshAuthUser } from "@/lib/auth-store";
@@ -51,7 +54,14 @@ const TIMEZONES = [
 
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
 	const [tab, setTab] = useState<
-		"profile" | "workspace" | "widget" | "telegram" | "email" | "api" | "security"
+		| "profile"
+		| "workspace"
+		| "widget"
+		| "telegram"
+		| "email"
+		| "whatsapp"
+		| "api"
+		| "security"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -125,6 +135,15 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [emailMsg, setEmailMsg] = useState("");
 	const [emailError, setEmailError] = useState("");
 	const [emailLoading, setEmailLoading] = useState(false);
+
+	const [whatsappIntegration, setWhatsappIntegration] =
+		useState<WhatsappIntegrationPublic | null>(null);
+	const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
+	const [waAccessToken, setWaAccessToken] = useState("");
+	const [waVerifyToken, setWaVerifyToken] = useState("");
+	const [whatsappMsg, setWhatsappMsg] = useState("");
+	const [whatsappError, setWhatsappError] = useState("");
+	const [whatsappLoading, setWhatsappLoading] = useState(false);
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -218,6 +237,19 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	useEffect(() => {
 		if (tab === "email") void loadEmail();
 	}, [tab, loadEmail]);
+
+	const loadWhatsapp = useCallback(async () => {
+		const list = await fetchIntegrations(workspaceId);
+		const wa =
+			list.find((i): i is WhatsappIntegrationPublic => i.type === "whatsapp") ??
+			null;
+		setWhatsappIntegration(wa);
+		if (wa?.verify_token) setWaVerifyToken(wa.verify_token);
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (tab === "whatsapp") void loadWhatsapp();
+	}, [tab, loadWhatsapp]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -374,6 +406,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						"widget",
 						"telegram",
 						"email",
+						"whatsapp",
 						"api",
 						"security",
 					] as const
@@ -399,9 +432,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 										? "تلگرام"
 										: t === "email"
 											? "ایمیل"
-											: t === "api"
-												? "API"
-												: "امنیت"}
+											: t === "whatsapp"
+												? "واتساپ"
+												: t === "api"
+													? "API"
+													: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -1279,6 +1314,125 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							<p className="text-sm text-destructive">{emailError}</p>
 						)}
 						{emailMsg && <p className="text-sm text-primary">{emailMsg}</p>}
+					</div>
+				)}
+				{tab === "whatsapp" && (
+					<div className="mx-auto flex max-w-lg flex-col gap-4">
+						<p className="text-sm text-muted-foreground">
+							اتصال به WhatsApp Cloud API (Meta). پس از اتصال، Webhook URL و
+							Verify Token را در Meta Developer Console ثبت کنید.
+						</p>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر (admin/owner) می‌تواند واتساپ را متصل کند.
+							</p>
+						) : whatsappIntegration ? (
+							<div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+								<p className="text-sm font-medium">
+									متصل:{" "}
+									{whatsappIntegration.display_phone_number ??
+										whatsappIntegration.phone_number_id}
+								</p>
+								<p className="text-xs text-muted-foreground" dir="ltr">
+									Phone number ID: {whatsappIntegration.phone_number_id}
+								</p>
+								<p className="break-all text-xs text-muted-foreground" dir="ltr">
+									Webhook: {whatsappIntegration.webhook_url}
+								</p>
+								<p className="text-xs text-muted-foreground" dir="ltr">
+									Verify token: {whatsappIntegration.verify_token}
+								</p>
+								<Button
+									type="button"
+									variant="destructive"
+									disabled={whatsappLoading}
+									onClick={async () => {
+										setWhatsappLoading(true);
+										const ok = await disconnectWhatsappIntegration(workspaceId);
+										setWhatsappLoading(false);
+										if (!ok) {
+											setWhatsappError("قطع اتصال ناموفق بود.");
+											return;
+										}
+										setWhatsappIntegration(null);
+										setWhatsappMsg("اتصال واتساپ قطع شد.");
+									}}
+								>
+									قطع اتصال
+								</Button>
+							</div>
+						) : (
+							<form
+								onSubmit={async (e) => {
+									e.preventDefault();
+									setWhatsappMsg("");
+									setWhatsappError("");
+									if (!waPhoneNumberId.trim() || !waAccessToken.trim()) {
+										setWhatsappError("Phone Number ID و Access Token الزامی است.");
+										return;
+									}
+									setWhatsappLoading(true);
+									const result = await connectWhatsappIntegration(workspaceId, {
+										phone_number_id: waPhoneNumberId.trim(),
+										access_token: waAccessToken.trim(),
+										verify_token: waVerifyToken.trim() || undefined,
+									});
+									setWhatsappLoading(false);
+									if (!result.ok) {
+										setWhatsappError(result.error ?? "اتصال ناموفق بود.");
+										return;
+									}
+									if (result.data) {
+										setWhatsappIntegration(result.data);
+										setWaVerifyToken(result.data.verify_token);
+									}
+									setWaAccessToken("");
+									setWhatsappMsg(
+										"واتساپ متصل شد. Webhook را در Meta با URL و Verify Token بالا ثبت کنید.",
+									);
+									void loadWhatsapp();
+								}}
+								className="flex flex-col gap-3"
+							>
+								<label className="flex flex-col gap-1 text-sm font-medium">
+									Phone Number ID
+									<Input
+										value={waPhoneNumberId}
+										onChange={(e) => setWaPhoneNumberId(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm font-medium">
+									Permanent Access Token
+									<Input
+										type="password"
+										value={waAccessToken}
+										onChange={(e) => setWaAccessToken(e.target.value)}
+										dir="ltr"
+										required
+									/>
+								</label>
+								<label className="flex flex-col gap-1 text-sm font-medium">
+									Verify Token (اختیاری — خودکار ساخته می‌شود)
+									<Input
+										value={waVerifyToken}
+										onChange={(e) => setWaVerifyToken(e.target.value)}
+										dir="ltr"
+										placeholder="خالی بگذارید برای تولید خودکار"
+									/>
+								</label>
+								<Button type="submit" disabled={whatsappLoading}>
+									{whatsappLoading ? "در حال اتصال…" : "اتصال واتساپ"}
+								</Button>
+							</form>
+						)}
+						{whatsappError && (
+							<p className="text-sm text-destructive">{whatsappError}</p>
+						)}
+						{whatsappMsg && (
+							<p className="text-sm text-primary">{whatsappMsg}</p>
+						)}
 					</div>
 				)}
 				{tab === "security" && (

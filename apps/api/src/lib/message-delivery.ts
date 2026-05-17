@@ -18,6 +18,7 @@ import {
 } from "./conversation-insights.js";
 import { deliverOutboundToEmail } from "../channels/email/outbound.js";
 import { deliverOutboundToTelegram } from "../channels/telegram/outbound.js";
+import { deliverOutboundToWhatsapp } from "../channels/whatsapp/outbound.js";
 import { getIO } from "../ws/broadcast.js";
 
 export function broadcastNewConversation(
@@ -85,6 +86,7 @@ export async function deliverNewMessage(
 
 	void deliverOutboundToTelegram(published, conversationId, workspaceId);
 	void deliverOutboundToEmail(published, conversationId, workspaceId);
+	void deliverOutboundToWhatsapp(published, conversationId, workspaceId);
 }
 
 export async function broadcastNewMessage(

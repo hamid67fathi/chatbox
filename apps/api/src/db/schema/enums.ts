@@ -32,6 +32,7 @@ export const conversationChannelEnum = pgEnum("conversation_channel", [
 	"widget",
 	"telegram",
 	"email",
+	"whatsapp",
 	"api",
 ]);
 

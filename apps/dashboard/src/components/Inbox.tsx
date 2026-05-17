@@ -56,6 +56,9 @@ const STATUS_OPTIONS = [
 const CHANNEL_OPTIONS = [
 	{ value: "", label: "همه کانال‌ها" },
 	{ value: "widget", label: "ویجت" },
+	{ value: "telegram", label: "تلگرام" },
+	{ value: "email", label: "ایمیل" },
+	{ value: "whatsapp", label: "واتساپ" },
 ];
 
 export function Inbox({ workspaceId, userId, workspaceRole }: Props) {

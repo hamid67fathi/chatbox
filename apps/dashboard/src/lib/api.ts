@@ -874,7 +874,21 @@ export interface EmailIntegrationPublic {
 	imap_user_masked: string;
 }
 
-export type IntegrationPublic = TelegramIntegrationPublic | EmailIntegrationPublic;
+export interface WhatsappIntegrationPublic {
+	type: "whatsapp";
+	enabled: boolean;
+	phone_number_id: string;
+	display_phone_number: string | null;
+	connected_at: string;
+	webhook_url: string;
+	verify_token: string;
+	token_masked: string;
+}
+
+export type IntegrationPublic =
+	| TelegramIntegrationPublic
+	| EmailIntegrationPublic
+	| WhatsappIntegrationPublic;
 
 export async function fetchIntegrations(
 	workspaceId: string,
@@ -975,6 +989,45 @@ export async function disconnectTelegramBot(
 	workspaceId: string,
 ): Promise<boolean> {
 	const res = await authFetch(`${API_URL}/v1/integrations/telegram`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
+export async function connectWhatsappIntegration(
+	workspaceId: string,
+	payload: {
+		phone_number_id: string;
+		access_token: string;
+		verify_token?: string;
+	},
+): Promise<{ ok: boolean; data?: WhatsappIntegrationPublic; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/integrations/whatsapp`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify(payload),
+	});
+	if (!res.ok) {
+		const json = (await res.json().catch(() => ({}))) as {
+			error?: { message?: string };
+		};
+		return {
+			ok: false,
+			error: json.error?.message ?? "اتصال واتساپ ناموفق بود.",
+		};
+	}
+	const json = (await res.json()) as { data?: WhatsappIntegrationPublic };
+	return { ok: true, data: json.data };
+}
+
+export async function disconnectWhatsappIntegration(
+	workspaceId: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/integrations/whatsapp`, {
 		method: "DELETE",
 		headers: authHeaders(workspaceId),
 	});

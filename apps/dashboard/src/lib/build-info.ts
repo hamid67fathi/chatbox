@@ -1,2 +1,2 @@
 /** هر بار تغییر UI داشبورد، این عدد را +1 کنید. */
-export const UI_BUILD = 36;
+export const UI_BUILD = 37;

@@ -34,6 +34,18 @@ import {
 	type TelegramIntegrationConfig,
 } from "../lib/telegram-settings.js";
 import { verifyImapConnection, verifySmtpConnection } from "../channels/email/verify.js";
+import { whatsappGetPhoneNumber } from "../channels/whatsapp/api.js";
+import {
+	handleWhatsappWebhook,
+	type WhatsappWebhookPayload,
+} from "../channels/whatsapp/inbound.js";
+import {
+	mergeWhatsappIntegration,
+	newWhatsappVerifyToken,
+	parseWhatsappIntegration,
+	toPublicWhatsappIntegration,
+	type WhatsappIntegrationConfig,
+} from "../lib/whatsapp-settings.js";
 import { requireWorkspace } from "../lib/rbac.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 
@@ -73,6 +85,55 @@ export async function integrationsRoutes(app: FastifyInstance) {
 			return reply.status(200).send({ ok: true });
 		},
 	);
+
+	app.get<{
+		Params: { workspaceId: string };
+		Querystring: {
+			"hub.mode"?: string;
+			"hub.verify_token"?: string;
+			"hub.challenge"?: string;
+		};
+	}>(
+		"/v1/integrations/whatsapp/webhook/:workspaceId",
+		async (request, reply) => {
+			const workspaceId = request.params.workspaceId;
+			const mode = request.query["hub.mode"];
+			const token = request.query["hub.verify_token"];
+			const challenge = request.query["hub.challenge"];
+
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, workspaceId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			const integration = parseWhatsappIntegration(ws.settings);
+			if (
+				mode === "subscribe" &&
+				integration?.verify_token &&
+				token === integration.verify_token &&
+				challenge
+			) {
+				return reply.status(200).type("text/plain").send(challenge);
+			}
+
+			throw unauthorized("WhatsApp webhook verification failed.");
+		},
+	);
+
+	app.post<{
+		Params: { workspaceId: string };
+		Body: WhatsappWebhookPayload;
+	}>(
+		"/v1/integrations/whatsapp/webhook/:workspaceId",
+		{
+			config: { rateLimit: { max: 200, timeWindow: "1 minute" } },
+		},
+		async (request, reply) => {
+			const workspaceId = request.params.workspaceId;
+			await handleWhatsappWebhook(workspaceId, request.body ?? {});
+			return reply.status(200).send({ ok: true });
+		},
+	);
 }
 
 export async function integrationsProtectedRoutes(app: FastifyInstance) {
@@ -88,9 +149,11 @@ export async function integrationsProtectedRoutes(app: FastifyInstance) {
 
 			const telegram = parseTelegramIntegration(ws.settings);
 			const email = parseEmailIntegration(ws.settings);
+			const whatsapp = parseWhatsappIntegration(ws.settings);
 			const data = [];
 			if (telegram) data.push(toPublicTelegramIntegration(telegram, wsId));
 			if (email) data.push(toPublicEmailIntegration(email));
+			if (whatsapp) data.push(toPublicWhatsappIntegration(whatsapp, wsId));
 
 			return { data };
 		},
@@ -290,6 +353,91 @@ export async function integrationsProtectedRoutes(app: FastifyInstance) {
 			if (!ws) throw notFound("Workspace not found.");
 
 			const nextSettings = mergeEmailIntegration(ws.settings, null);
+			await db
+				.update(workspaces)
+				.set({ settings: nextSettings, updatedAt: new Date() })
+				.where(eq(workspaces.id, wsId));
+
+			return { ok: true };
+		},
+	);
+
+	app.post<{
+		Body: {
+			phone_number_id?: string;
+			access_token?: string;
+			verify_token?: string;
+		};
+	}>(
+		"/v1/integrations/whatsapp",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			await assertIntegrationsAdmin(request, wsId);
+
+			const phoneNumberId =
+				typeof request.body?.phone_number_id === "string"
+					? request.body.phone_number_id.trim()
+					: "";
+			const accessToken =
+				typeof request.body?.access_token === "string"
+					? request.body.access_token.trim()
+					: "";
+			if (!phoneNumberId || !accessToken) {
+				throw validationError(
+					"phone_number_id and access_token are required.",
+					"phone_number_id",
+				);
+			}
+
+			const verifyToken =
+				typeof request.body?.verify_token === "string" &&
+				request.body.verify_token.trim()
+					? request.body.verify_token.trim()
+					: newWhatsappVerifyToken();
+
+			const phoneInfo = await whatsappGetPhoneNumber(
+				phoneNumberId,
+				accessToken,
+			);
+
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, wsId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			const config: WhatsappIntegrationConfig = {
+				enabled: true,
+				phone_number_id: phoneNumberId,
+				access_token: accessToken,
+				verify_token: verifyToken,
+				display_phone_number: phoneInfo.display_phone_number ?? null,
+				connected_at: new Date().toISOString(),
+			};
+
+			const nextSettings = mergeWhatsappIntegration(ws.settings, config);
+			await db
+				.update(workspaces)
+				.set({ settings: nextSettings, updatedAt: new Date() })
+				.where(eq(workspaces.id, wsId));
+
+			return { data: toPublicWhatsappIntegration(config, wsId) };
+		},
+	);
+
+	app.delete(
+		"/v1/integrations/whatsapp",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			await assertIntegrationsAdmin(request, wsId);
+
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, wsId),
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			const nextSettings = mergeWhatsappIntegration(ws.settings, null);
 			await db
 				.update(workspaces)
 				.set({ settings: nextSettings, updatedAt: new Date() })
