@@ -206,9 +206,14 @@ class CopilotResponse(BaseModel):
 
 @app.post("/v1/copilot", response_model=CopilotResponse)
 async def copilot(req: CopilotRequest):
-    if not req.messages:
-        raise HTTPException(400, "messages is required")
     payload = [m.model_dump() for m in req.messages]
+    if not payload:
+        payload = [
+            {
+                "role": "system",
+                "content": "مکالمه هنوز متنی ندارد. پیشنهاد شروع گفتگوی مودبانه به فارسی بده.",
+            }
+        ]
     result = await generate_copilot_suggestions(
         req.workspace_id,
         payload,
@@ -224,9 +229,14 @@ async def copilot(req: CopilotRequest):
 
 @app.post("/v1/copilot/stream")
 async def copilot_stream(req: CopilotRequest):
-    if not req.messages:
-        raise HTTPException(400, "messages is required")
     payload = [m.model_dump() for m in req.messages]
+    if not payload:
+        payload = [
+            {
+                "role": "system",
+                "content": "مکالمه هنوز متنی ندارد. پیشنهاد شروع گفتگوی مودبانه به فارسی بده.",
+            }
+        ]
 
     async def event_generator():
         async for event in stream_copilot_suggestions(

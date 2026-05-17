@@ -192,6 +192,12 @@ curl -s http://192.168.1.8:3001/health
 curl -s http://192.168.1.8:8000/health
 ```
 
+اگر **«سرویس پیشنهاد پاسخ در دسترس نیست»** در inbox دیدید:
+
+1. ترمینال ۲ (ai-service) باید روشن باشد — `curl` بالا برای `:8000` باید `ok` برگرداند.
+2. در `~/chat-box/.env` مقدار `AI_SERVICE_URL=http://127.0.0.1:8000` (یا IP سرور) باشد؛ بعد از تغییر API را restart کنید.
+3. اعتبار AI workspace تمام نشده باشد — بنر قرمز بالای inbox یا `GET .../ai-usage`.
+
 ---
 
 ## E) لاگین API و گرفتن TOKEN + Workspace ID

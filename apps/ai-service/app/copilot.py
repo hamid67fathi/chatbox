@@ -90,7 +90,15 @@ async def generate_copilot_suggestions(
     safe_transcript = redact(transcript)
     safe_visitor = redact(visitor_msg)
 
-    kb_chunks = await retrieve_chunks(workspace_id, visitor_msg or safe_transcript, top_k=3)
+    kb_chunks: list[dict] = []
+    try:
+        kb_chunks = await retrieve_chunks(
+            workspace_id,
+            visitor_msg or safe_transcript,
+            top_k=3,
+        )
+    except Exception:
+        kb_chunks = []
     kb_hint = kb_chunks[0]["content"][:120] if kb_chunks else ""
 
     if not settings.use_openai:

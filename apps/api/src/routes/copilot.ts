@@ -6,6 +6,8 @@ import { aiInteractions, conversations, messages } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
 import {
 	type CopilotMessage,
+	copilotUnavailableMessage,
+	pingAiService,
 	requestCopilot,
 	streamCopilotFromAI,
 } from "../lib/copilot-client.js";
@@ -95,24 +97,34 @@ export async function copilotRoutes(app: FastifyInstance) {
 			await assertConversationAccess(conv, wsId, user.id);
 			await assertAiBudgetAllowed(wsId);
 
+			if (!(await pingAiService())) {
+				return reply.status(503).send({
+					error: {
+						code: "ai_unavailable",
+						message:
+							"سرویس AI روشن نیست. ai-service را روی پورت ۸۰۰۰ اجرا کنید.",
+					},
+				});
+			}
+
 			const result = await requestCopilot(
 				wsId,
 				copilotMessages,
 				contactName,
 				convId,
 			);
-			if (!result) {
+			if (!result.ok) {
 				return reply.status(503).send({
 					error: {
 						code: "ai_unavailable",
-						message: "سرویس پیشنهاد پاسخ در دسترس نیست.",
+						message: copilotUnavailableMessage(result.failure),
 					},
 				});
 			}
 
-			await logCopilotInteraction(wsId, convId, user.id, result);
+			await logCopilotInteraction(wsId, convId, user.id, result.data);
 
-			return { data: result };
+			return { data: result.data };
 		},
 	);
 
@@ -134,7 +146,18 @@ export async function copilotRoutes(app: FastifyInstance) {
 
 			void (async () => {
 				try {
-					const ok = await streamCopilotFromAI(
+					if (!(await pingAiService())) {
+						stream.write(
+							`data: ${JSON.stringify({
+								type: "error",
+								message:
+									"سرویس AI روشن نیست. ai-service را روی پورت ۸۰۰۰ اجرا کنید.",
+							})}\n\n`,
+						);
+						return;
+					}
+
+					const streamed = await streamCopilotFromAI(
 						wsId,
 						copilotMessages,
 						contactName,
@@ -154,13 +177,14 @@ export async function copilotRoutes(app: FastifyInstance) {
 						},
 					);
 
-					if (!ok) {
+					if (!streamed.ok) {
 						stream.write(
 							`data: ${JSON.stringify({
 								type: "error",
-								message: "سرویس پیشنهاد پاسخ در دسترس نیست.",
+								message: copilotUnavailableMessage(streamed.failure),
 							})}\n\n`,
 						);
+						return;
 					}
 
 					await logCopilotInteraction(wsId, convId, user.id, tokens);

@@ -19,14 +19,85 @@ export interface CopilotResult {
 	output_tokens: number;
 }
 
+export type CopilotFailureReason =
+	| "unreachable"
+	| "bad_response"
+	| "timeout"
+	| "unknown";
+
+export interface CopilotFailure {
+	reason: CopilotFailureReason;
+	message: string;
+	status?: number;
+}
+
+const UNAVAILABLE_MSG = "سرویس پیشنهاد پاسخ در دسترس نیست.";
+const AI_DOWN_MSG =
+	"سرویس AI روشن نیست. ترمینال ai-service را اجرا کنید (پورت ۸۰۰۰) و AI_SERVICE_URL را در .env بررسی کنید.";
+
+function messagesForAi(messages: CopilotMessage[]): CopilotMessage[] {
+	if (messages.length > 0) return messages;
+	return [
+		{
+			role: "system",
+			content:
+				"مکالمه هنوز متنی ندارد. سه پیشنهاد شروع گفتگوی مودبانه به فارسی بده.",
+		},
+	];
+}
+
+function failureFromError(err: unknown, status?: number): CopilotFailure {
+	if (err instanceof Error && err.name === "AbortError") {
+		return { reason: "timeout", message: "زمان انتظار سرویس AI تمام شد." };
+	}
+	const code = (err as NodeJS.ErrnoException)?.code;
+	if (
+		code === "ECONNREFUSED" ||
+		code === "ENOTFOUND" ||
+		code === "ECONNRESET" ||
+		code === "EHOSTUNREACH"
+	) {
+		return { reason: "unreachable", message: AI_DOWN_MSG };
+	}
+	if (status === 400) {
+		return {
+			reason: "bad_response",
+			message: "درخواست Copilot نامعتبر بود (مکالمه بدون متن).",
+		};
+	}
+	if (status && status >= 500) {
+		return {
+			reason: "bad_response",
+			message: "خطای داخلی سرویس AI. لاگ ai-service را بررسی کنید.",
+		};
+	}
+	return { reason: "unknown", message: UNAVAILABLE_MSG, status };
+}
+
+export async function pingAiService(): Promise<boolean> {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 4_000);
+	try {
+		const res = await fetch(`${AI_SERVICE_URL}/health`, {
+			signal: controller.signal,
+		});
+		return res.ok;
+	} catch {
+		return false;
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
 export async function requestCopilot(
 	workspaceId: string,
 	messages: CopilotMessage[],
 	contactName?: string | null,
 	conversationId?: string,
-): Promise<CopilotResult | null> {
+): Promise<{ ok: true; data: CopilotResult } | { ok: false; failure: CopilotFailure }> {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT);
+	const payload = messagesForAi(messages);
 
 	try {
 		const res = await fetch(`${AI_SERVICE_URL}/v1/copilot`, {
@@ -34,19 +105,35 @@ export async function requestCopilot(
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				workspace_id: workspaceId,
-				messages,
+				messages: payload,
 				contact_name: contactName ?? null,
 				conversation_id: conversationId ?? null,
 			}),
 			signal: controller.signal,
 		});
 		if (!res.ok) {
-			throw new Error(`AI copilot returned ${res.status}`);
+			let detail = "";
+			try {
+				const body = (await res.json()) as { detail?: string };
+				detail = body.detail ?? "";
+			} catch {
+				/* ignore */
+			}
+			console.error(
+				"[AI] copilot failed:",
+				res.status,
+				detail || res.statusText,
+			);
+			return {
+				ok: false,
+				failure: failureFromError(new Error(detail || res.statusText), res.status),
+			};
 		}
-		return (await res.json()) as CopilotResult;
+		const data = (await res.json()) as CopilotResult;
+		return { ok: true, data };
 	} catch (err) {
 		console.error("[AI] copilot failed:", (err as Error).message);
-		return null;
+		return { ok: false, failure: failureFromError(err) };
 	} finally {
 		clearTimeout(timeout);
 	}
@@ -59,20 +146,30 @@ export async function streamCopilotFromAI(
 	conversationId: string | undefined,
 	onEvent: (event: Record<string, unknown>) => void,
 	signal?: AbortSignal,
-): Promise<boolean> {
+): Promise<{ ok: true } | { ok: false; failure: CopilotFailure }> {
+	const payload = messagesForAi(messages);
+
 	try {
 		const res = await fetch(`${AI_SERVICE_URL}/v1/copilot/stream`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				workspace_id: workspaceId,
-				messages,
+				messages: payload,
 				contact_name: contactName ?? null,
 				conversation_id: conversationId ?? null,
 			}),
 			signal,
 		});
-		if (!res.ok || !res.body) return false;
+		if (!res.ok || !res.body) {
+			return {
+				ok: false,
+				failure: failureFromError(
+					new Error(res.statusText),
+					res.status || undefined,
+				),
+			};
+		}
 
 		const reader = res.body.getReader();
 		const decoder = new TextDecoder();
@@ -95,11 +192,16 @@ export async function streamCopilotFromAI(
 				}
 			}
 		}
-		return true;
+		return { ok: true };
 	} catch (err) {
-		if ((err as Error).name !== "AbortError") {
-			console.error("[AI] copilot stream failed:", (err as Error).message);
+		if ((err as Error).name === "AbortError") {
+			return { ok: false, failure: failureFromError(err) };
 		}
-		return false;
+		console.error("[AI] copilot stream failed:", (err as Error).message);
+		return { ok: false, failure: failureFromError(err) };
 	}
+}
+
+export function copilotUnavailableMessage(failure: CopilotFailure): string {
+	return failure.message || UNAVAILABLE_MSG;
 }
