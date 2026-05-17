@@ -52,6 +52,7 @@ export class WidgetSocket {
 		apiUrl: string,
 		workspaceId: string,
 		conversationId: string,
+		contactId: string,
 		callbacks: {
 			onMessage: (msg: Message) => void;
 			onTyping: (data: { isTyping: boolean }) => void;
@@ -74,7 +75,12 @@ export class WidgetSocket {
 		}
 
 		this.socket = ioConnect(apiUrl, {
-			query: { workspace_id: workspaceId, token: "visitor" },
+			query: {
+				workspace_id: workspaceId,
+				token: "visitor",
+				client_type: "visitor",
+				contact_id: contactId,
+			},
 		});
 
 		this.socket.on("connected", () => {

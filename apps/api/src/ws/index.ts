@@ -3,6 +3,7 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
 import { Server } from "socket.io";
 import { registerEvents } from "./events.js";
+import { registerPresence, unregisterPresence } from "./presence-handler.js";
 
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 
@@ -28,14 +29,16 @@ export function createSocketServer(httpServer: HttpServer) {
 		next();
 	});
 
-	io.on("connection", (socket) => {
+	io.on("connection", async (socket) => {
 		const wsId = socket.data.workspaceId as string;
 		socket.join(`workspace:${wsId}`);
 		socket.emit("connected", { workspace_id: wsId });
 
 		registerEvents(io, socket);
+		await registerPresence(io, socket, wsId);
 
-		socket.on("disconnect", () => {
+		socket.on("disconnect", async () => {
+			await unregisterPresence(io, socket, wsId);
 			socket.to(`workspace:${wsId}`).emit("presence:offline", {
 				user: socket.data.token ?? socket.id,
 			});

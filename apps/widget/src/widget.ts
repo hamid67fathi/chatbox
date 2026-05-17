@@ -65,6 +65,7 @@ export class ChatBoxWidget {
 	private autoOpened = false;
 	private workspaceId = "";
 	private conversationId = "";
+	private contactId = "";
 	private isOpen = false;
 	private welcomeShown = false;
 	private chatStarted = false;
@@ -347,6 +348,7 @@ export class ChatBoxWidget {
 			const session = await createSession(this.config);
 			this.workspaceId = session.workspace_id;
 			this.conversationId = session.conversation_id;
+			this.contactId = session.contact_id;
 
 			const needsPrechat =
 				this.prechatFields().enabled && !session.profile_complete;
@@ -384,6 +386,7 @@ export class ChatBoxWidget {
 			this.config.apiUrl,
 			this.workspaceId,
 			this.conversationId,
+			this.contactId,
 			{
 				onMessage: (msg) => {
 					this.hideWelcome();

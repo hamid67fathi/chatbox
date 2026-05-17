@@ -204,6 +204,13 @@ export interface ConversationFilters {
 	assignedTo?: string;
 	limit?: number;
 	cursor?: string;
+	/** false = inbox (default), true = archived only, all = include archived */
+	archived?: "true" | "false" | "all";
+}
+
+export interface PresenceCounts {
+	agents_online: number;
+	visitors_online: number;
 }
 
 export async function fetchConversations(
@@ -219,6 +226,7 @@ export async function fetchConversations(
 	if (filters.channel) params.set("channel", filters.channel);
 	if (filters.assignedTo) params.set("assigned_to", filters.assignedTo);
 	if (filters.cursor) params.set("cursor", filters.cursor);
+	if (filters.archived) params.set("archived", filters.archived);
 
 	const res = await authFetch(`${API_URL}/v1/conversations?${params}`, {
 		headers: authHeaders(workspaceId),
@@ -660,6 +668,49 @@ export async function updateConversationStatus(
 		},
 	);
 	return res.ok;
+}
+
+export async function archiveConversation(
+	workspaceId: string,
+	conversationId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/archive`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	return res.ok;
+}
+
+export async function unarchiveConversation(
+	workspaceId: string,
+	conversationId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/conversations/${conversationId}/unarchive`,
+		{
+			method: "POST",
+			headers: authHeaders(workspaceId),
+		},
+	);
+	return res.ok;
+}
+
+export async function fetchPresence(
+	workspaceId: string,
+): Promise<PresenceCounts | null> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/presence`,
+		{
+			headers: authHeaders(workspaceId),
+			cache: "no-store",
+		},
+	);
+	if (!res.ok) return null;
+	const json = (await res.json()) as { data?: PresenceCounts };
+	return json.data ?? null;
 }
 
 export async function assignConversation(

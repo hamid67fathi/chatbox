@@ -6,10 +6,12 @@ import type { ConversationDetail, WorkspaceMember } from "@/lib/api";
 import {
 	addConversationNote,
 	addConversationTags,
+	archiveConversation,
 	assignConversation,
 	fetchConversationDetail,
 	fetchWorkspaceMembers,
 	refreshConversationSummary,
+	unarchiveConversation,
 	updateConversationPriority,
 	updateConversationStatus,
 } from "@/lib/api";
@@ -97,6 +99,12 @@ export function ConversationToolbar({
 			</div>
 		);
 	}
+
+	const meta =
+		detail.metadata && typeof detail.metadata === "object"
+			? (detail.metadata as { archivedAt?: string })
+			: null;
+	const isArchived = Boolean(meta?.archivedAt);
 
 	const visitorLabel =
 		detail.contact?.fullName ?? `Visitor · ${detail.id.slice(0, 8)}`;
@@ -215,6 +223,24 @@ export function ConversationToolbar({
 						</option>
 					))}
 				</select>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					disabled={saving}
+					onClick={() =>
+						void run(async () => {
+							if (isArchived) {
+								await unarchiveConversation(workspaceId, conversationId);
+							} else {
+								await archiveConversation(workspaceId, conversationId);
+							}
+							await reload();
+						})
+					}
+				>
+					{isArchived ? "بازگردانی از آرشیو" : "آرشیو"}
+				</Button>
 				<Button
 					type="button"
 					variant="ghost"

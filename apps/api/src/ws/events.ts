@@ -104,15 +104,4 @@ export function registerEvents(io: Server, socket: Socket) {
 		});
 	});
 
-	socket.on("presence:online", () => {
-		socket.to(`workspace:${wsId}`).emit("presence:online", {
-			user: socket.data.token ?? socket.id,
-		});
-	});
-
-	socket.on("presence:away", () => {
-		socket.to(`workspace:${wsId}`).emit("presence:away", {
-			user: socket.data.token ?? socket.id,
-		});
-	});
 }

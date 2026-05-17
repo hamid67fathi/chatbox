@@ -28,6 +28,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Props {
 	workspaceId: string;
 	conversationId: string;
+	userId?: string;
 	contactName?: string | null;
 }
 
@@ -41,7 +42,12 @@ function upsertMessage(prev: Message[], msg: Message): Message[] {
 	return [...prev, msg];
 }
 
-export function MessageThread({ workspaceId, conversationId, contactName }: Props) {
+export function MessageThread({
+	workspaceId,
+	conversationId,
+	userId,
+	contactName,
+}: Props) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [text, setText] = useState("");
 	const [sending, setSending] = useState(false);
@@ -60,7 +66,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 		(messageId: string) => {
 			if (markedReadRef.current.has(messageId)) return;
 			markedReadRef.current.add(messageId);
-			getSocket(workspaceId).emit("message:read", {
+			getSocket(workspaceId, userId).emit("message:read", {
 				conv_id: conversationId,
 				message_id: messageId,
 			});
@@ -105,7 +111,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 	}, [workspaceId, conversationId, markContactMessagesRead]);
 
 	useEffect(() => {
-		const socket = getSocket(workspaceId);
+		const socket = getSocket(workspaceId, userId);
 
 		socket.emit("conv:join", { conv_id: conversationId });
 
@@ -158,7 +164,7 @@ export function MessageThread({ workspaceId, conversationId, contactName }: Prop
 
 	const emitTyping = useCallback(
 		(isTyping: boolean) => {
-			getSocket(workspaceId).emit(isTyping ? "typing:start" : "typing:stop", {
+			getSocket(workspaceId, userId).emit(isTyping ? "typing:start" : "typing:stop", {
 				conv_id: conversationId,
 			});
 		},

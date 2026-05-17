@@ -21,6 +21,12 @@ import {
 } from "../lib/plan-limits.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 import { refreshConversationSummary } from "../lib/conversation-insights.js";
+import {
+	archiveMetadataPatch,
+	archivedCondition,
+	notArchivedCondition,
+	unarchiveMetadataPatch,
+} from "../lib/conversation-archive.js";
 import { getIO } from "../ws/broadcast.js";
 
 export async function conversationRoutes(app: FastifyInstance) {
@@ -32,6 +38,7 @@ export async function conversationRoutes(app: FastifyInstance) {
 			limit?: string;
 			cursor?: string;
 			include_empty?: string;
+			archived?: string;
 		};
 	}>("/v1/conversations", async (request) => {
 		const wsId = getWorkspaceId(request);
@@ -64,6 +71,13 @@ export async function conversationRoutes(app: FastifyInstance) {
 						),
 				),
 			);
+		}
+
+		const archivedFilter = request.query.archived ?? "false";
+		if (archivedFilter === "true") {
+			conditions.push(archivedCondition);
+		} else if (archivedFilter !== "all") {
+			conditions.push(notArchivedCondition);
 		}
 
 		if (request.query.status) {
@@ -229,6 +243,90 @@ export async function conversationRoutes(app: FastifyInstance) {
 					});
 			} catch {
 				/* socket.io not yet initialized */
+			}
+
+			return updated;
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/archive",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			await assertConversationAccess(existing, wsId, user.id);
+
+			const [updated] = await db
+				.update(conversations)
+				.set({
+					metadata: archiveMetadataPatch(existing.metadata, user.id),
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(conversations.id, request.params.id),
+						eq(conversations.workspaceId, wsId),
+					),
+				)
+				.returning();
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`).emit("conv:archived", {
+					conv_id: request.params.id,
+				});
+			} catch {
+				/* socket not ready */
+			}
+
+			return updated;
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/unarchive",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+
+			const existing = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, request.params.id),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!existing) throw notFound("Conversation not found.");
+			await assertConversationAccess(existing, wsId, user.id);
+
+			const [updated] = await db
+				.update(conversations)
+				.set({
+					metadata: unarchiveMetadataPatch(existing.metadata),
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(conversations.id, request.params.id),
+						eq(conversations.workspaceId, wsId),
+					),
+				)
+				.returning();
+
+			try {
+				const io = getIO();
+				io.to(`workspace:${wsId}`).emit("conv:unarchived", {
+					conv_id: request.params.id,
+				});
+			} catch {
+				/* socket not ready */
 			}
 
 			return updated;

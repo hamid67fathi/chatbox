@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConversationList } from "./ConversationList";
 import { ConversationToolbar } from "./ConversationToolbar";
 import { MessageThread } from "./MessageThread";
+import { PresenceStats } from "./PresenceStats";
 
 interface Props {
 	workspaceId: string;
@@ -40,6 +41,8 @@ function normalizeConversation(raw: Conversation): Conversation {
 	};
 }
 
+type InboxView = "inbox" | "archived";
+
 const STATUS_OPTIONS = [
 	{ value: "", label: "همه وضعیت‌ها" },
 	{ value: "open", label: "باز" },
@@ -58,6 +61,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
+	const [inboxView, setInboxView] = useState<InboxView>("inbox");
 	const [statusFilter, setStatusFilter] = useState("");
 	const [channelFilter, setChannelFilter] = useState("");
 	const [hasMore, setHasMore] = useState(false);
@@ -65,11 +69,14 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	const [nextCursor, setNextCursor] = useState<string | null>(null);
 
 	const apiFilters = useMemo((): ConversationFilters => {
-		const f: ConversationFilters = { limit: 30 };
+		const f: ConversationFilters = {
+			limit: 30,
+			archived: inboxView === "archived" ? "true" : "false",
+		};
 		if (statusFilter) f.status = statusFilter;
 		if (channelFilter) f.channel = channelFilter;
 		return f;
-	}, [statusFilter, channelFilter]);
+	}, [statusFilter, channelFilter, inboxView]);
 
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
@@ -117,7 +124,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	useEffect(() => {
 		if (!workspaceId) return;
 
-		const socket = getSocket(workspaceId);
+		const socket = getSocket(workspaceId, userId);
 
 		const onConnected = () => {
 			reloadConversations();
@@ -290,10 +297,31 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 			<aside className="flex w-80 shrink-0 flex-col border-e border-border bg-card">
 				<div className="space-y-3 border-b border-border p-4">
 					<div>
-						<h2 className="text-base font-semibold">صندوق ورودی</h2>
+						<h2 className="text-base font-semibold">
+							{inboxView === "archived" ? "آرشیو" : "صندوق ورودی"}
+						</h2>
 						<p className="text-xs text-muted-foreground">
 							{filteredConversations.length} مکالمه
 						</p>
+						<div className="mt-2">
+							<PresenceStats workspaceId={workspaceId} userId={userId} />
+						</div>
+					</div>
+					<div className="flex rounded-lg border border-border p-0.5 text-xs">
+						<button
+							type="button"
+							className={`flex-1 rounded-md px-2 py-1 ${inboxView === "inbox" ? "bg-primary text-primary-foreground" : ""}`}
+							onClick={() => setInboxView("inbox")}
+						>
+							فعال
+						</button>
+						<button
+							type="button"
+							className={`flex-1 rounded-md px-2 py-1 ${inboxView === "archived" ? "bg-primary text-primary-foreground" : ""}`}
+							onClick={() => setInboxView("archived")}
+						>
+							آرشیو
+						</button>
 					</div>
 					<div className="relative">
 						<Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -355,6 +383,7 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 						<MessageThread
 							workspaceId={workspaceId}
 							conversationId={activeId}
+							userId={userId}
 							contactName={activeContactName}
 						/>
 					</>

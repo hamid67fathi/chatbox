@@ -11,6 +11,7 @@ import {
 	assertCanInviteMember,
 	getPlanUsageStatus,
 } from "../lib/plan-limits.js";
+import { presenceCounts } from "../lib/presence.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -102,6 +103,15 @@ export async function workspaceRoutes(app: FastifyInstance) {
 			const status = await getPlanUsageStatus(request.params.id);
 			if (!status) throw notFound("Workspace not found.");
 			return { data: status };
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/workspaces/:id/presence",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const counts = await presenceCounts(request.params.id);
+			return { data: counts };
 		},
 	);
 
