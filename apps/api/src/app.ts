@@ -26,6 +26,7 @@ import { uploadRoutes } from "./routes/uploads.js";
 import { widgetRoutes } from "./routes/widget.js";
 import { workspaceRoutes } from "./routes/workspaces.js";
 import { widgetConfigRoutes } from "./routes/widget-config.js";
+import { apiTokenRoutes } from "./routes/api-tokens.js";
 
 export function buildApp() {
 	const app = Fastify({ logger: false });
@@ -135,6 +136,7 @@ export function buildApp() {
 		instance.register(copilotRoutes);
 		instance.register(knowledgeRoutes);
 		instance.register(billingRoutes);
+		instance.register(apiTokenRoutes);
 	});
 
 	return app;

@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { SignJWT, jwtVerify } from "jose";
+import { verifyApiToken, API_TOKEN_PREFIX } from "./api-tokens.js";
 import { ApiError } from "./errors.js";
 
 const BCRYPT_ROUNDS = 12;
@@ -118,6 +119,22 @@ export async function requireAuth(
 	}
 
 	const token = header.slice(7);
+
+	if (token.startsWith(API_TOKEN_PREFIX)) {
+		const record = await verifyApiToken(token);
+		if (!record) throw unauthorized("Invalid or revoked API token.");
+		const req = request as AuthenticatedRequest;
+		req.user = {
+			id: record.createdByUserId,
+			email: record.creatorEmail,
+		};
+		req.apiToken = {
+			id: record.id,
+			workspaceId: record.workspaceId,
+		};
+		return;
+	}
+
 	try {
 		const payload = await verifyToken<AccessTokenPayload>(token);
 		if (payload.type !== "access") throw unauthorized("Invalid token type.");
@@ -133,4 +150,5 @@ export async function requireAuth(
 
 export interface AuthenticatedRequest extends FastifyRequest {
 	user: { id: string; email: string };
+	apiToken?: { id: string; workspaceId: string };
 }

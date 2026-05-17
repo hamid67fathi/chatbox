@@ -1162,4 +1162,68 @@ export async function streamCopilotSuggestions(
 	}
 }
 
+export interface ApiTokenRow {
+	id: string;
+	name: string;
+	token_prefix: string;
+	created_by: string;
+	creator_email: string | null;
+	last_used_at: string | null;
+	expires_at: string | null;
+	created_at: string;
+}
+
+export async function fetchApiTokens(
+	workspaceId: string,
+): Promise<ApiTokenRow[]> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/api-tokens`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	if (!res.ok) return [];
+	const body = await res.json().catch(() => ({}));
+	return body.data ?? [];
+}
+
+export async function createApiToken(
+	workspaceId: string,
+	data: { name: string; expires_in_days?: number },
+): Promise<{
+	ok: boolean;
+	token?: string;
+	token_prefix?: string;
+	id?: string;
+	error?: string;
+}> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/api-tokens`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json", ...authHeaders(workspaceId) },
+			body: JSON.stringify(data),
+		},
+	);
+	const body = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		return { ok: false, error: body?.error?.message ?? `HTTP ${res.status}` };
+	}
+	return {
+		ok: true,
+		token: body.token,
+		token_prefix: body.token_prefix,
+		id: body.id,
+	};
+}
+
+export async function revokeApiToken(
+	workspaceId: string,
+	tokenId: string,
+): Promise<boolean> {
+	const res = await authFetch(
+		`${API_URL}/v1/workspaces/${workspaceId}/api-tokens/${tokenId}`,
+		{ method: "DELETE", headers: authHeaders(workspaceId) },
+	);
+	return res.ok;
+}
+
 export { API_URL };

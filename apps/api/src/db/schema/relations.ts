@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { aiInteractions } from "./ai-interactions.js";
+import { apiTokens } from "./api-tokens.js";
 import { cannedResponses } from "./canned-responses.js";
 import { contacts } from "./contacts.js";
 import {
@@ -26,6 +27,18 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 	aiInteractions: many(aiInteractions),
 	subscriptions: many(subscriptions),
 	payments: many(payments),
+	apiTokens: many(apiTokens),
+}));
+
+export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [apiTokens.workspaceId],
+		references: [workspaces.id],
+	}),
+	creator: one(users, {
+		fields: [apiTokens.createdBy],
+		references: [users.id],
+	}),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({

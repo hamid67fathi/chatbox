@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	API_URL,
+	createApiToken,
+	fetchApiTokens,
 	fetchWidgetConfig,
 	fetchWorkspaceDetail,
+	revokeApiToken,
 	updateProfile,
 	updateWidgetConfig,
 	updateWorkspace,
+	type ApiTokenRow,
 	type WidgetConfigPublic,
 } from "@/lib/api";
 import { refreshAuthUser } from "@/lib/auth-store";
@@ -32,7 +36,9 @@ const TIMEZONES = [
 ];
 
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
-	const [tab, setTab] = useState<"profile" | "workspace" | "widget">("profile");
+	const [tab, setTab] = useState<
+		"profile" | "workspace" | "widget" | "api"
+	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
 	const [fullName, setFullName] = useState("");
@@ -65,6 +71,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [triggerScrollPct, setTriggerScrollPct] = useState("");
 	const [widgetMsg, setWidgetMsg] = useState("");
 	const [widgetError, setWidgetError] = useState("");
+
+	const [apiTokens, setApiTokens] = useState<ApiTokenRow[]>([]);
+	const [apiTokenName, setApiTokenName] = useState("");
+	const [apiTokenExpiryDays, setApiTokenExpiryDays] = useState("");
+	const [newTokenRaw, setNewTokenRaw] = useState<string | null>(null);
+	const [apiMsg, setApiMsg] = useState("");
+	const [apiError, setApiError] = useState("");
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -109,11 +122,21 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		}
 	}, [workspaceId]);
 
+	const loadApiTokens = useCallback(async () => {
+		if (!canEditWorkspace) return;
+		const rows = await fetchApiTokens(workspaceId);
+		setApiTokens(rows);
+	}, [workspaceId, canEditWorkspace]);
+
 	useEffect(() => {
 		loadProfile();
 		loadWorkspace();
 		loadWidget();
 	}, [loadProfile, loadWorkspace, loadWidget]);
+
+	useEffect(() => {
+		if (tab === "api") void loadApiTokens();
+	}, [tab, loadApiTokens]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -150,6 +173,44 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			return;
 		}
 		setWsMsg("تنظیمات ورک‌اسپیس ذخیره شد.");
+	}
+
+	async function handleCreateApiToken(e: React.FormEvent) {
+		e.preventDefault();
+		setApiMsg("");
+		setApiError("");
+		setNewTokenRaw(null);
+		const label = apiTokenName.trim();
+		if (!label) {
+			setApiError("نام توکن الزامی است.");
+			return;
+		}
+		const days = apiTokenExpiryDays.trim();
+		const result = await createApiToken(workspaceId, {
+			name: label,
+			...(days ? { expires_in_days: Math.max(1, Number(days) || 0) } : {}),
+		});
+		if (!result.ok || !result.token) {
+			setApiError(result.error ?? "ساخت توکن ناموفق بود.");
+			return;
+		}
+		setNewTokenRaw(result.token);
+		setApiTokenName("");
+		setApiTokenExpiryDays("");
+		setApiMsg("توکن ساخته شد. فقط یک‌بار نمایش داده می‌شود — آن را کپی کنید.");
+		await loadApiTokens();
+	}
+
+	async function handleRevokeApiToken(tokenId: string) {
+		setApiMsg("");
+		setApiError("");
+		const ok = await revokeApiToken(workspaceId, tokenId);
+		if (!ok) {
+			setApiError("لغو توکن ناموفق بود.");
+			return;
+		}
+		setApiMsg("توکن لغو شد.");
+		await loadApiTokens();
 	}
 
 	async function saveWidget(e: React.FormEvent) {
@@ -197,7 +258,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 				<h1 className="text-lg font-semibold">تنظیمات</h1>
 			</div>
 			<div className="flex gap-2 border-b border-border px-6 pt-3">
-				{(["profile", "workspace", "widget"] as const).map((t) => (
+				{(["profile", "workspace", "widget", "api"] as const).map((t) => (
 					<button
 						key={t}
 						type="button"
@@ -213,7 +274,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							? "پروفایل"
 							: t === "workspace"
 								? "ورک‌اسپیس"
-								: "ویجت"}
+								: t === "widget"
+									? "ویجت"
+									: "API"}
 					</button>
 				))}
 			</div>
@@ -466,6 +529,128 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							</div>
 						)}
 					</form>
+				)}
+				{tab === "api" && (
+					<div className="mx-auto flex max-w-lg flex-col gap-6">
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر (admin/owner) می‌تواند توکن API بسازد یا لغو کند.
+							</p>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground">
+									توکن‌ها برای فراخوانی REST API از سرور یا webhook استفاده می‌شوند.
+									در هدر درخواست:{" "}
+									<code className="rounded bg-muted px-1 text-xs" dir="ltr">
+										Authorization: Bearer cbx_…
+									</code>{" "}
+									و{" "}
+									<code className="rounded bg-muted px-1 text-xs" dir="ltr">
+										X-Workspace-Id
+									</code>
+								</p>
+								<form
+									onSubmit={handleCreateApiToken}
+									className="flex flex-col gap-3 rounded-lg border border-border p-4"
+								>
+									<p className="text-sm font-medium">توکن جدید</p>
+									<label className="flex flex-col gap-1 text-sm font-medium">
+										نام (برای شناسایی)
+										<Input
+											value={apiTokenName}
+											onChange={(e) => setApiTokenName(e.target.value)}
+											placeholder="مثلاً production-webhook"
+											dir="ltr"
+										/>
+									</label>
+									<label className="flex flex-col gap-1 text-sm font-medium">
+										انقضا (روز، اختیاری)
+										<Input
+											type="number"
+											min={1}
+											value={apiTokenExpiryDays}
+											onChange={(e) => setApiTokenExpiryDays(e.target.value)}
+											placeholder="خالی = بدون انقضا"
+											dir="ltr"
+										/>
+									</label>
+									<Button type="submit">ساخت توکن</Button>
+								</form>
+								{newTokenRaw && (
+									<div className="rounded-lg border border-primary/40 bg-primary/5 p-4">
+										<p className="mb-2 text-sm font-medium text-primary">
+											توکن جدید (فقط یک‌بار)
+										</p>
+										<pre
+											className="overflow-x-auto break-all rounded bg-muted p-2 text-xs"
+											dir="ltr"
+										>
+											{newTokenRaw}
+										</pre>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											className="mt-2"
+											onClick={() => {
+												void navigator.clipboard.writeText(newTokenRaw);
+												setApiMsg("در کلیپ‌بورد کپی شد.");
+											}}
+										>
+											کپی
+										</Button>
+									</div>
+								)}
+								{apiError && (
+									<p className="text-sm text-destructive">{apiError}</p>
+								)}
+								{apiMsg && <p className="text-sm text-primary">{apiMsg}</p>}
+								<div>
+									<p className="mb-2 text-sm font-medium">توکن‌های فعال</p>
+									{apiTokens.length === 0 ? (
+										<p className="text-sm text-muted-foreground">
+											توکن فعالی وجود ندارد.
+										</p>
+									) : (
+										<ul className="divide-y divide-border rounded-lg border border-border">
+											{apiTokens.map((t) => (
+												<li
+													key={t.id}
+													className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+												>
+													<div>
+														<p className="font-medium">{t.name}</p>
+														<p
+															className="font-mono text-xs text-muted-foreground"
+															dir="ltr"
+														>
+															{t.token_prefix}…
+														</p>
+														<p className="text-xs text-muted-foreground">
+															{t.creator_email ?? "—"} ·{" "}
+															{new Date(t.created_at).toLocaleDateString("fa-IR")}
+															{t.last_used_at &&
+																` · آخرین استفاده ${new Date(t.last_used_at).toLocaleDateString("fa-IR")}`}
+															{t.expires_at &&
+																` · انقضا ${new Date(t.expires_at).toLocaleDateString("fa-IR")}`}
+														</p>
+													</div>
+													<Button
+														type="button"
+														variant="destructive"
+														size="sm"
+														onClick={() => void handleRevokeApiToken(t.id)}
+													>
+														لغو
+													</Button>
+												</li>
+											))}
+										</ul>
+									)}
+								</div>
+							</>
+						)}
+					</div>
 				)}
 				{tab === "workspace" && (
 					<form

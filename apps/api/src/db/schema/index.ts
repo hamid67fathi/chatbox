@@ -13,4 +13,5 @@ export * from "./ai-interactions.js";
 export * from "./subscriptions.js";
 export * from "./sessions.js";
 export * from "./otp-codes.js";
+export * from "./api-tokens.js";
 export * from "./relations.js";

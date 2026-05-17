@@ -33,8 +33,35 @@ export function requireWorkspace(minRole: Role = "viewer") {
 			throw forbidden("X-Workspace-Id header is required.");
 		}
 
-		const userId = (request as AuthenticatedRequest).user?.id;
+		const authReq = request as AuthenticatedRequest;
+		const userId = authReq.user?.id;
 		if (!userId) throw unauthorized();
+
+		if (authReq.apiToken) {
+			if (authReq.apiToken.workspaceId !== wsId) {
+				throw forbidden("API token is not valid for this workspace.");
+			}
+			const [membership] = await db
+				.select({ role: workspaceMembers.role })
+				.from(workspaceMembers)
+				.where(
+					and(
+						eq(workspaceMembers.workspaceId, wsId),
+						eq(workspaceMembers.userId, userId),
+					),
+				)
+				.limit(1);
+			if (!membership) throw forbidden("Token creator is not a workspace member.");
+			const userLevel = ROLE_HIERARCHY[membership.role as Role] ?? 0;
+			const minLevel = ROLE_HIERARCHY[minRole];
+			if (userLevel < minLevel)
+				throw forbidden(`Requires at least ${minRole} role.`);
+			(request as WorkspaceRequest).workspace = {
+				id: wsId,
+				role: membership.role as Role,
+			};
+			return;
+		}
 
 		const [membership] = await db
 			.select({ role: workspaceMembers.role })
