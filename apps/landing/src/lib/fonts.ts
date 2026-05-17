@@ -1,24 +1,42 @@
 import localFont from "next/font/local";
 
-const fontDir = "../../public/fonts";
-
 export const vazirmatn = localFont({
 	src: [
-		{ path: `${fontDir}/Vazirmatn-Light.ttf`, weight: "300", style: "normal" },
-		{ path: `${fontDir}/Vazirmatn-Regular.ttf`, weight: "400", style: "normal" },
-		{ path: `${fontDir}/Vazirmatn-Medium.ttf`, weight: "500", style: "normal" },
 		{
-			path: `${fontDir}/Vazirmatn-SemiBold.ttf`,
+			path: "../../public/fonts/Vazirmatn-Light.ttf",
+			weight: "300",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/Vazirmatn-Regular.ttf",
+			weight: "400",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/Vazirmatn-Medium.ttf",
+			weight: "500",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/Vazirmatn-SemiBold.ttf",
 			weight: "600",
 			style: "normal",
 		},
-		{ path: `${fontDir}/Vazirmatn-Bold.ttf`, weight: "700", style: "normal" },
 		{
-			path: `${fontDir}/Vazirmatn-ExtraBold.ttf`,
+			path: "../../public/fonts/Vazirmatn-Bold.ttf",
+			weight: "700",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/Vazirmatn-ExtraBold.ttf",
 			weight: "800",
 			style: "normal",
 		},
-		{ path: `${fontDir}/Vazirmatn-Black.ttf`, weight: "900", style: "normal" },
+		{
+			path: "../../public/fonts/Vazirmatn-Black.ttf",
+			weight: "900",
+			style: "normal",
+		},
 	],
 	variable: "--font-vazir",
 	display: "swap",
@@ -27,32 +45,32 @@ export const vazirmatn = localFont({
 export const cormorant = localFont({
 	src: [
 		{
-			path: `${fontDir}/CormorantGaramond-Light.ttf`,
+			path: "../../public/fonts/CormorantGaramond-Light.ttf",
 			weight: "300",
 			style: "normal",
 		},
 		{
-			path: `${fontDir}/CormorantGaramond-LightItalic.ttf`,
+			path: "../../public/fonts/CormorantGaramond-LightItalic.ttf",
 			weight: "300",
 			style: "italic",
 		},
 		{
-			path: `${fontDir}/CormorantGaramond-Regular.ttf`,
+			path: "../../public/fonts/CormorantGaramond-Regular.ttf",
 			weight: "400",
 			style: "normal",
 		},
 		{
-			path: `${fontDir}/CormorantGaramond-Italic.ttf`,
+			path: "../../public/fonts/CormorantGaramond-Italic.ttf",
 			weight: "400",
 			style: "italic",
 		},
 		{
-			path: `${fontDir}/CormorantGaramond-SemiBold.ttf`,
+			path: "../../public/fonts/CormorantGaramond-SemiBold.ttf",
 			weight: "600",
 			style: "normal",
 		},
 		{
-			path: `${fontDir}/CormorantGaramond-Bold.ttf`,
+			path: "../../public/fonts/CormorantGaramond-Bold.ttf",
 			weight: "700",
 			style: "normal",
 		},
@@ -63,10 +81,26 @@ export const cormorant = localFont({
 
 export const dmSans = localFont({
 	src: [
-		{ path: `${fontDir}/DMSans-Regular.ttf`, weight: "400", style: "normal" },
-		{ path: `${fontDir}/DMSans-Medium.ttf`, weight: "500", style: "normal" },
-		{ path: `${fontDir}/DMSans-SemiBold.ttf`, weight: "600", style: "normal" },
-		{ path: `${fontDir}/DMSans-Bold.ttf`, weight: "700", style: "normal" },
+		{
+			path: "../../public/fonts/DMSans-Regular.ttf",
+			weight: "400",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/DMSans-Medium.ttf",
+			weight: "500",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/DMSans-SemiBold.ttf",
+			weight: "600",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/DMSans-Bold.ttf",
+			weight: "700",
+			style: "normal",
+		},
 	],
 	variable: "--font-dm-sans",
 	display: "swap",
