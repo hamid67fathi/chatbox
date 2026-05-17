@@ -60,12 +60,12 @@ export function buildConversationReportConditions(
 	}
 
 	if (query.from) {
-		const from = parseIsoDate(query.from, "from");
-		conditions.push(sql`${SORT_AT} >= ${from}`);
+		const from = parseIsoDate(query.from, "from").toISOString();
+		conditions.push(sql`${SORT_AT} >= ${from}::timestamptz`);
 	}
 	if (query.to) {
-		const to = parseIsoDate(query.to, "to");
-		conditions.push(sql`${SORT_AT} <= ${to}`);
+		const to = parseIsoDate(query.to, "to").toISOString();
+		conditions.push(sql`${SORT_AT} <= ${to}::timestamptz`);
 	}
 
 	const archivedFilter = query.archived ?? "all";
