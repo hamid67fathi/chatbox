@@ -11,6 +11,17 @@ const config: Config = {
 					light: "#3b82f6",
 				},
 			},
+			fontFamily: {
+				sans: [
+					"var(--font-vazir)",
+					"var(--font-dm-sans)",
+					"Segoe UI",
+					"Tahoma",
+					"system-ui",
+					"sans-serif",
+				],
+				display: ["var(--font-display)", "var(--font-vazir)", "serif"],
+			},
 		},
 	},
 	plugins: [],

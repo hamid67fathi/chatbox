@@ -97,6 +97,12 @@ export function buildApp() {
 		root: publicRoot,
 		prefix: "/",
 		decorateReply: false,
+		setHeaders(res, path) {
+			if (typeof path === "string" && path.replace(/\\/g, "/").includes("/fonts/")) {
+				res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+				res.setHeader("Access-Control-Allow-Origin", "*");
+			}
+		},
 	});
 
 	const widgetRoot = resolve(__dirname, "../../widget");

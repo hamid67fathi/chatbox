@@ -8,7 +8,7 @@ export default function HomePage() {
 		<>
 			<section className="relative overflow-hidden bg-gradient-to-bl from-blue-600 via-indigo-600 to-violet-700 text-white">
 				<div className="mx-auto max-w-6xl px-4 py-20 md:py-28">
-					<h1 className="max-w-3xl text-3xl font-bold leading-tight md:text-5xl">
+					<h1 className="max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
 						{hero.title}
 					</h1>
 					<p className="mt-6 max-w-2xl text-lg text-blue-100">{hero.subtitle}</p>

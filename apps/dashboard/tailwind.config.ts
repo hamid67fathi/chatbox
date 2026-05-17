@@ -47,12 +47,14 @@ const config: Config = {
 			},
 			fontFamily: {
 				sans: [
-					"var(--font-sans)",
+					"var(--font-vazir)",
+					"var(--font-dm-sans)",
 					"Segoe UI",
 					"Tahoma",
 					"system-ui",
 					"sans-serif",
 				],
+				mono: ["var(--font-dm-mono)", "ui-monospace", "monospace"],
 			},
 		},
 	},

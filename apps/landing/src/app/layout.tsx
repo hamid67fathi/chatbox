@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { cormorant, dmSans, vazirmatn } from "@/lib/fonts";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -11,8 +12,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="fa" dir="rtl">
-			<body>
+		<html
+			lang="fa"
+			dir="rtl"
+			className={`${vazirmatn.variable} ${dmSans.variable} ${cormorant.variable}`}
+		>
+			<body className="font-sans antialiased">
 				<SiteHeader />
 				<main>{children}</main>
 				<SiteFooter />
