@@ -16,11 +16,11 @@ import {
 	updateWidgetConfig,
 	updateWorkspace,
 	uploadUserAvatar,
+	publicAssetUrl,
 	type ApiTokenRow,
 	type WidgetConfigPublic,
 } from "@/lib/api";
 import { refreshAuthUser } from "@/lib/auth-store";
-import { publicAssetUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { useCallback, useEffect, useRef, useState } from "react";
