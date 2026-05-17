@@ -349,6 +349,68 @@ export async function fetchWorkspaceDetail(
 	return res.json();
 }
 
+export interface BillingPlan {
+	name: string;
+	price_rial: number;
+	price_display: string;
+}
+
+export interface SubscriptionInfo {
+	id: string;
+	plan: string;
+	status: string;
+	periodStart: string | null;
+	periodEnd: string | null;
+}
+
+export async function fetchBillingPlans(
+	workspaceId: string,
+): Promise<BillingPlan[]> {
+	const res = await authFetch(`${API_URL}/v1/billing/plans`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { plans?: BillingPlan[] };
+	return json.plans ?? [];
+}
+
+export async function fetchSubscription(
+	workspaceId: string,
+): Promise<SubscriptionInfo | null> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/${workspaceId}/subscription`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	if (!res.ok) return null;
+	const json = (await res.json()) as { subscription?: SubscriptionInfo | null };
+	return json.subscription ?? null;
+}
+
+export async function startBillingCheckout(
+	workspaceId: string,
+	plan: string,
+): Promise<{ redirect_url?: string; error?: string }> {
+	const res = await authFetch(
+		`${API_URL}/v1/billing/${workspaceId}/checkout`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				...authHeaders(workspaceId),
+			},
+			body: JSON.stringify({ plan }),
+		},
+	);
+	const json = (await res.json()) as {
+		redirect_url?: string;
+		error?: { message?: string };
+	};
+	if (!res.ok) {
+		return { error: json.error?.message ?? "خطا در شروع پرداخت" };
+	}
+	return { redirect_url: json.redirect_url };
+}
+
 export async function fetchAiUsage(
 	workspaceId: string,
 ): Promise<AiBudgetStatus | null> {
