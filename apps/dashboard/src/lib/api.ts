@@ -853,6 +853,63 @@ export async function updateBannedIps(
 	return res.ok;
 }
 
+export interface TelegramIntegrationPublic {
+	type: "telegram";
+	enabled: boolean;
+	bot_id: number;
+	bot_username: string;
+	connected_at: string;
+	webhook_url: string;
+	token_masked: string;
+}
+
+export async function fetchIntegrations(
+	workspaceId: string,
+): Promise<TelegramIntegrationPublic[]> {
+	const res = await authFetch(`${API_URL}/v1/integrations`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: TelegramIntegrationPublic[] };
+	return json.data ?? [];
+}
+
+export async function connectTelegramBot(
+	workspaceId: string,
+	botToken: string,
+): Promise<{ ok: boolean; data?: TelegramIntegrationPublic; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/integrations/telegram`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify({ bot_token: botToken }),
+	});
+	if (!res.ok) {
+		const json = (await res.json().catch(() => ({}))) as {
+			error?: { message?: string };
+		};
+		return {
+			ok: false,
+			error: json.error?.message ?? "اتصال ربات تلگرام ناموفق بود.",
+		};
+	}
+	const json = (await res.json()) as { data?: TelegramIntegrationPublic };
+	return { ok: true, data: json.data };
+}
+
+export async function disconnectTelegramBot(
+	workspaceId: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/integrations/telegram`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
 export async function banConversationIp(
 	workspaceId: string,
 	conversationId: string,

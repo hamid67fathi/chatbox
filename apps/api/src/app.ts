@@ -29,6 +29,10 @@ import { widgetConfigRoutes } from "./routes/widget-config.js";
 import { apiTokenRoutes } from "./routes/api-tokens.js";
 import { reportRoutes } from "./routes/reports.js";
 import { securityRoutes } from "./routes/security.js";
+import {
+	integrationsProtectedRoutes,
+	integrationsRoutes,
+} from "./routes/integrations.js";
 
 export function buildApp() {
 	const app = Fastify({ logger: false, trustProxy: true });
@@ -123,6 +127,7 @@ export function buildApp() {
 
 	app.register(authRoutes);
 	app.register(widgetRoutes);
+	app.register(integrationsRoutes);
 	app.register(billingPublicRoutes);
 
 	app.register(async function protectedRoutes(instance) {
@@ -141,6 +146,7 @@ export function buildApp() {
 		instance.register(apiTokenRoutes);
 		instance.register(reportRoutes);
 		instance.register(securityRoutes);
+		instance.register(integrationsProtectedRoutes);
 	});
 
 	return app;

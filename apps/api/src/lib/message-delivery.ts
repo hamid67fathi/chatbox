@@ -16,6 +16,7 @@ import {
 	triggerContactMessageSentiment,
 	triggerConversationSummary,
 } from "./conversation-insights.js";
+import { deliverOutboundToTelegram } from "../channels/telegram/outbound.js";
 import { getIO } from "../ws/broadcast.js";
 
 export function broadcastNewConversation(
@@ -80,6 +81,8 @@ export async function deliverNewMessage(
 			published.body,
 		);
 	}
+
+	void deliverOutboundToTelegram(published, conversationId, workspaceId);
 }
 
 export async function broadcastNewMessage(

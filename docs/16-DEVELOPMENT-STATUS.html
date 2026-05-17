@@ -55,7 +55,9 @@
         <li><a href="#sec-2">قرارداد ستون «وضعیت»</a></li>
         <li><a href="#sec-3">جدول وضعیت (مراحل P0 → P3)</a></li>
         <li><a href="#sec-3b">جدول وضعیت (مراحل P4 → P10 — تولید)</a></li>
-        <li><a href="#sec-feature-list">فیچر لیست (بک‌لاگ محصول)</a></li>
+        <li><a href="#sec-feature-list">فیچر لیست — فاز اول (FL-01 تا FL-14)</a></li>
+        <li><a href="#sec-feature-list-2">فیچر لیست — فاز دوم (FL-15+)</a></li>
+        <li><a href="#sec-agent-context">راهنمای AI Agent — توسعه فاز دوم</a></li>
         <li><a href="#sec-4">چک‌لیست‌های دیگر کجا هستند؟</a></li>
       </ul>
     </aside>
@@ -676,8 +678,8 @@ rule: &gt;
       </div>
 
       <hr />
-      <h2 id="sec-feature-list">فیچر لیست (بک‌لاگ محصول)</h2>
-      <p><strong>اولویت فعلی توسعه</strong> (فاز ۹ موکول). قالب جدول مشابه مسیر تولید P4→P10: کد، عنوان، توضیح، وضعیت، تاریخ، یادداشت.</p>
+      <h2 id="sec-feature-list">فیچر لیست — فاز اول (FL-01 تا FL-14)</h2>
+      <p><strong>اولویت فعلی توسعه</strong> (فاز ۹ موکول). فیچرهای FL-01 تا FL-14 همزمان با P4→P8 پیاده‌سازی شدند. برای فاز دوم (FL-15+) به بخش بعدی مراجعه کنید.</p>
       <div class="table-wrap">
         <table>
           <thead>
@@ -830,6 +832,968 @@ rule: &gt;
           </tbody>
         </table>
       </div>
+
+      <hr />
+      <!-- ═══════════════════════════════════════════════════════════
+           فیچر لیست — فاز دوم
+      ════════════════════════════════════════════════════════════ -->
+      <h2 id="sec-feature-list-2">فیچر لیست — فاز دوم (بک‌لاگ توسعه)</h2>
+      <blockquote>
+        <p>
+          <strong>هدف فاز دوم:</strong> گسترش از ابزار چت به پلتفرم کامل پشتیبانی مشتری — کانال‌های چندگانه،
+          اتوماسیون هوشمند، آنالیتیکس پیشرفته، و ویژگی‌های Enterprise.<br />
+          <strong>پیش‌نیاز:</strong> اتمام P9 (زیرساخت تولید) قبل از شروع FL-15+.
+        </p>
+      </blockquote>
+
+      <pre><code class="language-yaml">phase: 2
+backlog_prefix: FL
+range: FL-15 .. FL-53
+status_enum: [not_started, planned, in_progress, blocked, done]
+agent_note: >
+  Before implementing any FL-2x item, read sec-agent-context below.
+  Each feature category maps to specific files — follow the pattern guide.
+</code></pre>
+
+      <!-- ── کانال‌های ارتباطی ── -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>کد</th>
+              <th>عنوان</th>
+              <th>توضیح</th>
+              <th>وضعیت</th>
+              <th>تاریخ</th>
+              <th>یادداشت / Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr><td colspan="6"><strong>دسته — کانال‌های ارتباطی (Omni-channel)</strong></td></tr>
+            <tr>
+              <td>FL-15</td>
+              <td>Telegram Bot</td>
+              <td>
+                ربات تلگرام به‌عنوان کانال ورودی مکالمه؛ webhook تلگرام → API → Inbox؛
+                ارسال پاسخ اپراتور به تلگرام؛ کانفیگ Bot Token از Settings
+              </td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
+              <td>
+                <code>settings.integrations.telegram</code>؛
+                <code>apps/api/src/channels/telegram/</code>؛
+                <code>POST /v1/integrations/telegram/webhook/:workspaceId</code>؛
+                outbound در <code>deliverNewMessage</code>؛ تب «تلگرام» در Settings
+              </td>
+            </tr>
+            <tr>
+              <td>FL-16</td>
+              <td>کانال ایمیل (IMAP/SMTP)</td>
+              <td>
+                دریافت ایمیل از IMAP → تبدیل به مکالمه؛ پاسخ از طریق SMTP؛
+                Thread linking با Message-ID؛ پشتیبانی attachment؛
+                کانفیگ از Settings
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> سرویس <code>apps/email-worker/</code> (جدید)؛
+                جدول <code>channels</code> (type=email)؛ کتابخانه <code>nodemailer</code> + <code>imapflow</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-17</td>
+              <td>WhatsApp Business API</td>
+              <td>
+                اتصال به WhatsApp Cloud API (Meta)؛ webhook پیام‌های ورودی؛
+                ارسال template messages؛ media messages؛ کانفیگ Phone Number ID + Token
+              </td>
+              <td>برنامه‌ریزی</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>apps/api/src/channels/whatsapp/</code>؛
+                META_VERIFY_TOKEN در <code>.env</code>؛
+                endpoint <code>GET|POST /v1/channels/whatsapp/webhook</code>
+              </td>
+            </tr>
+
+            <!-- ── اتوماسیون ── -->
+            <tr><td colspan="6"><strong>دسته — اتوماسیون و جریان‌ها (Automation)</strong></td></tr>
+            <tr>
+              <td>FL-18</td>
+              <td>Flow Builder (ساختار چت‌بات بصری)</td>
+              <td>
+                ویرایشگر drag-and-drop برای طراحی جریان مکالمه؛ نودهای: پیام/سوال/شرط/اقدام/انتقال به اپراتور؛
+                ذخیره در DB؛ اجرا توسط flow-engine
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جداول <code>flows</code>, <code>flow_nodes</code>, <code>flow_sessions</code>؛
+                <code>packages/flow-engine/</code>؛ UI: React Flow یا X6؛
+                صفحه <code>/flows</code> در داشبورد
+              </td>
+            </tr>
+            <tr>
+              <td>FL-19</td>
+              <td>قوانین مسیریابی خودکار</td>
+              <td>
+                Rule engine: اگر [کلیدواژه/کانال/زبان/ساعت] → [تیم/اپراتور/بات]؛
+                اولویت‌بندی قوانین؛ round-robin assignment؛ UI مدیریت قوانین
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جدول <code>routing_rules</code>؛
+                <code>apps/api/src/routing/</code>؛
+                اجرا در hook <code>conversation:created</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-20</td>
+              <td>ساعات کاری و پیام غیبت</td>
+              <td>
+                تعریف ساعات کاری per-workspace (روز هفته + timezone)؛
+                پیام خودکار خارج از ساعت کاری؛ holiday list؛
+                نمایش وضعیت در ویجت («آنلاین / خارج از ساعت کاری»)
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>settings.business_hours</code> (JSONB)؛
+                <code>packages/shared/src/business-hours.ts</code>؛
+                تب «ساعات کاری» در Settings
+              </td>
+            </tr>
+            <tr>
+              <td>FL-21</td>
+              <td>SLA Tracking</td>
+              <td>
+                تعریف SLA (زمان اولین پاسخ / زمان حل)؛ شمارش‌گر در inbox؛
+                هشدار نزدیک انقضا (رنگ قرمز/زرد)؛ گزارش SLA violations؛
+                per-plan priorities
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> فیلدهای <code>first_response_at</code>, <code>resolved_at</code> در conversations؛
+                <code>sla_policies</code> جدول جدید؛ cron job برای بررسی هر ۵ دقیقه
+              </td>
+            </tr>
+
+            <!-- ── آنالیتیکس ── -->
+            <tr><td colspan="6"><strong>دسته — آنالیتیکس پیشرفته (Analytics)</strong></td></tr>
+            <tr>
+              <td>FL-22</td>
+              <td>رتبه‌بندی پس از چت (CSAT)</td>
+              <td>
+                ارسال نظرسنجی ⭐ (1-5) پس از بستن مکالمه؛ ذخیره امتیاز و کامنت؛
+                داشبورد میانگین CSAT per-agent و per-period؛ widget follow-up message
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جدول <code>csat_responses</code>؛
+                trigger در <code>conversation:resolved</code>؛
+                صفحه ویجت جداگانه برای بازخورد؛
+                API <code>POST /v1/csat/:token</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-23</td>
+              <td>داشبورد عملکرد اپراتور</td>
+              <td>
+                آمار per-agent: تعداد مکالمه، زمان پاسخ میانگین، CSAT، رزولوشن rate؛
+                مقایسه تیمی؛ فیلتر بازه زمانی؛ export CSV/Excel
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> view ماتریالایز در Postgres؛
+                <code>GET /v1/reports/agents</code>؛
+                صفحه <code>/reports/agents</code>؛
+                cron refresh هر ساعت
+              </td>
+            </tr>
+            <tr>
+              <td>FL-24</td>
+              <td>گزارش‌های پیشرفته</td>
+              <td>
+                نمودار مکالمات over time؛ heatmap ساعت‌های اوج؛ کانال distribution؛
+                تگ‌های پرکاربرد؛ funnel ورود→رزولوشن؛ export PDF/Excel
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>GET /v1/reports/overview</code>؛
+                Chart.js یا Recharts در داشبورد؛
+                صفحه <code>/reports/overview</code>
+              </td>
+            </tr>
+
+            <!-- ── AI فاز دوم ── -->
+            <tr><td colspan="6"><strong>دسته — AI فاز دوم (هوش مصنوعی پیشرفته)</strong></td></tr>
+            <tr>
+              <td>FL-25</td>
+              <td>تگ‌گذاری خودکار با AI</td>
+              <td>
+                پس از بستن مکالمه، AI موضوع را استخراج می‌کند و تگ مناسب پیشنهاد/اعمال می‌کند؛
+                مدل قابل fine-tune؛ قابل override توسط اپراتور
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> endpoint جدید <code>POST /v1/ai/tag</code> در ai-service؛
+                hook در <code>conversation:resolved</code>؛
+                ذخیره در <code>conversation_tags</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-26</td>
+              <td>AI چندزبانه (FA/EN/AR)</td>
+              <td>
+                تشخیص زبان پیام ورودی؛ پاسخ RAG به همان زبان؛
+                ترجمه خودکار KB برای زبان‌های مختلف؛
+                تنظیم زبان پیش‌فرض per-workspace
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>langdetect</code> در ai-service؛
+                فیلد <code>language</code> در ai_interactions؛
+                prompt template چندزبانه در <code>ai-service/prompts/</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-27</td>
+              <td>شخصیت سفارشی AI (AI Persona)</td>
+              <td>
+                تعریف نام، لحن (رسمی/دوستانه/فنی)، دستورالعمل سیستمی سفارشی؛
+                per-workspace persona؛ preview در داشبورد
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> فیلد <code>ai_persona</code> (JSONB) در جدول workspaces؛
+                inject در system prompt هنگام LLM call؛
+                تب «تنظیمات AI» در Settings
+              </td>
+            </tr>
+            <tr>
+              <td>FL-28</td>
+              <td>خلاصه هوشمند قبل از ارجاع</td>
+              <td>
+                هنگام escalation به اپراتور، AI خلاصه مکالمه + context + پیشنهاد پاسخ را
+                به اپراتور نشان می‌دهد؛ اپراتور را سریع‌تر آماده می‌کند
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> event <code>conversation:needs_human</code>؛
+                call به <code>POST /v1/ai/summarize</code>؛
+                نمایش در پنل جانبی inbox هنگام assign
+              </td>
+            </tr>
+
+            <!-- ── CRM ── -->
+            <tr><td colspan="6"><strong>دسته — CRM و مدیریت مخاطبین</strong></td></tr>
+            <tr>
+              <td>FL-29</td>
+              <td>بخش‌بندی مخاطبان (Segments)</td>
+              <td>
+                تعریف segment بر اساس فیلترها (کانال، تگ، تعداد مکالمه، آخرین تعامل)؛
+                dynamic segments (به‌روزرسانی خودکار)؛
+                استفاده در routing rules و کمپین
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جدول <code>contact_segments</code>؛
+                query builder در <code>packages/shared/src/segments.ts</code>؛
+                صفحه <code>/contacts/segments</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-30</td>
+              <td>تاریخچه کامل تعاملات مخاطب</td>
+              <td>
+                Timeline کامل: مکالمات، پیام‌ها، تگ‌ها، تغییر وضعیت، یادداشت‌های تیم؛
+                فیلتر بر اساس کانال و بازه زمانی؛
+                نمایش در صفحه contact detail
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>GET /v1/contacts/:id/timeline</code>؛
+                aggregate از conversations + messages + notes؛
+                صفحه <code>/contacts/:id</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-31</td>
+              <td>اقدامات دسته‌ای روی مخاطبان</td>
+              <td>
+                انتخاب چند contact → تگ‌گذاری دسته‌ای، export، ban، merge duplicates؛
+                import CSV مخاطبان جدید
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>POST /v1/contacts/bulk</code>؛
+                <code>POST /v1/contacts/import</code> (CSV parse با papaparse)؛
+                UI checkbox multi-select در <code>/contacts</code>
+              </td>
+            </tr>
+
+            <!-- ── اعلان‌ها ── -->
+            <tr><td colspan="6"><strong>دسته — اعلان‌ها (Notifications)</strong></td></tr>
+            <tr>
+              <td>FL-32</td>
+              <td>Push Notification (PWA)</td>
+              <td>
+                Service Worker + Web Push API؛ اعلان مکالمه جدید / پیام جدید برای اپراتور آفلاین؛
+                کانفیگ VAPID keys؛ تنظیمات دریافت اعلان per-user
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>apps/dashboard/public/sw.js</code>؛
+                <code>web-push</code> npm package؛
+                جدول <code>push_subscriptions</code>؛
+                تنظیمات در پروفایل کاربر
+              </td>
+            </tr>
+            <tr>
+              <td>FL-33</td>
+              <td>ایمیل اعلان‌ها</td>
+              <td>
+                ارسال ایمیل برای: مکالمه جدید، assign به اپراتور، mention در یادداشت؛
+                قالب HTML RTL؛ unsubscribe link؛ کانفیگ SMTP per-workspace
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>packages/mailer/</code> (nodemailer + React Email)؛
+                queue با BullMQ؛ جدول <code>notification_preferences</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-34</td>
+              <td>Webhook Outbound</td>
+              <td>
+                ارسال رویدادها (مکالمه جدید / پیام / رزولوشن) به URL خارجی (Zapier/Make/سیستم‌های سفارشی)؛
+                retry logic؛ log وضعیت؛ امضای HMAC
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جدول <code>webhook_endpoints</code>؛
+                <code>apps/api/src/webhooks/dispatcher.ts</code>؛
+                HMAC-SHA256 signature header؛
+                retry با exponential backoff (BullMQ)
+              </td>
+            </tr>
+
+            <!-- ── Enterprise ── -->
+            <tr><td colspan="6"><strong>دسته — Enterprise و امنیت پیشرفته</strong></td></tr>
+            <tr>
+              <td>FL-35</td>
+              <td>SSO با Google OAuth</td>
+              <td>
+                ورود با حساب گوگل؛ auto-provision user در workspace؛
+                پشتیبانی از Google Workspace domain restriction؛
+                ترکیب با JWT موجود
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>passport-google-oauth20</code>؛
+                <code>GET /v1/auth/google</code> + callback؛
+                فیلد <code>oauth_provider</code> در جدول users
+              </td>
+            </tr>
+            <tr>
+              <td>FL-36</td>
+              <td>لاگ حسابرسی (Audit Log)</td>
+              <td>
+                ثبت تمام اقدامات حساس: login، تغییر تنظیمات، دسترسی داده، export؛
+                قابل جستجو و فیلتر؛ export برای بازرسی؛ نگهداری ۱ سال
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> جدول <code>audit_logs</code> (actor, action, resource, ip, timestamp)؛
+                middleware <code>auditLog()</code>؛
+                <code>GET /v1/audit-logs</code> (فقط owner/admin)؛
+                صفحه <code>/settings/audit</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-37</td>
+              <td>محدودیت IP داشبورد</td>
+              <td>
+                IP allowlist برای دسترسی به داشبورد (نه ویجت)؛
+                کانفیگ per-workspace؛
+                هشدار email هنگام login از IP مشکوک
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>settings.security.dashboard_ip_whitelist</code>؛
+                middleware قبل از <code>requireAuth</code>؛
+                مکمل FL-14 (IP ban)
+              </td>
+            </tr>
+            <tr>
+              <td>FL-38</td>
+              <td>Two-Factor Authentication (2FA)</td>
+              <td>
+                TOTP (Google Authenticator/Authy)؛ QR code setup؛
+                recovery codes؛ enforce 2FA per-workspace (توسط owner)
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>otplib</code> + <code>qrcode</code>؛
+                فیلد <code>totp_secret</code> در users؛
+                <code>POST /v1/auth/2fa/setup|verify|disable</code>
+              </td>
+            </tr>
+
+            <!-- ── موبایل ── -->
+            <tr><td colspan="6"><strong>دسته — موبایل و PWA</strong></td></tr>
+            <tr>
+              <td>FL-39</td>
+              <td>PWA برای اپراتورها</td>
+              <td>
+                تبدیل داشبورد به Progressive Web App؛ قابل نصب روی موبایل/دسکتاپ؛
+                offline inbox (اخرین مکالمات cache)؛
+                push notification پشتیبانی (مرتبط با FL-32)
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>next-pwa</code> یا custom SW؛
+                <code>manifest.json</code>؛
+                cache strategy: network-first برای API، cache-first برای assets
+              </td>
+            </tr>
+            <tr>
+              <td>FL-40</td>
+              <td>اپ موبایل اپراتور (React Native)</td>
+              <td>
+                اپ native iOS/Android برای اپراتورها؛ inbox، پیام‌رسانی real-time، push notification؛
+                استفاده از همان API موجود
+              </td>
+              <td>برنامه‌ریزی</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> <code>apps/mobile/</code> (Expo + React Native)؛
+                Socket.io client موجود reuse؛
+                FCM/APNs برای push
+              </td>
+            </tr>
+
+            <!-- ── White-label ── -->
+            <tr><td colspan="6"><strong>دسته — White-label و فروش مجدد</strong></td></tr>
+            <tr>
+              <td>FL-41</td>
+              <td>White-label کامل</td>
+              <td>
+                تنظیم لوگو، رنگ‌بندی، دامنه سفارشی (custom domain) برای داشبورد و ویجت؛
+                حذف برندینگ Chat-Box؛ email‌های سفارشی؛
+                per-workspace white-label settings
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> فیلد <code>branding</code> (JSONB) در workspaces؛
+                Nginx per-domain routing؛
+                CSS variables override در ویجت (مرتبط با FL-05)؛
+                پلن Enterprise-only
+              </td>
+            </tr>
+            <tr>
+              <td>FL-42</td>
+              <td>Marketplace پلاگین</td>
+              <td>
+                معماری پلاگین برای افزونه‌های شخص ثالث؛
+                SDK توسعه‌دهنده؛ sandbox اجرا؛
+                marketplace داخلی برای نصب
+              </td>
+              <td>برنامه‌ریزی</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong> تحقیق معماری sandbox (iframe/WebAssembly)؛
+                جدول <code>installed_plugins</code>؛
+                مرحله‌ای — ابتدا فقط Zapier/Make webhook (FL-34)
+              </td>
+            </tr>
+
+            <!-- ════════════════════════════════════════════════════════
+                 CRM پیشرفته و ردیابی مادام‌العمر مشتری
+            ════════════════════════════════════════════════════════ -->
+            <tr>
+              <td colspan="6">
+                <strong>دسته — CRM پیشرفته و ردیابی مادام‌العمر مشتری (Customer Intelligence)</strong>
+                <br />
+                <small>
+                  هدف: ساختن یک پروفایل کامل و دائمی از هر بازدیدکننده/مشتری — از اولین بازدید ناشناس
+                  تا سال‌ها پس از آن — به‌طوری که تیم پشتیبانی در لحظه‌ای که مشتری چت می‌کند،
+                  تمام سابقه، رفتار، و ارزش او را ببیند.
+                </small>
+              </td>
+            </tr>
+
+            <tr>
+              <td>FL-43</td>
+              <td>Identity Resolution — تشخیص و اتصال هویت</td>
+              <td>
+                اتصال بازدیدکننده ناشناس (cookie/fingerprint) به مخاطب شناخته‌شده (email/phone) —
+                هر بار که مشتری ایمیل می‌دهد یا وارد می‌شود، تمام سابقه ناشناس قبلی به پروفایل او
+                متصل می‌شود. Cross-device stitching با email به‌عنوان anchor. اولویت: first-party cookie
+                با TTL یک سال → device fingerprint به‌عنوان fallback.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                ویجت: <code>cbx_vid</code> cookie (1 year) + <code>localStorage</code> fallback؛<br />
+                جدول جدید: <code>visitor_identities (visitor_id, contact_id, workspace_id, identified_at, method)</code>؛<br />
+                API: <code>POST /v1/contacts/identify</code> — email/phone → lookup → merge visitor→contact؛<br />
+                migration: <code>00XX_visitor_identities.sql</code>؛<br />
+                مراقب: merge نباید داده workspace دیگر را آلوده کند
+              </td>
+            </tr>
+            <tr>
+              <td>FL-44</td>
+              <td>پایگاه رویداد بازدیدکننده (Visitor Event Store)</td>
+              <td>
+                ثبت تمام رویدادهای بازدیدکننده از لحظه اول تا ابد:
+                page_view, session_start, session_end, conversation_started,
+                custom_event (FL-48). Table partitioned by month برای مقیاس‌پذیری.
+                retention policy per-plan (Starter: 6 ماه، Pro: 2 سال، Enterprise: بی‌نهایت).
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جدول: <code>visitor_events (id, workspace_id, visitor_id, contact_id, event_type, url, referrer, payload JSONB, ip, user_agent, created_at)</code>؛<br />
+                Partition: <code>PARTITION BY RANGE (created_at)</code>؛<br />
+                Index: <code>(workspace_id, visitor_id, created_at DESC)</code>؛<br />
+                Write path: <code>POST /v1/track</code> (بدون auth، فقط با workspace public key)؛<br />
+                Read path: <code>GET /v1/contacts/:id/events</code> (cursor pagination)
+              </td>
+            </tr>
+            <tr>
+              <td>FL-45</td>
+              <td>فیلدهای سفارشی مخاطب (Custom Attributes)</td>
+              <td>
+                Owner می‌تواند فیلدهای دلخواه برای مخاطبان تعریف کند:
+                text، number، date، boolean، select (dropdown).
+                این فیلدها در پروفایل مخاطب نمایش داده می‌شوند،
+                قابل set از ویجت SDK (<code>cbx('identify', {plan: 'pro'})</code>)،
+                قابل فیلتر در Segments (FL-29)، و قابل استفاده در متغیرهای پاسخ‌آماده.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جداول: <code>contact_attribute_definitions (workspace_id, key, label, type, options JSONB, required, order)</code>
+                + <code>contact_attribute_values (contact_id, definition_id, value TEXT)</code>؛<br />
+                API: <code>CRUD /v1/settings/contact-attributes</code> + <code>PATCH /v1/contacts/:id/attributes</code>؛<br />
+                UI: تب «فیلدهای سفارشی» در Settings → پنل جانبی مخاطب در inbox
+              </td>
+            </tr>
+            <tr>
+              <td>FL-46</td>
+              <td>مراحل چرخه عمر مشتری (Lifecycle Stages)</td>
+              <td>
+                هر مخاطب در یک مرحله قرار دارد:
+                <code>new → lead → prospect → customer → vip → at_risk → churned → reactivated</code>.
+                انتقال دستی توسط اپراتور یا خودکار بر اساس قوانین
+                (مثلاً: «اگر بیش از ۳۰ روز مکالمه نداشت → at_risk»).
+                تاریخچه انتقال‌ها ذخیره می‌شود. گزارش funnel تعداد مخاطبان در هر مرحله.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                فیلد <code>lifecycle_stage</code> (enum) در جدول contacts؛<br />
+                جدول <code>contact_lifecycle_history (contact_id, from_stage, to_stage, changed_by, changed_at, reason)</code>؛<br />
+                cron job روزانه برای انتقال خودکار؛<br />
+                UI: badge رنگی در پروفایل مخاطب + dropdown تغییر مرحله
+              </td>
+            </tr>
+            <tr>
+              <td>FL-47</td>
+              <td>امتیازدهی به مخاطبان (Contact / Lead Scoring)</td>
+              <td>
+                امتیاز عددی (0–100) برای هر مخاطب بر اساس وزن‌های قابل تنظیم:
+                تعداد صفحات بازدید شده، مدت زمان در سایت، تعداد مکالمات، امتیاز CSAT،
+                lifecycle stage، custom events. امتیاز بالا → routing priority بالاتر.
+                نمایش در لیست مخاطبان قابل sort.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جدول <code>contact_scores (contact_id, score, breakdown JSONB, computed_at)</code>؛<br />
+                جدول <code>scoring_rules (workspace_id, signal_type, weight, config JSONB)</code>؛<br />
+                <code>packages/shared/src/scoring-engine.ts</code>؛<br />
+                cron: recompute ساعتی برای مخاطبانی که رویداد جدید داشتند؛<br />
+                مرتبط با FL-19 (routing rules) — امتیاز بالا → VIP queue
+              </td>
+            </tr>
+            <tr>
+              <td>FL-48</td>
+              <td>Event Tracking SDK — ردیابی رویداد سفارشی</td>
+              <td>
+                گسترش ویجت با متد <code>cbx('track', 'event', props)</code> برای ثبت
+                رویدادهای دلخواه از سایت (خرید، ثبت‌نام، افزودن به سبد، تماشای ویدئو…).
+                هر رویداد در Visitor Event Store (FL-44) ذخیره می‌شود.
+                قابل استفاده در Segments، Scoring، و Triggers.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                ویجت: <code>apps/widget/src/tracker.ts</code> — queue + batch send هر ۵ ثانیه؛<br />
+                API: <code>POST /v1/track</code> (public, rate-limited 100 req/min/workspace)؛<br />
+                مستندات SDK: <code>docs/widget-sdk.md</code>؛<br />
+                مثال: <code>cbx('track','purchase',{amount:500000,currency:'IRR'})</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-49</td>
+              <td>نقشه سفر مشتری (Customer Journey Map)</td>
+              <td>
+                نمایش بصری timeline از اولین بازدید تا امروز برای هر مخاطب:
+                صفحات بازدید شده، مکالمات، رویدادهای سفارشی، تغییر lifecycle، خریدها.
+                Heatmap ساعت‌های فعالیت. Session detail با list صفحات.
+                قابل export به PDF.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                <code>GET /v1/contacts/:id/journey?from=&amp;to=</code>؛<br />
+                aggregate از <code>visitor_events</code> + <code>conversations</code> + <code>lifecycle_history</code>؛<br />
+                UI: <code>apps/dashboard/src/components/contact/JourneyTimeline.tsx</code>؛<br />
+                کتابخانه timeline: یا D3.js یا custom Tailwind component
+              </td>
+            </tr>
+            <tr>
+              <td>FL-50</td>
+              <td>چت پیش‌دستانه هوشمند (Proactive Chat)</td>
+              <td>
+                نمایش خودکار پنجره چت بر اساس رفتار بازدیدکننده:
+                «X ثانیه روی صفحه قیمت ماند»، «exit intent»، «بیش از Y صفحه دید»،
+                «رویداد سفارشی X رخ داد». پیام قابل personalize با متغیر ({{name}}).
+                throttle: حداکثر یک بار در N روز. A/B test برای متن‌های مختلف.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جدول <code>proactive_rules (workspace_id, trigger_type, conditions JSONB, message, throttle_days, ab_variants JSONB, active)</code>؛<br />
+                ویجت: <code>apps/widget/src/proactive.ts</code>؛<br />
+                exit intent: <code>mouseleave</code> از viewport بالا؛<br />
+                مرتبط با FL-48 (event triggers) و FL-04 (plan limit: تعداد rules)
+              </td>
+            </tr>
+            <tr>
+              <td>FL-51</td>
+              <td>کمپین پیام برونگرا (Outbound Campaigns)</td>
+              <td>
+                ارسال پیام به یک Segment از مخاطبان شناخته‌شده (outbound):
+                متن با متغیرها ({{name}}، {{company}})، زمان‌بندی، tracking باز کردن / پاسخ.
+                ارسال از طریق کانال اول مخاطب (ویجت اگر آنلاین، ایمیل اگر آفلاین).
+                گزارش delivery/open/reply rate.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جداول: <code>campaigns</code> + <code>campaign_recipients (campaign_id, contact_id, status, sent_at, opened_at, replied_at)</code>؛<br />
+                BullMQ برای ارسال batch؛<br />
+                rate limit: ۵۰۰ پیام/ساعت/workspace (برای جلوگیری از spam)؛<br />
+                پیش‌نیاز: FL-29 (Segments) + FL-33 (Email) فعال باشد
+              </td>
+            </tr>
+            <tr>
+              <td>FL-52</td>
+              <td>CRM شرکت‌ها (Company / B2B)</td>
+              <td>
+                پروفایل شرکت با: نام، دامنه، صنعت، اندازه، وب‌سایت، یادداشت.
+                Auto-detect از domain ایمیل مخاطب.
+                چند مخاطب می‌توانند به یک شرکت متصل باشند.
+                پنل شرکت: لیست مخاطبان، تمام مکالمات شرکت، امتیاز شرکت.
+                قابل استفاده در Segments («همه مشتریان شرکت X»).
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جداول: <code>companies (workspace_id, name, domain, industry, size, metadata JSONB)</code>
+                + <code>contact_companies (contact_id, company_id, role)</code>؛<br />
+                auto-detect: extract domain از email + <code>clearbit/logo.dev</code> API برای آیکون؛<br />
+                صفحه <code>/companies</code> در داشبورد؛<br />
+                <code>GET /v1/companies/:id/contacts</code> + <code>GET /v1/companies/:id/conversations</code>
+              </td>
+            </tr>
+            <tr>
+              <td>FL-53</td>
+              <td>امتیاز سلامت و پیش‌بینی ریزش (Health Score &amp; Churn Prediction)</td>
+              <td>
+                امتیاز سلامت مشتری (0–100) بر اساس: فعالیت اخیر، روند CSAT،
+                تعداد مکالمات حل‌شده، مدت‌زمان بدون تعامل.
+                مدل ساده rule-based (نه ML) برای v1.
+                هشدار به اپراتور برای مشتریان «at_risk».
+                داشبورد: لیست مشتریان در خطر با دلیل.
+              </td>
+              <td>شروع نشده</td>
+              <td>—</td>
+              <td>
+                <strong>Agent:</strong><br />
+                جدول <code>contact_health (contact_id, score, risk_level ENUM(low,medium,high), signals JSONB, computed_at)</code>؛<br />
+                cron روزانه: compute برای مخاطبانی که lifecycle=customer/vip/at_risk؛<br />
+                <code>GET /v1/reports/at-risk-contacts</code>؛<br />
+                notification به اپراتور assign‌شده هنگام score زیر threshold؛<br />
+                مرتبط با FL-47 (Scoring) و FL-46 (Lifecycle)
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CRM Technical Architecture Note -->
+      <blockquote>
+        <p>
+          <strong>معماری کلی CRM ردیابی مادام‌العمر:</strong><br />
+          <code>Widget cookie (cbx_vid, 1yr)</code>
+          → <code>visitor_events</code> (partitioned, unlimited)
+          → <code>identify() call</code>
+          → <code>visitor_identities</code> (merge ناشناس↔شناخته‌شده)
+          → <code>contact profile</code> (custom attrs + lifecycle + score + health)
+          → <code>Journey UI</code> (نمایش کامل سابقه از روز اول).<br />
+          <strong>Privacy:</strong> داده‌ها workspace-scoped هستند. retention policy per-plan.
+          مشتری می‌تواند با <code>cbx('forget')</code> درخواست حذف کند (GDPR/حریم خصوصی).
+        </p>
+      </blockquote>
+
+      <hr />
+      <!-- ═══════════════════════════════════════════════════════════
+           راهنمای AI Agent — توسعه فاز دوم
+      ════════════════════════════════════════════════════════════ -->
+      <h2 id="sec-agent-context">راهنمای AI Agent — توسعه فاز دوم</h2>
+      <blockquote>
+        <p>
+          این بخش به‌طور خاص برای AI Agent نوشته شده است تا بدون نیاز به خواندن کل کدبیس،
+          بتواند هر Feature List را پیاده‌سازی کند. قبل از شروع هر FL، این بخش را بخوانید.
+        </p>
+      </blockquote>
+
+      <h3>۱ — وضعیت فعلی کدبیس (Snapshot مه ۲۰۲۶)</h3>
+      <pre><code class="language-yaml">monorepo: pnpm + turborepo
+apps:
+  api:         Fastify 4 + TypeScript — پورت 3001
+  dashboard:   Next.js 14 App Router + Tailwind + shadcn/ui — پورت 3000
+  widget:      Vanilla TS (tsup IIFE) — پورت 3003
+  ai-service:  FastAPI + Python — پورت 8000
+  landing:     Next.js static export — پورت 3002
+packages:
+  config:      ESLint + TypeScript shared config
+  shared:      types, constants, utils مشترک
+database:
+  engine:      PostgreSQL 16 + pgvector + Drizzle ORM
+  migrations:  apps/api/src/db/migrations/00XX_*.sql
+  schema:      apps/api/src/db/schema.ts
+realtime:
+  engine:      Socket.io 4 + Redis adapter
+  events:      conversation:*, message:*, presence:*
+auth:
+  method:      JWT (jose) — httpOnly cookie + Bearer token
+  middleware:  apps/api/src/auth/middleware.ts → requireAuth, requireRole
+</code></pre>
+
+      <h3>۲ — نقشه فایل‌های کلیدی برای توسعه</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>کار</th><th>فایل / مسیر</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>افزودن جدول DB جدید</td><td><code>apps/api/src/db/schema.ts</code> + migration جدید در <code>migrations/</code></td></tr>
+            <tr><td>route جدید API</td><td><code>apps/api/src/routes/</code> → فایل جدید + register در <code>app.ts</code></td></tr>
+            <tr><td>middleware auth</td><td><code>apps/api/src/auth/middleware.ts</code> (importهای موجود)</td></tr>
+            <tr><td>event Socket.io</td><td><code>apps/api/src/realtime/events.ts</code> → emit؛ <code>apps/dashboard/src/lib/socket.ts</code> → listen</td></tr>
+            <tr><td>صفحه داشبورد جدید</td><td><code>apps/dashboard/src/app/(dashboard)/</code> → پوشه + <code>page.tsx</code></td></tr>
+            <tr><td>کامپوننت UI</td><td><code>apps/dashboard/src/components/</code> — از shadcn/ui استفاده کنید</td></tr>
+            <tr><td>تنظیمات workspace جدید</td><td>فیلد JSONB در <code>settings</code> جدول workspaces + <code>GET/PUT /v1/settings</code></td></tr>
+            <tr><td>endpoint AI service</td><td><code>apps/ai-service/app/routers/</code> → router جدید + register در <code>main.py</code></td></tr>
+            <tr><td>تایپ مشترک</td><td><code>packages/shared/src/types/</code></td></tr>
+            <tr><td>متغیر محیطی جدید</td><td><code>.env.example</code> + <code>apps/api/src/config.ts</code> + <code>apps/ai-service/app/config.py</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>۳ — الگوی پیاده‌سازی یک فیچر جدید (step-by-step)</h3>
+      <pre><code class="language-markdown">## الگوی استاندارد پیاده‌سازی Feature
+
+### مرحله A — DB (اگر نیاز به جدول/فیلد جدید است)
+1. فیلد یا جدول را به `schema.ts` اضافه کنید
+2. migration جدید بسازید: `apps/api/src/db/migrations/00XX_description.sql`
+3. RLS policy اضافه کنید اگر جدول workspace-scoped است
+4. seed را به‌روز کنید اگر داده پیش‌فرض نیاز است
+
+### مرحله B — API (Fastify route)
+```typescript
+// الگوی route فایل
+import { FastifyPluginAsync } from 'fastify'
+import { requireAuth, requireRole } from '../../auth/middleware.js'
+
+const myRoute: FastifyPluginAsync = async (app) => {
+  app.get('/v1/my-resource', { preHandler: [requireAuth] }, async (req, reply) => {
+    const { workspaceId } = req.user  // همیشه workspace isolation
+    // ...
+  })
+}
+```
+- route را در `apps/api/src/app.ts` register کنید
+- error format: `{ error: { code, message, details? } }`
+- همیشه workspaceId را از `req.user` بگیرید، نه از body/param
+
+### مرحله C — Real-time (اگر نیاز است)
+```typescript
+// emit در سمت server
+io.to(`workspace:${workspaceId}`).emit('resource:event', payload)
+
+// listen در داشبورد
+socket.on('resource:event', (data) => { /* update state */ })
+```
+
+### مرحله D — Dashboard UI (Next.js)
+1. صفحه: `apps/dashboard/src/app/(dashboard)/my-page/page.tsx`
+2. کامپوننت‌ها: `apps/dashboard/src/components/my-feature/`
+3. API calls: از `apps/dashboard/src/lib/api.ts` (fetch wrapper موجود) استفاده کنید
+4. RTL: Tailwind + `dir="rtl"` — از `text-right` و `mr-/ml-` آگاه باشید
+
+### مرحله E — تست
+1. unit test: `apps/api/src/__tests__/my-feature.test.ts` (vitest + supertest)
+2. حداقل ۳ test: happy path، not found، unauthorized
+3. اجرا: `pnpm test`
+</code></pre>
+
+      <h3>۴ — قواعد مهم (Rules Agent باید رعایت کند)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>قانون</th><th>توضیح</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Workspace Isolation</strong></td>
+              <td>هر query باید <code>WHERE workspace_id = $workspaceId</code> داشته باشد. بدون این، cross-tenant data leak رخ می‌دهد.</td>
+            </tr>
+            <tr>
+              <td><strong>Auth در هر route</strong></td>
+              <td><code>preHandler: [requireAuth]</code> را فراموش نکنید. برای admin-only: <code>requireRole('admin')</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Migration immutable</strong></td>
+              <td>فایل migration موجود را ویرایش نکنید. همیشه migration جدید بسازید.</td>
+            </tr>
+            <tr>
+              <td><strong>Type safety</strong></td>
+              <td>تایپ‌های shared را در <code>packages/shared</code> بسازید، نه در app اختصاصی.</td>
+            </tr>
+            <tr>
+              <td><strong>Error format</strong></td>
+              <td>همیشه از <code>reply.status(4xx).send({ error: { code, message } })</code> استفاده کنید.</td>
+            </tr>
+            <tr>
+              <td><strong>RTL in UI</strong></td>
+              <td>کامپوننت‌های داشبورد RTL هستند. از <code>gap-x</code> به‌جای <code>space-x</code> در flex استفاده کنید.</td>
+            </tr>
+            <tr>
+              <td><strong>Plan limits</strong></td>
+              <td>اگر فیچر جدید محدودیت پلن دارد، به <code>apps/api/src/billing/plan-limits.ts</code> اضافه کنید.</td>
+            </tr>
+            <tr>
+              <td><strong>env.example</strong></td>
+              <td>هر متغیر محیطی جدید را با کامنت توضیحی به <code>.env.example</code> اضافه کنید.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>۵ — اولویت‌بندی پیشنهادی فاز دوم (برای Agent)</h3>
+      <pre><code class="language-yaml">priority_order:
+  tier_1_high_impact:   # این‌ها بیشترین ارزش کاربری دارند
+    - FL-20   # ساعات کاری — پایه هر کسب‌وکار
+    - FL-22   # CSAT — بازخورد کاربر، ضروری برای رشد
+    - FL-32   # Push notifications — نگه داشتن اپراتور آگاه
+    - FL-33   # Email notifications
+    - FL-34   # Webhook outbound — اتصال به ابزارهای دیگر
+
+  tier_2_growth:        # برای جذب کاربران B2B
+    - FL-15   # Telegram — بازار ایران
+    - FL-19   # Auto-routing
+    - FL-21   # SLA tracking
+    - FL-23   # Agent performance dashboard
+    - FL-35   # Google SSO
+
+  tier_3_enterprise:    # برای بازار Enterprise
+    - FL-36   # Audit log
+    - FL-38   # 2FA
+    - FL-41   # White-label
+    - FL-17   # WhatsApp
+
+  tier_4_platform:      # پلتفرم بلندمدت
+    - FL-18   # Flow builder
+    - FL-40   # Mobile app
+    - FL-42   # Plugin marketplace
+
+dependencies:
+  FL-32 → FL-39  # PWA نیاز به service worker دارد
+  FL-22 → FL-21  # SLA نیاز به ساعات کاری دارد
+  FL-29 → FL-31  # bulk actions نیاز به segments دارد
+  FL-34 → FL-42  # marketplace بر Webhook بنا می‌شود
+</code></pre>
+
+      <h3>۶ — پرامپت template برای شروع هر FL</h3>
+      <pre><code class="language-markdown">## پرامپت شروع فیچر (کپی و تکمیل کنید)
+
+Context:
+- Project: Chat-Box — Live Chat SaaS (monorepo: pnpm + turborepo)
+- Stack: Fastify API (port 3001) | Next.js 14 Dashboard (port 3000) | Vanilla Widget | FastAPI AI (port 8000)
+- DB: PostgreSQL + Drizzle ORM | Auth: JWT httpOnly cookie | Realtime: Socket.io + Redis
+- Docs: docs/16-DEVELOPMENT-STATUS.html (وضعیت کامل) | docs/09-AI-AGENT-GUIDE.html (قوانین Agent)
+
+Task: پیاده‌سازی [FL-XX — نام فیچر]
+
+Feature spec:
+[توضیح فیچر از جدول بالا را اینجا paste کنید]
+
+Agent note from doc:
+[یادداشت Agent از ستون آخر جدول را اینجا paste کنید]
+
+Steps to follow:
+1. DB: [توضیح تغییرات schema]
+2. API: [route‌های جدید]
+3. Real-time: [events جدید در صورت نیاز]
+4. UI: [صفحه/کامپوننت‌های جدید]
+5. Tests: حداقل 3 test برای happy path + auth + edge case
+
+Rules:
+- همیشه workspace isolation رعایت شود
+- migration جدید (نه ویرایش موجود)
+- type‌های shared در packages/shared
+- .env.example به‌روزرسانی شود
+</code></pre>
 
       <hr />
       <h2 id="sec-4">چک‌لیست‌های دیگر کجا هستند؟</h2>

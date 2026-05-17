@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	API_URL,
+	connectTelegramBot,
 	createApiToken,
+	disconnectTelegramBot,
 	fetchApiTokens,
 	fetchBannedIps,
+	fetchIntegrations,
 	fetchWidgetConfig,
 	fetchWorkspaceDetail,
 	revokeApiToken,
@@ -18,6 +21,7 @@ import {
 	uploadUserAvatar,
 	publicAssetUrl,
 	type ApiTokenRow,
+	type TelegramIntegrationPublic,
 	type WidgetConfigPublic,
 } from "@/lib/api";
 import { refreshAuthUser } from "@/lib/auth-store";
@@ -43,7 +47,7 @@ const TIMEZONES = [
 
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
 	const [tab, setTab] = useState<
-		"profile" | "workspace" | "widget" | "api" | "security"
+		"profile" | "workspace" | "widget" | "telegram" | "api" | "security"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -92,6 +96,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [bannedIpsText, setBannedIpsText] = useState("");
 	const [securityMsg, setSecurityMsg] = useState("");
 	const [securityError, setSecurityError] = useState("");
+
+	const [telegramBotToken, setTelegramBotToken] = useState("");
+	const [telegramIntegration, setTelegramIntegration] =
+		useState<TelegramIntegrationPublic | null>(null);
+	const [telegramMsg, setTelegramMsg] = useState("");
+	const [telegramError, setTelegramError] = useState("");
+	const [telegramLoading, setTelegramLoading] = useState(false);
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -162,6 +173,16 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	useEffect(() => {
 		if (tab === "security") void loadSecurity();
 	}, [tab, loadSecurity]);
+
+	const loadTelegram = useCallback(async () => {
+		const list = await fetchIntegrations(workspaceId);
+		const tg = list.find((i) => i.type === "telegram") ?? null;
+		setTelegramIntegration(tg);
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (tab === "telegram") void loadTelegram();
+	}, [tab, loadTelegram]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -312,7 +333,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 			</div>
 			<div className="flex gap-2 border-b border-border px-6 pt-3">
 				{(
-					["profile", "workspace", "widget", "api", "security"] as const
+					["profile", "workspace", "widget", "telegram", "api", "security"] as const
 				).map((t) => (
 					<button
 						key={t}
@@ -331,9 +352,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 								? "ورک‌اسپیس"
 								: t === "widget"
 									? "ابزارک"
-									: t === "api"
-										? "API"
-										: "امنیت"}
+									: t === "telegram"
+										? "تلگرام"
+										: t === "api"
+											? "API"
+											: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -905,6 +928,102 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							ذخیره ورک‌اسپیس
 						</Button>
 					</form>
+				)}
+				{tab === "telegram" && (
+					<div className="mx-auto flex max-w-lg flex-col gap-4">
+						<p className="text-sm text-muted-foreground">
+							ربات تلگرام را به ورک‌اسپیس وصل کنید. پیام‌های کاربران در صندوق ورودی
+							نمایش داده می‌شود و پاسخ اپراتور به تلگرام ارسال می‌شود.
+						</p>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر (admin/owner) می‌تواند ربات تلگرام را متصل کند.
+							</p>
+						) : telegramIntegration ? (
+							<div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+								<p className="text-sm font-medium">
+									متصل: @{telegramIntegration.bot_username}
+								</p>
+								<p className="text-xs text-muted-foreground" dir="ltr">
+									توکن: {telegramIntegration.token_masked}
+								</p>
+								<p className="break-all text-xs text-muted-foreground" dir="ltr">
+									Webhook: {telegramIntegration.webhook_url}
+								</p>
+								<Button
+									type="button"
+									variant="destructive"
+									disabled={telegramLoading}
+									onClick={async () => {
+										setTelegramLoading(true);
+										setTelegramMsg("");
+										setTelegramError("");
+										const ok = await disconnectTelegramBot(workspaceId);
+										setTelegramLoading(false);
+										if (!ok) {
+											setTelegramError("قطع اتصال ناموفق بود.");
+											return;
+										}
+										setTelegramIntegration(null);
+										setTelegramBotToken("");
+										setTelegramMsg("اتصال تلگرام قطع شد.");
+									}}
+								>
+									قطع اتصال
+								</Button>
+							</div>
+						) : (
+							<form
+								onSubmit={async (e) => {
+									e.preventDefault();
+									setTelegramMsg("");
+									setTelegramError("");
+									if (!telegramBotToken.trim()) {
+										setTelegramError("Bot Token را وارد کنید.");
+										return;
+									}
+									setTelegramLoading(true);
+									const result = await connectTelegramBot(
+										workspaceId,
+										telegramBotToken.trim(),
+									);
+									setTelegramLoading(false);
+									if (!result.ok) {
+										setTelegramError(result.error ?? "اتصال ناموفق بود.");
+										return;
+									}
+									setTelegramBotToken("");
+									if (result.data) setTelegramIntegration(result.data);
+									setTelegramMsg("ربات تلگرام با موفقیت متصل شد.");
+									void loadTelegram();
+								}}
+								className="flex flex-col gap-3"
+							>
+								<label className="flex flex-col gap-1 text-sm font-medium">
+									Bot Token
+									<Input
+										value={telegramBotToken}
+										onChange={(e) => setTelegramBotToken(e.target.value)}
+										placeholder="123456789:ABCdefGHI..."
+										dir="ltr"
+										autoComplete="off"
+									/>
+								</label>
+								<p className="text-xs text-muted-foreground">
+									از @BotFather در تلگرام توکن بگیرید. آدرس webhook به‌صورت خودکار
+									روی API ثبت می‌شود (نیاز به URL عمومی با{" "}
+									<code className="text-xs">API_PUBLIC_URL</code>).
+								</p>
+								<Button type="submit" disabled={telegramLoading}>
+									{telegramLoading ? "در حال اتصال…" : "اتصال ربات"}
+								</Button>
+							</form>
+						)}
+						{telegramError && (
+							<p className="text-sm text-destructive">{telegramError}</p>
+						)}
+						{telegramMsg && <p className="text-sm text-primary">{telegramMsg}</p>}
+					</div>
 				)}
 				{tab === "security" && (
 					<form
