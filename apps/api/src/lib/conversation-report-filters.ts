@@ -2,9 +2,7 @@ import {
 	and,
 	eq,
 	exists,
-	gte,
 	ilike,
-	lte,
 	or,
 	sql,
 	type SQL,
@@ -62,10 +60,12 @@ export function buildConversationReportConditions(
 	}
 
 	if (query.from) {
-		conditions.push(gte(SORT_AT, parseIsoDate(query.from, "from")));
+		const from = parseIsoDate(query.from, "from");
+		conditions.push(sql`${SORT_AT} >= ${from}`);
 	}
 	if (query.to) {
-		conditions.push(lte(SORT_AT, parseIsoDate(query.to, "to")));
+		const to = parseIsoDate(query.to, "to");
+		conditions.push(sql`${SORT_AT} <= ${to}`);
 	}
 
 	const archivedFilter = query.archived ?? "all";

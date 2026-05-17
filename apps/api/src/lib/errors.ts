@@ -80,11 +80,18 @@ export function errorHandler(
 		return reply.status(error.statusCode).send(error.toJSON(request.id));
 	}
 	request.log.error(error);
+	const expose =
+		process.env.NODE_ENV !== "production" && error instanceof Error;
 	return reply.status(500).send({
 		error: {
 			code: "internal_error",
-			message: "An unexpected error occurred.",
+			message: expose
+				? error.message
+				: "An unexpected error occurred.",
 			request_id: request.id,
+			...(expose && error.stack
+				? { details: { stack: error.stack.split("\n").slice(0, 5) } }
+				: {}),
 		},
 	});
 }

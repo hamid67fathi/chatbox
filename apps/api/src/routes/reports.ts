@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
@@ -16,7 +16,6 @@ import {
 } from "../lib/conversation-report-csv.js";
 import {
 	buildConversationReportConditions,
-	SORT_AT,
 	type ReportQueryParams,
 } from "../lib/conversation-report-filters.js";
 import { validationError } from "../lib/errors.js";
@@ -25,6 +24,13 @@ import { getWorkspaceId } from "../lib/workspace.js";
 
 const MAX_PAGE = 100;
 const MAX_EXPORT = 5000;
+
+function toIso(value: Date | string | null | undefined): string | null {
+	if (value == null) return null;
+	if (value instanceof Date) return value.toISOString();
+	const d = new Date(value);
+	return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 async function fetchReportRows(
 	workspaceId: string,
@@ -62,7 +68,10 @@ async function fetchReportRows(
 		.leftJoin(contacts, eq(conversations.contactId, contacts.id))
 		.leftJoin(users, eq(conversations.assignedAgentId, users.id))
 		.where(and(...conditions))
-		.orderBy(sql`${SORT_AT} DESC`)
+		.orderBy(
+			desc(conversations.lastMessageAt),
+			desc(conversations.createdAt),
+		)
 		.limit(opts.limit)
 		.offset(opts.offset);
 
@@ -140,9 +149,9 @@ function mapRowForJson(r: ReportRow) {
 		status: r.status,
 		channel: r.channel,
 		subject: r.subject,
-		created_at: r.createdAt.toISOString(),
-		last_message_at: r.lastMessageAt?.toISOString() ?? null,
-		closed_at: r.closedAt?.toISOString() ?? null,
+		created_at: toIso(r.createdAt) ?? "",
+		last_message_at: toIso(r.lastMessageAt),
+		closed_at: toIso(r.closedAt),
 		csat_score: r.csatScore,
 		first_response_sec: r.firstResponseSec,
 		message_count: r.messageCount,
