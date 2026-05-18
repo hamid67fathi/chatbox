@@ -30,7 +30,13 @@ pnpm --filter api db:push
 pnpm --filter api db:ensure-api-tokens
 ```
 
-> **`db:migrate` روی سروری که قبلاً با `db:push` ساخته شده** ممکن است با exit 1 قطع شود (اسکیما از قبل وجود دارد ولی جدول `drizzle.__drizzle_migrations` هم‌خوان نیست). در این حالت از `db:push` یا `db:ensure-api-tokens` استفاده کنید، نه `db:migrate`.
+view گزارش اپراتور (`agent_performance_daily`) و migrationهای 0012–0020:
+
+```bash
+pnpm --filter api db:ensure-pending
+```
+
+> **`db:migrate` روی سروری که قبلاً با `db:push` ساخته شده** ممکن است با exit 1 قطع شود (اسکیما از قبل وجود دارد ولی جدول `drizzle.__drizzle_migrations` هم‌خوان نیست). در این حالت از `db:push` + `db:ensure-pending` (یا `db:ensure-api-tokens`) استفاده کنید، نه `db:migrate`.
 
 اگر `apps/ai-service/requirements.txt` عوض شده:
 
