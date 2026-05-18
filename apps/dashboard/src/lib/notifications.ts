@@ -8,14 +8,14 @@ export { fetchNotificationPreferencesFromApi as fetchNotificationPreferences };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToApplicationServerKey(base64String: string): ArrayBuffer {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 	const raw = atob(base64);
 	const buffer = new ArrayBuffer(raw.length);
 	const out = new Uint8Array(buffer);
 	for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-	return out;
+	return buffer;
 }
 
 export function pushSupported(): boolean {
