@@ -27,10 +27,40 @@ export interface AgentPerformanceReport {
 	refreshed_at: string | null;
 }
 
+const AGENT_PERF_VIEW = "agent_performance_daily";
+
+export async function agentPerformanceViewExists(): Promise<boolean> {
+	const rows = (await db.execute(sql`
+		SELECT 1 AS ok
+		FROM pg_matviews
+		WHERE schemaname = current_schema()
+			AND matviewname = ${AGENT_PERF_VIEW}
+		LIMIT 1
+	`)) as { ok: number }[];
+	return rows.length > 0;
+}
+
 export async function refreshAgentPerformanceView(): Promise<void> {
-	await db.execute(
-		sql`REFRESH MATERIALIZED VIEW CONCURRENTLY agent_performance_daily`,
-	);
+	if (!(await agentPerformanceViewExists())) {
+		console.warn(
+			`[agent-performance] materialized view "${AGENT_PERF_VIEW}" is missing; run: pnpm --filter api db:migrate`,
+		);
+		return;
+	}
+	try {
+		await db.execute(
+			sql`REFRESH MATERIALIZED VIEW CONCURRENTLY agent_performance_daily`,
+		);
+	} catch (err) {
+		const code = (err as { cause?: { code?: string } })?.cause?.code;
+		if (code === "42P01") {
+			console.warn(
+				`[agent-performance] materialized view "${AGENT_PERF_VIEW}" is missing; run: pnpm --filter api db:migrate`,
+			);
+			return;
+		}
+		throw err;
+	}
 }
 
 export async function getAgentPerformanceReport(
@@ -49,20 +79,23 @@ export async function getAgentPerformanceReport(
 		avg_first_response_sec: string | null;
 	};
 
-	const convRows = (await db.execute(sql`
-		SELECT
-			agent_id,
-			sum(conversations_total)::int AS conversations_total,
-			sum(conversations_resolved)::int AS conversations_resolved,
-			avg(avg_first_response_sec) FILTER (
-				WHERE avg_first_response_sec IS NOT NULL
-			) AS avg_first_response_sec
-		FROM agent_performance_daily
-		WHERE workspace_id = ${workspaceId}
-			AND day >= ${fromDay}::date
-			AND day <= ${toDay}::date
-		GROUP BY agent_id
-	`)) as ConvAggRow[];
+	let convRows: ConvAggRow[] = [];
+	if (await agentPerformanceViewExists()) {
+		convRows = (await db.execute(sql`
+			SELECT
+				agent_id,
+				sum(conversations_total)::int AS conversations_total,
+				sum(conversations_resolved)::int AS conversations_resolved,
+				avg(avg_first_response_sec) FILTER (
+					WHERE avg_first_response_sec IS NOT NULL
+				) AS avg_first_response_sec
+			FROM agent_performance_daily
+			WHERE workspace_id = ${workspaceId}
+				AND day >= ${fromDay}::date
+				AND day <= ${toDay}::date
+			GROUP BY agent_id
+		`)) as ConvAggRow[];
+	}
 
 	const csatRows = await db
 		.select({
