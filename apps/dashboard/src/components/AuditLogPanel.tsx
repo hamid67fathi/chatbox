@@ -19,6 +19,7 @@ const ACTION_LABELS: Record<string, string> = {
 	"widget_config.update": "تنظیمات ویجت",
 	"security.banned_ips_update": "IP مسدود",
 	"security.dashboard_ip_whitelist_update": "لیست مجاز IP داشبورد",
+	"branding.update": "برندینگ White-label",
 	"notification.preferences_update": "تنظیمات اعلان",
 	"api_token.create": "ایجاد API token",
 	"api_token.revoke": "لغو API token",

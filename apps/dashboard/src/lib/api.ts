@@ -959,6 +959,57 @@ export async function updateDashboardIpWhitelist(
 	return res.ok;
 }
 
+export interface BrandingPublic {
+	enabled: boolean;
+	logo_url: string | null;
+	primary_color: string | null;
+	dashboard_title: string | null;
+	hide_powered_by: boolean;
+	custom_domain: string | null;
+	email_from_name: string | null;
+	widget_branding_label: string | null;
+	widget_branding_url: string | null;
+}
+
+export interface BrandingResponse {
+	enterprise: boolean;
+	white_label_active: boolean;
+	branding: BrandingPublic;
+	dashboard: {
+		title: string;
+		logo_url: string | null;
+		primary_color: string | null;
+		hide_chatbox_brand: boolean;
+	};
+}
+
+export async function fetchBranding(
+	workspaceId: string,
+): Promise<BrandingResponse | null> {
+	const res = await authFetch(`${API_URL}/v1/branding`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return null;
+	const json = (await res.json()) as { data?: BrandingResponse };
+	return json.data ?? null;
+}
+
+export async function updateBranding(
+	workspaceId: string,
+	body: Partial<BrandingPublic> & { enabled?: boolean },
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/branding`, {
+		method: "PUT",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify(body),
+	});
+	return res.ok;
+}
+
 export async function fetchRequire2fa(
 	workspaceId: string,
 ): Promise<boolean> {

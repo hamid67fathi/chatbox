@@ -3,6 +3,11 @@ import { eq } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { workspaces } from "../../db/schema/index.js";
 import { parseEmailIntegration } from "../email-settings.js";
+import {
+	isWhiteLabelActive,
+	parseWorkspaceBranding,
+	workspaceHasEnterprise,
+} from "../workspace-branding.js";
 import type { EmailNotificationJob } from "./types.js";
 
 function smtpFromEnv(): SmtpConfig | null {
@@ -25,19 +30,34 @@ function smtpFromEnv(): SmtpConfig | null {
 async function workspaceSmtp(workspaceId: string): Promise<SmtpConfig | null> {
 	const ws = await db.query.workspaces.findFirst({
 		where: eq(workspaces.id, workspaceId),
-		columns: { settings: true },
+		columns: { settings: true, plan: true },
 	});
 	const integration = parseEmailIntegration(ws?.settings);
-	if (!integration?.enabled) return smtpFromEnv();
-	return {
-		host: integration.smtp.host,
-		port: integration.smtp.port,
-		secure: integration.smtp.secure,
-		user: integration.smtp.user,
-		password: integration.smtp.password,
-		fromAddress: integration.from_address,
-		fromName: integration.from_name,
-	};
+	const base = integration?.enabled
+		? {
+				host: integration.smtp.host,
+				port: integration.smtp.port,
+				secure: integration.smtp.secure,
+				user: integration.smtp.user,
+				password: integration.smtp.password,
+				fromAddress: integration.from_address,
+				fromName: integration.from_name,
+			}
+		: smtpFromEnv();
+	if (!base) return null;
+
+	const branding = parseWorkspaceBranding(ws?.settings);
+	const enterprise = ws
+		? await workspaceHasEnterprise(workspaceId)
+		: false;
+	if (
+		ws &&
+		isWhiteLabelActive(ws.plan, branding, enterprise) &&
+		branding.emailFromName
+	) {
+		base.fromName = branding.emailFromName;
+	}
+	return base;
 }
 
 export async function processEmailNotificationJob(

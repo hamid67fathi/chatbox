@@ -47,10 +47,12 @@ import {
 	mergeCsatSettings,
 	parseCsatSettings,
 } from "../lib/csat-settings.js";
+import { resolveWorkspaceWidgetBranding } from "../lib/widget-branding.js";
 import {
-	DEFAULT_WIDGET_BRANDING,
-	shouldShowWidgetBranding,
-} from "../lib/widget-branding.js";
+	isWhiteLabelActive,
+	parseWorkspaceBranding,
+	workspaceHasEnterprise,
+} from "../lib/workspace-branding.js";
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -323,14 +325,21 @@ export async function publicWidgetConfigHandler(
 	});
 	if (!ws) throw notFound("Workspace not found.");
 
-	const showBranding = await shouldShowWidgetBranding(ws.id);
+	const branding = parseWorkspaceBranding(ws.settings);
+	const enterprise = await workspaceHasEnterprise(ws.id);
+	const whiteLabelActive = isWhiteLabelActive(ws.plan, branding, enterprise);
+	const widgetBranding = await resolveWorkspaceWidgetBranding(ws.id);
+	const data = publicWidgetData(ws.settings, ws.timezone);
+	if (whiteLabelActive && branding.primaryColor) {
+		data.primary_color = branding.primaryColor;
+	}
 
 	return {
 		workspace_id: ws.id,
 		slug: ws.slug,
-		...publicWidgetData(ws.settings, ws.timezone),
-		show_branding: showBranding,
-		branding_label: DEFAULT_WIDGET_BRANDING.label,
-		branding_url: DEFAULT_WIDGET_BRANDING.url,
+		...data,
+		show_branding: widgetBranding.show_branding,
+		branding_label: widgetBranding.branding_label,
+		branding_url: widgetBranding.branding_url,
 	};
 }

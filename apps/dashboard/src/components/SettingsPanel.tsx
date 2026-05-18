@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandingSettingsPanel } from "@/components/BrandingSettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -673,6 +674,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						"ai",
 						"api",
 						"security",
+						"branding",
 						"notifications",
 					] as const
 				).map((t) => (
@@ -709,9 +711,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 																? "هوش مصنوعی"
 																: t === "api"
 																	? "API"
-																	: t === "notifications"
-																		? "اعلان‌ها"
-																		: "امنیت"}
+																	: t === "branding"
+																		? "برند"
+																		: t === "notifications"
+																			? "اعلان‌ها"
+																			: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -2228,6 +2232,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						</label>
 						<Button type="submit">ذخیره سیاست 2FA</Button>
 					</form>
+				)}
+				{tab === "branding" && (
+					<BrandingSettingsPanel workspaceId={workspaceId} />
 				)}
 				{canEditWorkspace && tab === "security" && (
 					<div className="mx-auto mt-6 max-w-lg rounded-lg border border-border bg-card p-4">

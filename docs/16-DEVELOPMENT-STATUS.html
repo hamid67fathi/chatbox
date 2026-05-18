@@ -1346,12 +1346,12 @@ agent_note: >
                 اپ native iOS/Android برای اپراتورها؛ inbox، پیام‌رسانی real-time، push notification؛
                 استفاده از همان API موجود
               </td>
-              <td>برنامه‌ریزی</td>
-              <td>—</td>
+              <td class="done">انجام شد (MVP)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>apps/mobile/</code> (Expo + React Native)؛
-                Socket.io client موجود reuse؛
-                FCM/APNs برای push
+                <strong>Agent:</strong> <code>apps/mobile/</code> Expo Router؛
+                ورود + 2FA؛ inbox؛ چت real-time (Socket.io)؛
+                SecureStore؛ push در فاز بعد
               </td>
             </tr>
 
@@ -1365,13 +1365,14 @@ agent_note: >
                 حذف برندینگ Chat-Box؛ email‌های سفارشی؛
                 per-workspace white-label settings
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> فیلد <code>branding</code> (JSONB) در workspaces؛
-                Nginx per-domain routing؛
-                CSS variables override در ویجت (مرتبط با FL-05)؛
-                پلن Enterprise-only
+                <strong>Agent:</strong> <code>settings.branding</code> در workspaces؛
+                <code>GET/PUT /v1/branding</code>؛
+                تب «برند» در تنظیمات؛
+                CSS <code>--primary</code> + لوگو سایدبار؛
+                ویجت و ایمیل؛ Enterprise-only
               </td>
             </tr>
             <tr>

@@ -17,6 +17,7 @@ import { authRoutes } from "./routes/auth.js";
 import { googleAuthRoutes } from "./routes/google-auth.js";
 import { twoFactorRoutes } from "./routes/two-factor.js";
 import { auditLogRoutes } from "./routes/audit-logs.js";
+import { brandingRoutes } from "./routes/branding.js";
 import { billingPublicRoutes } from "./routes/billing-public.js";
 import { csatReportRoutes, publicCsatRoutes } from "./routes/csat.js";
 import { billingRoutes } from "./routes/billing.js";
@@ -174,6 +175,7 @@ export function buildApp() {
 		instance.register(aiTagRoutes);
 		instance.register(aiPersonaRoutes);
 		instance.register(auditLogRoutes);
+		instance.register(brandingRoutes);
 	});
 
 	return app;

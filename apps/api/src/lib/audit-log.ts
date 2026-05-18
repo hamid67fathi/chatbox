@@ -11,6 +11,7 @@ export const AUDIT_ACTIONS = {
 	SECURITY_REQUIRE_2FA: "security.require_2fa_update",
 	WORKSPACE_UPDATE: "workspace.update",
 	WIDGET_CONFIG_UPDATE: "widget_config.update",
+	BRANDING_UPDATE: "branding.update",
 	SECURITY_BANNED_IPS: "security.banned_ips_update",
 	SECURITY_DASHBOARD_IP_WHITELIST: "security.dashboard_ip_whitelist_update",
 	NOTIFICATION_PREFS: "notification.preferences_update",
