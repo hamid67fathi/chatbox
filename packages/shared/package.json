@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./segments": "./src/segments.ts",
-		"./notification-sound": "./src/notification-sound.ts"
+		"./notification-sound": "./src/notification-sound.ts",
+		"./offline-inbox": "./src/offline-inbox.ts"
 	}
 }

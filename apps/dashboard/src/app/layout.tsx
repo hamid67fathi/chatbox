@@ -1,4 +1,5 @@
 import { BuildBadge } from "@/components/BuildBadge";
+import { PwaProvider } from "@/components/PwaProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { dmMono, dmSans, vazirmatn } from "@/lib/fonts";
 import type { Metadata } from "next";
@@ -8,6 +9,16 @@ import "./globals.css";
 export const metadata: Metadata = {
 	title: "Chat-Box | داشبورد",
 	description: "داشبورد مدیریت مکالمات",
+	manifest: "/manifest.webmanifest",
+	appleWebApp: {
+		capable: true,
+		title: "ChatBox",
+		statusBarStyle: "default",
+	},
+	themeColor: [
+		{ media: "(prefers-color-scheme: light)", color: "#7c3aed" },
+		{ media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+	],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -22,8 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				className={`min-h-screen font-sans ${vazirmatn.className} ${dmSans.className}`}
 			>
 				<ThemeProvider>
-					{children}
-					<BuildBadge />
+					<PwaProvider>
+						{children}
+						<BuildBadge />
+					</PwaProvider>
 				</ThemeProvider>
 			</body>
 		</html>

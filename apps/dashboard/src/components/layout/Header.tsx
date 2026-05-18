@@ -1,5 +1,6 @@
 "use client";
 
+import { PwaInstallButton } from "@/components/PwaProvider";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { clearAuth } from "@/lib/auth-store";
@@ -35,6 +36,7 @@ export function Header({ userEmail, workspaceName }: Props) {
 				)}
 			</div>
 			<div className="flex items-center gap-1">
+				<PwaInstallButton />
 				<Button
 					type="button"
 					variant="ghost"

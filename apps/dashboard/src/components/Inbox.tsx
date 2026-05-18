@@ -8,6 +8,11 @@ import type {
 	Message,
 } from "@/lib/api";
 import { fetchConversationDetail, fetchConversations } from "@/lib/api";
+import {
+	buildInboxCacheKey,
+	loadOfflineInbox,
+	saveOfflineInbox,
+} from "@/lib/offline-inbox-cache";
 import { canAgentSeeConversation } from "@/lib/conversation-access";
 import {
 	maybeShowBrowserConversationNotification,
@@ -101,8 +106,33 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 
 	const reloadConversations = useCallback(() => {
 		if (!workspaceId) return;
+		const cacheKey = buildInboxCacheKey(workspaceId, apiFilters);
+		if (typeof navigator !== "undefined" && !navigator.onLine) {
+			const cached = loadOfflineInbox(cacheKey);
+			if (cached?.length) {
+				setConversations(cached.map(normalizeConversation));
+				setLoadError("آفلاین — آخرین لیست ذخیره‌شده");
+				setHasMore(false);
+				setNextCursor(null);
+				return;
+			}
+		}
 		fetchConversations(workspaceId, apiFilters).then(({ data, error, page }) => {
-			setConversations(data.map(normalizeConversation));
+			const normalized = data.map(normalizeConversation);
+			if (normalized.length > 0) {
+				saveOfflineInbox(cacheKey, normalized);
+			}
+			if (error && normalized.length === 0) {
+				const cached = loadOfflineInbox(cacheKey);
+				if (cached?.length) {
+					setConversations(cached.map(normalizeConversation));
+					setLoadError("آفلاین — آخرین لیست ذخیره‌شده");
+					setHasMore(false);
+					setNextCursor(null);
+					return;
+				}
+			}
+			setConversations(normalized);
 			setLoadError(error ?? null);
 			setHasMore(page?.has_more ?? false);
 			setNextCursor(page?.next_cursor ?? null);
