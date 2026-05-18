@@ -73,7 +73,7 @@ export async function subscribeToPush(
 
 	const sub = await reg.pushManager.subscribe({
 		userVisibleOnly: true,
-		applicationServerKey: urlBase64ToUint8Array(publicKey),
+		applicationServerKey: urlBase64ToApplicationServerKey(publicKey),
 	});
 
 	const json = sub.toJSON();
