@@ -234,6 +234,8 @@ export function parseBusinessHoursPatch(
 	}
 	if (typeof o.show_status_in_widget === "boolean") {
 		patch.show_status_in_widget = o.show_status_in_widget;
+	} else if (typeof o.show_status === "boolean") {
+		patch.show_status_in_widget = o.show_status;
 	}
 	if (Array.isArray(o.holidays)) {
 		patch.holidays = o.holidays.filter(

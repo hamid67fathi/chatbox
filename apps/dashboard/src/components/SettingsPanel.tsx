@@ -557,7 +557,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 				enabled: bhEnabled,
 				timezone: bhTimezone,
 				away_message: bhAwayMessage,
-				show_status_in_widget: bhShowStatus,
+				show_status: bhShowStatus,
 				holidays,
 				schedule: bhSchedule,
 			},
