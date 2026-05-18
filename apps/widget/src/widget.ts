@@ -27,6 +27,12 @@ import {
 	bindPageNavigation,
 	pageContextPayload,
 } from "./page-context.js";
+import { flushCbxQueue } from "./cbx.js";
+import {
+	bindProactiveTriggers,
+	fetchProactiveRules,
+} from "./proactive.js";
+import { trackVisitorEvent } from "./track.js";
 import {
 	loadWidgetBrowserPrefs,
 	maybeShowWidgetBrowserNotification,
@@ -117,7 +123,14 @@ export class ChatBoxWidget {
 
 	async mount(target?: HTMLElement) {
 		const theme = await fetchWidgetTheme(this.config);
-		if (theme) this.theme = { ...DEFAULT_THEME, ...theme, prechat: theme.prechat ?? DEFAULT_PRECHAT };
+		if (theme) {
+			this.theme = {
+				...DEFAULT_THEME,
+				...theme,
+				prechat: theme.prechat ?? DEFAULT_PRECHAT,
+			};
+			this.trackingPublicKey = theme.tracking_public_key ?? null;
+		}
 
 		const host = document.createElement("div");
 		host.id = "chatbox-widget";
@@ -274,6 +287,62 @@ export class ChatBoxWidget {
 		});
 
 		await this.initSession();
+
+		flushCbxQueue();
+		void this.initProactive();
+	}
+
+	/** Public SDK: cbx('track', 'event_name', { ...props }) */
+	trackCustom(eventName: string, props: Record<string, unknown> = {}): void {
+		if (!this.trackingPublicKey) return;
+		const ctx = pageContextPayload();
+		trackVisitorEvent(
+			this.config.apiUrl,
+			this.trackingPublicKey,
+			this.config.workspaceSlug,
+			"custom_event",
+			{
+				url: ctx.page_url,
+				payload: { name: eventName, ...props },
+				contact_id: this.contactId,
+			},
+		);
+	}
+
+	/** Public SDK: cbx('identify', { email, name, phone, ... }) */
+	async identifyTraits(traits: Record<string, unknown>): Promise<void> {
+		const data: { full_name?: string; email?: string; phone?: string } = {};
+		if (typeof traits.email === "string") data.email = traits.email;
+		if (typeof traits.phone === "string") data.phone = traits.phone;
+		if (typeof traits.name === "string") data.full_name = traits.name;
+		else if (typeof traits.full_name === "string") data.full_name = traits.full_name;
+		if (!data.email && !data.phone && !data.full_name) return;
+		try {
+			await updateContactProfile(data, this.config.workspaceSlug);
+		} catch {
+			/* non-fatal */
+		}
+	}
+
+	private proactiveCleanup: (() => void) | null = null;
+
+	private async initProactive(): Promise<void> {
+		const rules = await fetchProactiveRules(
+			this.config.apiUrl,
+			this.config.workspaceSlug,
+		);
+		if (rules.length === 0) return;
+		this.proactiveCleanup = bindProactiveTriggers(
+			rules,
+			this.config.workspaceSlug,
+			(message) => {
+				if (!this.isOpen) this.toggle();
+				if (this.welcomeEl && message.trim()) {
+					this.welcomeEl.textContent = message;
+					this.welcomeEl.classList.remove("hidden");
+				}
+			},
+		);
 	}
 
 	private escapeHtml(text: string) {
@@ -383,7 +452,10 @@ export class ChatBoxWidget {
 		submitBtn.disabled = true;
 
 		try {
-			const result = await updateContactProfile(payload);
+			const result = await updateContactProfile(
+				payload,
+				this.config.workspaceSlug,
+			);
 			if (!result.profile_complete) {
 				this.prechatErrorEl.textContent =
 					"لطفاً فیلدهای الزامی را تکمیل کنید.";
@@ -524,15 +596,43 @@ export class ChatBoxWidget {
 		}
 	}
 
+	private emitTrack(
+		eventType: Parameters<typeof trackVisitorEvent>[3],
+		page?: ReturnType<typeof pageContextPayload>,
+	) {
+		if (!this.trackingPublicKey) return;
+		const ctx = page ?? pageContextPayload();
+		trackVisitorEvent(
+			this.config.apiUrl,
+			this.trackingPublicKey,
+			this.config.workspaceSlug,
+			eventType,
+			{
+				url: ctx.page_url,
+				payload: ctx.metadata,
+				contact_id: this.contactId,
+			},
+		);
+	}
+
 	private pushPageContext() {
 		const page = pageContextPayload();
 		void updateVisitorContext(page);
 		this.ws.emitVisitorPresence(page);
+		this.emitTrack("page_view", page);
 	}
 
 	private startPageTracking() {
 		this.unbindPageNav?.();
+		this.trackTeardown?.();
 		this.unbindPageNav = bindPageNavigation(() => this.pushPageContext());
+		const onLeave = () => this.emitTrack("session_end");
+		window.addEventListener("beforeunload", onLeave);
+		window.addEventListener("pagehide", onLeave);
+		this.trackTeardown = () => {
+			window.removeEventListener("beforeunload", onLeave);
+			window.removeEventListener("pagehide", onLeave);
+		};
 		if (this.pageContextTimer) clearInterval(this.pageContextTimer);
 		this.pageContextTimer = setInterval(() => this.pushPageContext(), 60_000);
 		if (this.presenceTimer) clearInterval(this.presenceTimer);
@@ -548,6 +648,8 @@ export class ChatBoxWidget {
 		this.ws.disconnect();
 		this.unbindPageNav?.();
 		this.unbindPageNav = null;
+		this.trackTeardown?.();
+		this.trackTeardown = null;
 		if (this.pageContextTimer) {
 			clearInterval(this.pageContextTimer);
 			this.pageContextTimer = null;
@@ -961,6 +1063,7 @@ export class ChatBoxWidget {
 	}
 
 	destroy() {
+		this.proactiveCleanup?.();
 		this.ws.disconnect();
 		this.root.host.remove();
 	}

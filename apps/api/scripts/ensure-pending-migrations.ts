@@ -21,6 +21,14 @@ const PENDING = [
 	"0018_google_oauth",
 	"0019_audit_logs",
 	"0020_user_totp_recovery",
+	"0021_plugin_marketplace",
+	"0022_visitor_identities",
+	"0023_visitor_events",
+	"0024_crm_contact_attributes",
+	"0025_crm_lifecycle",
+	"0026_crm_scoring_health",
+	"0027_crm_proactive_campaigns",
+	"0028_crm_companies",
 ] as const;
 
 const SKIP_ERROR_CODES = new Set([

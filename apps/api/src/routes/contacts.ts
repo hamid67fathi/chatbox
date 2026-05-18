@@ -14,7 +14,10 @@ import { buildContactTimeline } from "../lib/contact-timeline.js";
 import { notFound, validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
 import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
+import { identifyByVisitorId } from "../lib/identity-resolution.js";
+import { listContactVisitorEvents } from "../lib/visitor-events.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import { workspaces } from "../db/schema/index.js";
 
 const CHANNELS = new Set([
 	"widget",
@@ -108,6 +111,47 @@ export async function contactRoutes(app: FastifyInstance) {
 		},
 	);
 
+	app.post<{
+		Body: {
+			visitor_id?: string;
+			email?: string;
+			phone?: string;
+			contact_id?: string;
+		};
+	}>(
+		"/v1/contacts/identify",
+		{ preHandler: [requireWorkspace("admin")] },
+		async (request, reply) => {
+			const wsId = getWorkspaceId(request);
+			const user = (request as AuthenticatedRequest).user;
+			const body = request.body ?? {};
+			if (!body.visitor_id?.trim()) {
+				throw validationError("visitor_id is required.", "visitor_id");
+			}
+
+			const result = await identifyByVisitorId(wsId, {
+				visitor_id: body.visitor_id,
+				email: body.email,
+				phone: body.phone,
+				contact_id: body.contact_id,
+			});
+
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.CONTACT_IDENTIFY,
+				targetType: "contact",
+				targetId: result.contact_id,
+				diff: {
+					visitor_id: body.visitor_id,
+					merged: result.merged,
+				},
+			});
+
+			return reply.status(200).send({ data: result });
+		},
+	);
+
 	app.get<{ Params: { id: string } }>(
 		"/v1/contacts/:id",
 		{ preHandler: [requireWorkspace("viewer")] },
@@ -121,6 +165,37 @@ export async function contactRoutes(app: FastifyInstance) {
 			});
 			if (!row) throw notFound("Contact not found.");
 			return { data: row };
+		},
+	);
+
+	app.get<{
+		Params: { id: string };
+		Querystring: { limit?: string; cursor?: string };
+	}>(
+		"/v1/contacts/:id/events",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const ws = await db.query.workspaces.findFirst({
+				where: eq(workspaces.id, wsId),
+				columns: { plan: true },
+			});
+			if (!ws) throw notFound("Workspace not found.");
+
+			const result = await listContactVisitorEvents(
+				wsId,
+				request.params.id,
+				{
+					plan: ws.plan,
+					limit: Number(request.query.limit) || 50,
+					cursor: request.query.cursor,
+				},
+			);
+
+			return {
+				data: result.rows,
+				page: { next_cursor: result.next_cursor },
+			};
 		},
 	);
 

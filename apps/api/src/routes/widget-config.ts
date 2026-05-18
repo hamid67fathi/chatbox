@@ -47,6 +47,7 @@ import {
 	mergeCsatSettings,
 	parseCsatSettings,
 } from "../lib/csat-settings.js";
+import { ensureTrackingPublicKey } from "../lib/tracking-key.js";
 import { resolveWorkspaceWidgetBranding } from "../lib/widget-branding.js";
 import {
 	isWhiteLabelActive,
@@ -329,6 +330,7 @@ export async function publicWidgetConfigHandler(
 	const enterprise = await workspaceHasEnterprise(ws.id);
 	const whiteLabelActive = isWhiteLabelActive(ws.plan, branding, enterprise);
 	const widgetBranding = await resolveWorkspaceWidgetBranding(ws.id);
+	const trackingPublicKey = await ensureTrackingPublicKey(ws.id);
 	const data = publicWidgetData(ws.settings, ws.timezone);
 	if (whiteLabelActive && branding.primaryColor) {
 		data.primary_color = branding.primaryColor;
@@ -337,6 +339,7 @@ export async function publicWidgetConfigHandler(
 	return {
 		workspace_id: ws.id,
 		slug: ws.slug,
+		tracking_public_key: trackingPublicKey,
 		...data,
 		show_branding: widgetBranding.show_branding,
 		branding_label: widgetBranding.branding_label,

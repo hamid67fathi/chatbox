@@ -165,7 +165,7 @@ export async function workspaceHasEnterprise(
 }
 
 export function isWhiteLabelActive(
-	plan: string,
+	_plan: string,
 	branding: WorkspaceBrandingConfig,
 	hasEnterprise: boolean,
 ): boolean {

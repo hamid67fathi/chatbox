@@ -1,7 +1,18 @@
 "use client";
 
-import type { VisitorInfo, VisitorPageView } from "@/lib/api";
-import { fetchConversationDetail } from "@/lib/api";
+import { JourneyTimeline } from "@/components/contact/JourneyTimeline";
+import type {
+	ContactVisitorEvent,
+	JourneyItem,
+	VisitorInfo,
+	VisitorPageView,
+} from "@/lib/api";
+import {
+	fetchContactJourney,
+	fetchContactVisitorEvents,
+	fetchConversationDetail,
+	updateContactLifecycle,
+} from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 import { ExternalLink, Globe, History, MapPin, Monitor } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -10,13 +21,36 @@ interface Props {
 	workspaceId: string;
 	conversationId: string;
 	channel: string;
+	canEditContact?: boolean;
 }
+
+const LIFECYCLE_STAGES = [
+	{ value: "new", label: "جدید" },
+	{ value: "lead", label: "لید" },
+	{ value: "prospect", label: "پیش‌نمایش" },
+	{ value: "customer", label: "مشتری" },
+	{ value: "vip", label: "VIP" },
+	{ value: "at_risk", label: "در خطر" },
+	{ value: "churned", label: "ریزش" },
+	{ value: "reactivated", label: "بازگشت" },
+];
 
 function deviceLabel(device: string | null | undefined): string {
 	if (device === "mobile") return "موبایل";
 	if (device === "tablet") return "تبلت";
 	if (device === "desktop") return "دسکتاپ";
 	return device ?? "—";
+}
+
+function eventLabel(type: string): string {
+	const labels: Record<string, string> = {
+		page_view: "بازدید صفحه",
+		session_start: "شروع نشست",
+		session_end: "پایان نشست",
+		conversation_started: "شروع مکالمه",
+		custom_event: "رویداد سفارشی",
+	};
+	return labels[type] ?? type;
 }
 
 function formatPagePath(url: string): string {
@@ -32,18 +66,36 @@ export function VisitorInfoPanel({
 	workspaceId,
 	conversationId,
 	channel,
+	canEditContact = false,
 }: Props) {
 	const [visitor, setVisitor] = useState<VisitorInfo | null>(null);
+	const [events, setEvents] = useState<ContactVisitorEvent[]>([]);
+	const [journey, setJourney] = useState<JourneyItem[]>([]);
+	const [contactId, setContactId] = useState<string | null>(null);
+	const [lifecycle, setLifecycle] = useState("new");
 	const [loading, setLoading] = useState(false);
 
 	const load = useCallback(async () => {
 		if (channel !== "widget") {
 			setVisitor(null);
+			setEvents([]);
 			return;
 		}
 		setLoading(true);
 		const detail = await fetchConversationDetail(workspaceId, conversationId);
 		setVisitor(detail?.visitor ?? null);
+		if (detail?.contactId) {
+			setContactId(detail.contactId);
+			const ev = await fetchContactVisitorEvents(workspaceId, detail.contactId);
+			setEvents(ev.rows);
+			setJourney(await fetchContactJourney(workspaceId, detail.contactId));
+			const c = detail.contact as { lifecycle_stage?: string; lifecycleStage?: string } | undefined;
+			setLifecycle(c?.lifecycle_stage ?? c?.lifecycleStage ?? "new");
+		} else {
+			setContactId(null);
+			setEvents([]);
+			setJourney([]);
+		}
 		setLoading(false);
 	}, [workspaceId, conversationId, channel]);
 
@@ -130,6 +182,72 @@ export function VisitorInfoPanel({
 							</div>
 						</div>
 					</div>
+
+					{contactId && (
+						<div className="flex flex-wrap items-center gap-2 text-xs">
+							<span className="text-muted-foreground">مرحله عمر:</span>
+							<select
+								className="rounded border border-border bg-background px-2 py-1"
+								value={lifecycle}
+								disabled={!canEditContact}
+								onChange={(e) => {
+									const stage = e.target.value;
+									setLifecycle(stage);
+									void updateContactLifecycle(workspaceId, contactId, stage);
+								}}
+							>
+								{LIFECYCLE_STAGES.map((s) => (
+									<option key={s.value} value={s.value}>
+										{s.label}
+									</option>
+								))}
+							</select>
+						</div>
+					)}
+
+					{journey.length > 0 && (
+						<div>
+							<p className="mb-1 text-xs font-semibold text-muted-foreground">
+								نقشه سفر مشتری
+							</p>
+							<JourneyTimeline items={journey} />
+						</div>
+					)}
+
+					{events.length > 0 && (
+						<div>
+							<p className="mb-1 text-xs font-semibold text-muted-foreground">
+								رویدادهای ردیابی
+							</p>
+							<ul className="max-h-28 space-y-1 overflow-y-auto rounded-md border border-border bg-background/80 p-2 text-xs">
+								{events.map((ev) => (
+									<li
+										key={ev.id}
+										className="flex flex-wrap justify-between gap-2 border-b border-border/60 pb-1 last:border-0"
+									>
+										<span className="font-medium">{eventLabel(ev.event_type)}</span>
+										<time className="text-muted-foreground" dateTime={ev.created_at}>
+											{new Date(ev.created_at).toLocaleString("fa-IR", {
+												month: "short",
+												day: "numeric",
+												hour: "2-digit",
+												minute: "2-digit",
+											})}
+										</time>
+										{ev.url && (
+											<span
+												className="w-full truncate text-primary"
+												dir="ltr"
+												title={ev.url}
+											>
+												{formatPagePath(ev.url)}
+											</span>
+										)}
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
 
 					<div>
 						<p className="mb-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground">

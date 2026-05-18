@@ -4,8 +4,8 @@ import { db } from "../db/index.js";
 import { workspaces } from "../db/schema/index.js";
 import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
 import type { AuthenticatedRequest } from "../lib/auth.js";
-import { forbidden, validationError } from "../lib/errors.js";
-import { notFound } from "../lib/errors.js";
+import { forbidden } from "../lib/auth.js";
+import { notFound, validationError } from "../lib/errors.js";
 import {
 	getWorkspaceRole,
 	isSupervisorRole,

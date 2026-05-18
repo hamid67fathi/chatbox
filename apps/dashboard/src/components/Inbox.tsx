@@ -517,6 +517,9 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							workspaceId={workspaceId}
 							conversationId={activeId}
 							channel={activeConversation?.channel ?? "widget"}
+							canEditContact={
+								workspaceRole === "owner" || workspaceRole === "admin"
+							}
 						/>
 						<MessageThread
 							workspaceId={workspaceId}

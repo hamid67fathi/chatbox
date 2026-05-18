@@ -44,7 +44,29 @@ import {
 	visitorFromMetadata,
 } from "../lib/visitor-context.js";
 import { assertWorkspaceIpAllowed } from "../lib/workspace-ip-guard.js";
+import {
+	findContactByVisitorId,
+	resolveContactIdentity,
+} from "../lib/identity-resolution.js";
+import {
+	recordVisitorEvent,
+	trackContextFromRequest,
+} from "../lib/visitor-events.js";
 import { getIO } from "../ws/broadcast.js";
+
+async function openConversationForContact(
+	workspaceId: string,
+	contactId: string,
+) {
+	return db.query.conversations.findFirst({
+		where: and(
+			eq(conversations.workspaceId, workspaceId),
+			eq(conversations.contactId, contactId),
+			eq(conversations.status, "open"),
+		),
+		orderBy: [desc(conversations.lastMessageAt), desc(conversations.createdAt)],
+	});
+}
 
 async function assertVisitorNotBanned(contactId: string, workspaceId: string) {
 	const contact = await db.query.contacts.findFirst({
@@ -165,12 +187,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 			await assertWorkspaceIpAllowed(request, ws.id);
 
 			let contact = visitor_id
-				? await db.query.contacts.findFirst({
-						where: and(
-							eq(contacts.externalId, visitor_id),
-							eq(contacts.workspaceId, ws.id),
-						),
-					})
+				? await findContactByVisitorId(ws.id, visitor_id)
 				: null;
 
 			if (!contact) {
@@ -232,6 +249,36 @@ export async function widgetRoutes(app: FastifyInstance) {
 				pageTitle: typeof page_title === "string" ? page_title : null,
 				metadata,
 			});
+
+			const trackCtx = trackContextFromRequest(request);
+			const vid = contact.externalId ?? visitor_id ?? "";
+			if (vid) {
+				void recordVisitorEvent({
+					workspaceId: ws.id,
+					visitorId: vid,
+					eventType: "session_start",
+					url: page_url ?? null,
+					contactId: contact.id,
+					ip: trackCtx.ip,
+					userAgent: trackCtx.userAgent,
+					payload:
+						metadata && typeof metadata === "object"
+							? (metadata as Record<string, unknown>)
+							: {},
+				});
+				if (isNewConversation) {
+					void recordVisitorEvent({
+						workspaceId: ws.id,
+						visitorId: vid,
+						eventType: "conversation_started",
+						url: page_url ?? null,
+						contactId: contact.id,
+						payload: { conversation_id: conv.id },
+						ip: trackCtx.ip,
+						userAgent: trackCtx.userAgent,
+					});
+				}
+			}
 
 			if (isNewConversation) {
 				void (async () => {
@@ -370,18 +417,61 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			if (!updated) throw notFound("Contact not found.");
 
-			const profile = {
-				fullName: updated.fullName,
+			const identity = await resolveContactIdentity(ws.id, {
+				sourceContactId: updated.id,
 				email: updated.email,
 				phone: updated.phone,
+				visitorId: updated.externalId,
+				method: "prechat",
+			});
+
+			let finalContact = updated;
+			let conversationId = (request as VisitorRequest).visitor.conversationId;
+			let token: string | undefined;
+
+			if (identity.merged) {
+				const canonical = await db.query.contacts.findFirst({
+					where: and(
+						eq(contacts.id, identity.contactId),
+						eq(contacts.workspaceId, workspaceId),
+					),
+				});
+				if (!canonical) throw notFound("Contact not found.");
+				finalContact = canonical;
+				const conv =
+					(await openConversationForContact(workspaceId, canonical.id)) ??
+					(await db.query.conversations.findFirst({
+						where: and(
+							eq(conversations.workspaceId, workspaceId),
+							eq(conversations.contactId, canonical.id),
+						),
+						orderBy: [
+							desc(conversations.lastMessageAt),
+							desc(conversations.createdAt),
+						],
+					}));
+				if (!conv) throw notFound("Conversation not found.");
+				conversationId = conv.id;
+				token = await signVisitorToken(canonical.id, workspaceId, conv.id);
+			}
+
+			const profile = {
+				fullName: finalContact.fullName,
+				email: finalContact.email,
+				phone: finalContact.phone,
 			};
 
 			return {
 				profile_complete: isContactProfileComplete(profile, prechat),
+				contact_id: finalContact.id,
+				conversation_id: conversationId,
+				visitor_id: finalContact.externalId,
+				...(token ? { token } : {}),
+				identity_merged: identity.merged,
 				contact: {
-					full_name: updated.fullName,
-					email: updated.email,
-					phone: updated.phone,
+					full_name: finalContact.fullName,
+					email: finalContact.email,
+					phone: finalContact.phone,
 				},
 			};
 		},

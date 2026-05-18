@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandingSettingsPanel } from "@/components/BrandingSettingsPanel";
+import { ContactAttributesSettingsPanel } from "@/components/ContactAttributesSettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -106,7 +107,9 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		| "ai"
 		| "api"
 		| "security"
+		| "branding"
 		| "notifications"
+		| "contact_attrs"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -675,6 +678,7 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						"api",
 						"security",
 						"branding",
+						"contact_attrs",
 						"notifications",
 					] as const
 				).map((t) => (
@@ -713,9 +717,11 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 																	? "API"
 																	: t === "branding"
 																		? "برند"
-																		: t === "notifications"
-																			? "اعلان‌ها"
-																			: "امنیت"}
+																		: t === "contact_attrs"
+																			? "فیلدهای مخاطب"
+																			: t === "notifications"
+																				? "اعلان‌ها"
+																				: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -2235,6 +2241,12 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 				)}
 				{tab === "branding" && (
 					<BrandingSettingsPanel workspaceId={workspaceId} />
+				)}
+				{tab === "contact_attrs" && (
+					<ContactAttributesSettingsPanel
+						workspaceId={workspaceId}
+						canEdit={canEditWorkspace}
+					/>
 				)}
 				{canEditWorkspace && tab === "security" && (
 					<div className="mx-auto mt-6 max-w-lg rounded-lg border border-border bg-card p-4">

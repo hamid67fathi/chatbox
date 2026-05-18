@@ -19,6 +19,8 @@ import { flowSessions, flows } from "./flows.js";
 import { routingRules } from "./routing-rules.js";
 import { contactSegments } from "./contact-segments.js";
 import { pushSubscriptions } from "./push-subscriptions.js";
+import { installedPlugins, pluginCatalog } from "./plugins.js";
+import { visitorIdentities } from "./visitor-identities.js";
 import { webhookDeliveries, webhookEndpoints } from "./webhook-endpoints.js";
 import { auditLogs } from "./audit-logs.js";
 import { csatResponses } from "./csat-responses.js";
@@ -42,6 +44,8 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 	contactSegments: many(contactSegments),
 	pushSubscriptions: many(pushSubscriptions),
 	webhookEndpoints: many(webhookEndpoints),
+	installedPlugins: many(installedPlugins),
+	visitorIdentities: many(visitorIdentities),
 	slaPolicies: many(slaPolicies),
 	csatResponses: many(csatResponses),
 	auditLogs: many(auditLogs),
@@ -128,6 +132,7 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
 		references: [workspaces.id],
 	}),
 	conversations: many(conversations),
+	visitorIdentities: many(visitorIdentities),
 }));
 
 export const conversationsRelations = relations(
@@ -184,6 +189,42 @@ export const pushSubscriptionsRelations = relations(
 		workspace: one(workspaces, {
 			fields: [pushSubscriptions.workspaceId],
 			references: [workspaces.id],
+		}),
+	}),
+);
+
+export const visitorIdentitiesRelations = relations(
+	visitorIdentities,
+	({ one }) => ({
+		workspace: one(workspaces, {
+			fields: [visitorIdentities.workspaceId],
+			references: [workspaces.id],
+		}),
+		contact: one(contacts, {
+			fields: [visitorIdentities.contactId],
+			references: [contacts.id],
+		}),
+	}),
+);
+
+export const pluginCatalogRelations = relations(pluginCatalog, ({ many }) => ({
+	installed: many(installedPlugins),
+}));
+
+export const installedPluginsRelations = relations(
+	installedPlugins,
+	({ one }) => ({
+		workspace: one(workspaces, {
+			fields: [installedPlugins.workspaceId],
+			references: [workspaces.id],
+		}),
+		catalog: one(pluginCatalog, {
+			fields: [installedPlugins.pluginSlug],
+			references: [pluginCatalog.slug],
+		}),
+		webhookEndpoint: one(webhookEndpoints, {
+			fields: [installedPlugins.webhookEndpointId],
+			references: [webhookEndpoints.id],
 		}),
 	}),
 );

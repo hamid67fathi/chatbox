@@ -32,6 +32,7 @@ export interface WidgetTheme {
 	show_branding?: boolean;
 	branding_label?: string;
 	branding_url?: string;
+	tracking_public_key?: string;
 	business_hours?: {
 		enabled: boolean;
 		is_open: boolean;
@@ -216,14 +217,8 @@ export async function createSession(
 	const data = (await res.json()) as SessionResponse;
 	setVisitorToken(data.token);
 	if (data.visitor_id) {
-		try {
-			localStorage.setItem(
-				visitorStorageKey(config.workspaceSlug),
-				data.visitor_id,
-			);
-		} catch {
-			/* private mode */
-		}
+		const { persistVisitorId } = await import("./visitor-id.js");
+		persistVisitorId(config.workspaceSlug, data.visitor_id);
 	}
 	return data;
 }
@@ -253,13 +248,18 @@ export async function updateVisitorContext(page?: {
 	}
 }
 
-export async function updateContactProfile(data: {
-	full_name?: string;
-	email?: string;
-	phone?: string;
-}): Promise<{
+export async function updateContactProfile(
+	data: {
+		full_name?: string;
+		email?: string;
+		phone?: string;
+	},
+	workspaceSlug?: string,
+): Promise<{
 	profile_complete: boolean;
 	contact: SessionResponse["contact"];
+	token?: string;
+	identity_merged?: boolean;
 }> {
 	const res = await fetch(`${apiBaseUrl}/widget/v1/contact`, {
 		method: "PATCH",
@@ -267,7 +267,19 @@ export async function updateContactProfile(data: {
 		body: JSON.stringify(data),
 	});
 	if (!res.ok) throw await readApiError(res);
-	return res.json();
+	const body = (await res.json()) as {
+		profile_complete: boolean;
+		contact: SessionResponse["contact"];
+		token?: string;
+		identity_merged?: boolean;
+		visitor_id?: string;
+	};
+	if (body.token) setVisitorToken(body.token);
+	if (body.visitor_id && workspaceSlug) {
+		const { persistVisitorId } = await import("./visitor-id.js");
+		persistVisitorId(workspaceSlug, body.visitor_id);
+	}
+	return body;
 }
 
 export async function fetchMessages(

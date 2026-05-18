@@ -26,6 +26,7 @@ export const contacts = pgTable(
 		avatarUrl: text("avatar_url"),
 		metadata: jsonb("metadata").notNull().default({}),
 		tags: text("tags").array().notNull().default([]),
+		lifecycleStage: text("lifecycle_stage").notNull().default("new"),
 		firstSeenAt: timestamp("first_seen_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),

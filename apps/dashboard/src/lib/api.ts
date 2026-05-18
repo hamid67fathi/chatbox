@@ -447,6 +447,38 @@ export async function refreshHandoffBrief(
 	return json.data ?? null;
 }
 
+export interface ContactVisitorEvent {
+	id: string;
+	event_type: string;
+	url: string | null;
+	referrer: string | null;
+	payload: Record<string, unknown>;
+	visitor_id: string;
+	created_at: string;
+}
+
+export async function fetchContactVisitorEvents(
+	workspaceId: string,
+	contactId: string,
+	cursor?: string,
+): Promise<{ rows: ContactVisitorEvent[]; next_cursor: string | null }> {
+	const params = new URLSearchParams({ limit: "30" });
+	if (cursor) params.set("cursor", cursor);
+	const res = await authFetch(
+		`${API_URL}/v1/contacts/${contactId}/events?${params}`,
+		{ headers: authHeaders(workspaceId), cache: "no-store" },
+	);
+	if (!res.ok) return { rows: [], next_cursor: null };
+	const json = (await res.json()) as {
+		data?: ContactVisitorEvent[];
+		page?: { next_cursor?: string | null };
+	};
+	return {
+		rows: json.data ?? [],
+		next_cursor: json.page?.next_cursor ?? null,
+	};
+}
+
 export async function fetchConversationDetail(
 	workspaceId: string,
 	conversationId: string,
@@ -2954,6 +2986,83 @@ export interface WebhookDelivery {
 	deliveredAt: string | null;
 }
 
+export interface PluginCatalogItem {
+	slug: string;
+	name: string;
+	description: string;
+	category: string;
+	icon: string;
+	integration_type: string;
+	setup_path: string | null;
+	docs_url: string | null;
+	default_events: string[];
+	installed: boolean;
+	enabled: boolean;
+	webhook_endpoint_id: string | null;
+	installed_at: string | null;
+}
+
+export async function fetchPlugins(
+	workspaceId: string,
+): Promise<PluginCatalogItem[]> {
+	const res = await authFetch(`${API_URL}/v1/plugins`, {
+		headers: authHeaders(workspaceId),
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: PluginCatalogItem[] };
+	return json.data ?? [];
+}
+
+export async function installPlugin(
+	workspaceId: string,
+	slug: string,
+	body?: { webhook_url?: string },
+): Promise<{ ok: boolean; error?: string }> {
+	const res = await authFetch(`${API_URL}/v1/plugins/${slug}/install`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify(body ?? {}),
+	});
+	if (!res.ok) {
+		const json = (await res.json().catch(() => ({}))) as {
+			error?: { message?: string };
+		};
+		return { ok: false, error: json.error?.message ?? "نصب افزونه ناموفق بود." };
+	}
+	return { ok: true };
+}
+
+export async function uninstallPlugin(
+	workspaceId: string,
+	slug: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/plugins/${slug}/install`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
+export async function updatePluginEnabled(
+	workspaceId: string,
+	slug: string,
+	enabled: boolean,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/plugins/${slug}`, {
+		method: "PATCH",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeaders(workspaceId),
+		},
+		body: JSON.stringify({ enabled }),
+	});
+	return res.ok;
+}
+
 export async function fetchWebhookEndpoints(
 	workspaceId: string,
 ): Promise<WebhookEndpoint[]> {
@@ -3133,6 +3242,161 @@ export async function downloadAuditLogsCsv(
 	a.click();
 	URL.revokeObjectURL(url);
 	return true;
+}
+
+export interface ContactAttributeDef {
+	id: string;
+	key: string;
+	label: string;
+	type: string;
+}
+
+export async function fetchContactAttributeDefs(
+	workspaceId: string,
+): Promise<ContactAttributeDef[]> {
+	const res = await authFetch(`${API_URL}/v1/settings/contact-attributes`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: ContactAttributeDef[] };
+	return json.data ?? [];
+}
+
+export async function createContactAttributeDef(
+	workspaceId: string,
+	body: { key: string; label: string; type?: string },
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/settings/contact-attributes`, {
+		method: "POST",
+		headers: authHeaders(workspaceId),
+		body: JSON.stringify(body),
+	});
+	return res.ok;
+}
+
+export async function deleteContactAttributeDef(
+	workspaceId: string,
+	id: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/settings/contact-attributes/${id}`, {
+		method: "DELETE",
+		headers: authHeaders(workspaceId),
+	});
+	return res.ok;
+}
+
+export interface JourneyItem {
+	id: string;
+	type: string;
+	occurred_at: string;
+	title: string;
+	detail?: string | null;
+}
+
+export async function fetchContactJourney(
+	workspaceId: string,
+	contactId: string,
+): Promise<JourneyItem[]> {
+	const res = await authFetch(`${API_URL}/v1/contacts/${contactId}/journey`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: JourneyItem[] };
+	return json.data ?? [];
+}
+
+export async function updateContactLifecycle(
+	workspaceId: string,
+	contactId: string,
+	stage: string,
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/contacts/${contactId}/lifecycle`, {
+		method: "PATCH",
+		headers: authHeaders(workspaceId),
+		body: JSON.stringify({ stage }),
+	});
+	return res.ok;
+}
+
+export interface CompanyRow {
+	id: string;
+	name: string;
+	domain: string | null;
+	industry: string | null;
+}
+
+export async function fetchCompanies(workspaceId: string): Promise<CompanyRow[]> {
+	const res = await authFetch(`${API_URL}/v1/companies`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: CompanyRow[] };
+	return json.data ?? [];
+}
+
+export async function createCompany(
+	workspaceId: string,
+	body: { name: string; domain?: string },
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/companies`, {
+		method: "POST",
+		headers: authHeaders(workspaceId),
+		body: JSON.stringify(body),
+	});
+	return res.ok;
+}
+
+export interface CampaignRow {
+	id: string;
+	name: string;
+	status: string;
+	message_template: string;
+}
+
+export async function fetchCampaigns(workspaceId: string): Promise<CampaignRow[]> {
+	const res = await authFetch(`${API_URL}/v1/campaigns`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: CampaignRow[] };
+	return (json.data ?? []).map((r) => ({
+		...r,
+		message_template:
+			(r as CampaignRow & { messageTemplate?: string }).messageTemplate ??
+			(r as CampaignRow).message_template ??
+			"",
+	}));
+}
+
+export async function createCampaign(
+	workspaceId: string,
+	body: { name: string; message_template: string },
+): Promise<boolean> {
+	const res = await authFetch(`${API_URL}/v1/campaigns`, {
+		method: "POST",
+		headers: authHeaders(workspaceId),
+		body: JSON.stringify(body),
+	});
+	return res.ok;
+}
+
+export interface AtRiskContactRow {
+	contact_id: string;
+	score: number;
+	risk_level: string;
+	full_name: string | null;
+	email: string | null;
+}
+
+export async function fetchAtRiskContacts(
+	workspaceId: string,
+): Promise<AtRiskContactRow[]> {
+	const res = await authFetch(`${API_URL}/v1/reports/at-risk-contacts`, {
+		headers: authHeaders(workspaceId),
+	});
+	if (!res.ok) return [];
+	const json = (await res.json()) as { data?: AtRiskContactRow[] };
+	return json.data ?? [];
 }
 
 export { API_URL };

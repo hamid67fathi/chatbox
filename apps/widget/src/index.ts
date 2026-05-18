@@ -1,5 +1,6 @@
+import { installCbxGlobal } from "./cbx.js";
 import { ChatBoxWidget } from "./widget.js";
-import { visitorStorageKey } from "./api.js";
+import { loadVisitorId } from "./visitor-id.js";
 
 export { ChatBoxWidget };
 export type { WidgetConfig, WidgetTheme } from "./api.js";
@@ -30,20 +31,15 @@ function autoInit() {
 		return;
 	}
 
-	let visitorId: string | undefined;
-	try {
-		visitorId =
-			localStorage.getItem(visitorStorageKey(workspaceSlug)) ?? undefined;
-	} catch {
-		visitorId = undefined;
-	}
+	const visitorId = loadVisitorId(workspaceSlug);
+
+	installCbxGlobal();
 
 	const widget = new ChatBoxWidget({ apiUrl, workspaceSlug, visitorId });
+	(window as unknown as Record<string, unknown>).__chatbox = widget;
 	void widget.mount().catch((err) => {
 		console.error("[ChatBox] mount failed:", err);
 	});
-
-	(window as unknown as Record<string, unknown>).__chatbox = widget;
 }
 
 if (typeof document !== "undefined") {

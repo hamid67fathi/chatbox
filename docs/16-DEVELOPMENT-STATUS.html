@@ -1383,12 +1383,13 @@ agent_note: >
                 SDK توسعه‌دهنده؛ sandbox اجرا؛
                 marketplace داخلی برای نصب
               </td>
-              <td>برنامه‌ریزی</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> تحقیق معماری sandbox (iframe/WebAssembly)؛
-                جدول <code>installed_plugins</code>؛
-                مرحله‌ای — ابتدا فقط Zapier/Make webhook (FL-34)
+                <strong>Agent:</strong> <code>plugin_catalog</code> + <code>installed_plugins</code>؛
+                <code>GET/POST/DELETE /v1/plugins</code>؛
+                Zapier / Make / Webhook سفارشی؛
+                صفحه <code>/integrations</code>
               </td>
             </tr>
 
@@ -1416,15 +1417,14 @@ agent_note: >
                 متصل می‌شود. Cross-device stitching با email به‌عنوان anchor. اولویت: first-party cookie
                 با TTL یک سال → device fingerprint به‌عنوان fallback.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                ویجت: <code>cbx_vid</code> cookie (1 year) + <code>localStorage</code> fallback؛<br />
-                جدول جدید: <code>visitor_identities (visitor_id, contact_id, workspace_id, identified_at, method)</code>؛<br />
-                API: <code>POST /v1/contacts/identify</code> — email/phone → lookup → merge visitor→contact؛<br />
-                migration: <code>00XX_visitor_identities.sql</code>؛<br />
-                مراقب: merge نباید داده workspace دیگر را آلوده کند
+                <strong>Agent:</strong> <code>cbx_vid</code> cookie + localStorage؛
+                <code>visitor_identities</code>؛
+                merge مکالمات/پیام‌ها هنگام شناسایی email/phone؛
+                <code>POST /v1/contacts/identify</code>؛
+                prechat + session lookup
               </td>
             </tr>
             <tr>
@@ -1436,15 +1436,13 @@ agent_note: >
                 custom_event (FL-48). Table partitioned by month برای مقیاس‌پذیری.
                 retention policy per-plan (Starter: 6 ماه، Pro: 2 سال، Enterprise: بی‌نهایت).
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جدول: <code>visitor_events (id, workspace_id, visitor_id, contact_id, event_type, url, referrer, payload JSONB, ip, user_agent, created_at)</code>؛<br />
-                Partition: <code>PARTITION BY RANGE (created_at)</code>؛<br />
-                Index: <code>(workspace_id, visitor_id, created_at DESC)</code>؛<br />
-                Write path: <code>POST /v1/track</code> (بدون auth، فقط با workspace public key)؛<br />
-                Read path: <code>GET /v1/contacts/:id/events</code> (cursor pagination)
+                <strong>Agent:</strong> <code>visitor_events</code> (partitioned)؛
+                <code>POST /v1/track</code> + <code>tracking_public_key</code>؛
+                <code>GET /v1/contacts/:id/events</code>؛
+                ویجت page_view/session؛ retention بر اساس پلن
               </td>
             </tr>
             <tr>
@@ -1457,14 +1455,13 @@ agent_note: >
                 قابل set از ویجت SDK (<code>cbx('identify', {plan: 'pro'})</code>)،
                 قابل فیلتر در Segments (FL-29)، و قابل استفاده در متغیرهای پاسخ‌آماده.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جداول: <code>contact_attribute_definitions (workspace_id, key, label, type, options JSONB, required, order)</code>
-                + <code>contact_attribute_values (contact_id, definition_id, value TEXT)</code>؛<br />
-                API: <code>CRUD /v1/settings/contact-attributes</code> + <code>PATCH /v1/contacts/:id/attributes</code>؛<br />
-                UI: تب «فیلدهای سفارشی» در Settings → پنل جانبی مخاطب در inbox
+                <strong>Agent:</strong> <code>contact_attribute_definitions</code> + values؛
+                <code>GET/POST/DELETE /v1/settings/contact-attributes</code>؛
+                <code>PATCH /v1/contacts/:id/attributes</code>؛
+                تب «فیلدهای مخاطب» در تنظیمات
               </td>
             </tr>
             <tr>
@@ -1477,14 +1474,12 @@ agent_note: >
                 (مثلاً: «اگر بیش از ۳۰ روز مکالمه نداشت → at_risk»).
                 تاریخچه انتقال‌ها ذخیره می‌شود. گزارش funnel تعداد مخاطبان در هر مرحله.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                فیلد <code>lifecycle_stage</code> (enum) در جدول contacts؛<br />
-                جدول <code>contact_lifecycle_history (contact_id, from_stage, to_stage, changed_by, changed_at, reason)</code>؛<br />
-                cron job روزانه برای انتقال خودکار؛<br />
-                UI: badge رنگی در پروفایل مخاطب + dropdown تغییر مرحله
+                <strong>Agent:</strong> <code>lifecycle_stage</code> + <code>contact_lifecycle_history</code>؛
+                <code>PATCH /v1/contacts/:id/lifecycle</code>؛
+                dropdown در پنل بازدیدکننده inbox
               </td>
             </tr>
             <tr>
@@ -1496,15 +1491,12 @@ agent_note: >
                 lifecycle stage، custom events. امتیاز بالا → routing priority بالاتر.
                 نمایش در لیست مخاطبان قابل sort.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جدول <code>contact_scores (contact_id, score, breakdown JSONB, computed_at)</code>؛<br />
-                جدول <code>scoring_rules (workspace_id, signal_type, weight, config JSONB)</code>؛<br />
-                <code>packages/shared/src/scoring-engine.ts</code>؛<br />
-                cron: recompute ساعتی برای مخاطبانی که رویداد جدید داشتند؛<br />
-                مرتبط با FL-19 (routing rules) — امتیاز بالا → VIP queue
+                <strong>Agent:</strong> <code>scoring_rules</code> + <code>contact_scores</code>؛
+                <code>POST /v1/contacts/:id/score/recompute</code>؛
+                قوانین پیش‌فرض email/phone/lifecycle
               </td>
             </tr>
             <tr>
@@ -1516,14 +1508,12 @@ agent_note: >
                 هر رویداد در Visitor Event Store (FL-44) ذخیره می‌شود.
                 قابل استفاده در Segments، Scoring، و Triggers.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                ویجت: <code>apps/widget/src/tracker.ts</code> — queue + batch send هر ۵ ثانیه؛<br />
-                API: <code>POST /v1/track</code> (public, rate-limited 100 req/min/workspace)؛<br />
-                مستندات SDK: <code>docs/widget-sdk.md</code>؛<br />
-                مثال: <code>cbx('track','purchase',{amount:500000,currency:'IRR'})</code>
+                <strong>Agent:</strong> <code>cbx('track', …)</code> + queue در <code>cbx.ts</code>؛
+                <code>POST /v1/track</code>؛
+                <code>docs/widget-sdk.md</code>
               </td>
             </tr>
             <tr>
@@ -1535,14 +1525,11 @@ agent_note: >
                 Heatmap ساعت‌های فعالیت. Session detail با list صفحات.
                 قابل export به PDF.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                <code>GET /v1/contacts/:id/journey?from=&amp;to=</code>؛<br />
-                aggregate از <code>visitor_events</code> + <code>conversations</code> + <code>lifecycle_history</code>؛<br />
-                UI: <code>apps/dashboard/src/components/contact/JourneyTimeline.tsx</code>؛<br />
-                کتابخانه timeline: یا D3.js یا custom Tailwind component
+                <strong>Agent:</strong> <code>GET /v1/contacts/:id/journey</code>؛
+                <code>JourneyTimeline.tsx</code> در پنل inbox
               </td>
             </tr>
             <tr>
@@ -1554,14 +1541,12 @@ agent_note: >
                 «رویداد سفارشی X رخ داد». پیام قابل personalize با متغیر ({{name}}).
                 throttle: حداکثر یک بار در N روز. A/B test برای متن‌های مختلف.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جدول <code>proactive_rules (workspace_id, trigger_type, conditions JSONB, message, throttle_days, ab_variants JSONB, active)</code>؛<br />
-                ویجت: <code>apps/widget/src/proactive.ts</code>؛<br />
-                exit intent: <code>mouseleave</code> از viewport بالا؛<br />
-                مرتبط با FL-48 (event triggers) و FL-04 (plan limit: تعداد rules)
+                <strong>Agent:</strong> <code>proactive_rules</code>؛
+                <code>GET /v1/proactive-rules</code> + widget public؛
+                <code>proactive.ts</code> (time_on_page، exit_intent)
               </td>
             </tr>
             <tr>
@@ -1573,14 +1558,12 @@ agent_note: >
                 ارسال از طریق کانال اول مخاطب (ویجت اگر آنلاین، ایمیل اگر آفلاین).
                 گزارش delivery/open/reply rate.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جداول: <code>campaigns</code> + <code>campaign_recipients (campaign_id, contact_id, status, sent_at, opened_at, replied_at)</code>؛<br />
-                BullMQ برای ارسال batch؛<br />
-                rate limit: ۵۰۰ پیام/ساعت/workspace (برای جلوگیری از spam)؛<br />
-                پیش‌نیاز: FL-29 (Segments) + FL-33 (Email) فعال باشد
+                <strong>Agent:</strong> <code>campaigns</code> + <code>campaign_recipients</code>؛
+                <code>GET/POST /v1/campaigns</code>؛
+                صفحه <code>/campaigns</code> (ثبت پیش‌نویس)
               </td>
             </tr>
             <tr>
@@ -1593,15 +1576,13 @@ agent_note: >
                 پنل شرکت: لیست مخاطبان، تمام مکالمات شرکت، امتیاز شرکت.
                 قابل استفاده در Segments («همه مشتریان شرکت X»).
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جداول: <code>companies (workspace_id, name, domain, industry, size, metadata JSONB)</code>
-                + <code>contact_companies (contact_id, company_id, role)</code>؛<br />
-                auto-detect: extract domain از email + <code>clearbit/logo.dev</code> API برای آیکون؛<br />
-                صفحه <code>/companies</code> در داشبورد؛<br />
-                <code>GET /v1/companies/:id/contacts</code> + <code>GET /v1/companies/:id/conversations</code>
+                <strong>Agent:</strong> <code>companies</code> + <code>contact_companies</code>؛
+                <code>GET/POST /v1/companies</code>؛
+                <code>GET /v1/companies/:id/contacts</code>؛
+                صفحه <code>/companies</code>
               </td>
             </tr>
             <tr>
@@ -1614,15 +1595,12 @@ agent_note: >
                 هشدار به اپراتور برای مشتریان «at_risk».
                 داشبورد: لیست مشتریان در خطر با دلیل.
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد (فاز ۱)</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong><br />
-                جدول <code>contact_health (contact_id, score, risk_level ENUM(low,medium,high), signals JSONB, computed_at)</code>؛<br />
-                cron روزانه: compute برای مخاطبانی که lifecycle=customer/vip/at_risk؛<br />
-                <code>GET /v1/reports/at-risk-contacts</code>؛<br />
-                notification به اپراتور assign‌شده هنگام score زیر threshold؛<br />
-                مرتبط با FL-47 (Scoring) و FL-46 (Lifecycle)
+                <strong>Agent:</strong> <code>contact_health</code> rule-based؛
+                <code>GET /v1/reports/at-risk-contacts</code>؛
+                recompute هنگام گزارش
               </td>
             </tr>
 

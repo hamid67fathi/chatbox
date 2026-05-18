@@ -44,6 +44,9 @@ import { contactSegmentRoutes } from "./routes/contact-segments.js";
 import { pushRoutes } from "./routes/push.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { webhookEndpointRoutes } from "./routes/webhook-endpoints.js";
+import { pluginRoutes } from "./routes/plugins.js";
+import { trackRoutes } from "./routes/track.js";
+import { crmFeatureRoutes } from "./routes/crm-features.js";
 import { aiPersonaRoutes } from "./routes/ai-persona.js";
 import { aiTagRoutes } from "./routes/ai-tag.js";
 import { slaPolicyRoutes } from "./routes/sla-policy.js";
@@ -147,6 +150,8 @@ export function buildApp() {
 	app.register(billingPublicRoutes);
 	app.register(publicCsatRoutes);
 	app.register(notificationRoutes);
+	app.register(trackRoutes);
+	app.register(crmFeatureRoutes);
 
 	app.register(async function protectedRoutes(instance) {
 		instance.addHook("onRequest", requireAuth);
@@ -171,6 +176,7 @@ export function buildApp() {
 		instance.register(contactSegmentRoutes);
 		instance.register(pushRoutes);
 		instance.register(webhookEndpointRoutes);
+		instance.register(pluginRoutes);
 		instance.register(slaPolicyRoutes);
 		instance.register(aiTagRoutes);
 		instance.register(aiPersonaRoutes);
