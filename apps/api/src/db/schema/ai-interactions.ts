@@ -28,6 +28,7 @@ export const aiInteractions = pgTable(
 			onDelete: "set null",
 		}),
 		purpose: text("purpose").notNull(),
+		language: text("language"),
 		model: text("model").notNull(),
 		prompt: text("prompt"),
 		response: text("response"),

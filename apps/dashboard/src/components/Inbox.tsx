@@ -7,14 +7,24 @@ import type {
 	ConversationFilters,
 	Message,
 } from "@/lib/api";
-import { fetchConversations } from "@/lib/api";
+import { fetchConversationDetail, fetchConversations } from "@/lib/api";
 import { canAgentSeeConversation } from "@/lib/conversation-access";
+import {
+	maybeShowBrowserConversationNotification,
+	maybeShowBrowserMessageNotification,
+	maybeShowBrowserNeedsHumanNotification,
+} from "@/lib/browser-notifications";
+import {
+	loadNotificationSoundPrefs,
+	maybePlayIncomingMessageSound,
+} from "@/lib/notification-sound-prefs";
 import { getSocket } from "@/lib/socket";
 import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConversationList } from "./ConversationList";
 import { ConversationToolbar } from "./ConversationToolbar";
+import { HandoffBriefPanel } from "./HandoffBriefPanel";
 import { MessageThread } from "./MessageThread";
 import { PresenceStats } from "./PresenceStats";
 import { VisitorInfoPanel } from "./VisitorInfoPanel";
@@ -74,6 +84,10 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 	const [hasMore, setHasMore] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [nextCursor, setNextCursor] = useState<string | null>(null);
+	const [suggestedReply, setSuggestedReply] = useState<string | null>(null);
+	const [handoffBrief, setHandoffBrief] = useState<
+		import("@/lib/api").HandoffBrief | null
+	>(null);
 
 	const apiFilters = useMemo((): ConversationFilters => {
 		const f: ConversationFilters = {
@@ -137,6 +151,11 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 
 	useEffect(() => {
 		if (!workspaceId) return;
+		void loadNotificationSoundPrefs(workspaceId);
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (!workspaceId) return;
 
 		const socket = getSocket(workspaceId, userId);
 
@@ -147,6 +166,10 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		const onConversationNew = (data: { conversation: Conversation }) => {
 			const conv = normalizeConversation(data.conversation);
 			if (!canAgentSeeConversation(conv, userId, workspaceRole)) return;
+			maybeShowBrowserConversationNotification({
+				conversationId: conv.id,
+				contactName: conv.contact?.fullName,
+			});
 			setConversations((prev) => {
 				if (prev.some((c) => c.id === conv.id)) return prev;
 				return [conv, ...prev];
@@ -159,6 +182,18 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		}) => {
 			const convId = data.message.conversationId;
 			const meta = data.conversation;
+			maybePlayIncomingMessageSound({
+				senderType: data.message.senderType,
+				conversationId: convId,
+				activeConversationId: activeId,
+			});
+			const convRow = conversations.find((c) => c.id === convId);
+			maybeShowBrowserMessageNotification({
+				senderType: data.message.senderType,
+				conversationId: convId,
+				contactName: convRow?.contact?.fullName,
+				messageBody: data.message.body,
+			});
 			setConversations((prev) => {
 				const idx = prev.findIndex((c) => c.id === convId);
 				if (meta?.assignedAgentId && meta.assignedAgentId !== userId) {
@@ -216,6 +251,11 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 		};
 
 		const onNeedsHuman = (data: { conversation_id: string }) => {
+			const convRow = conversations.find((c) => c.id === data.conversation_id);
+			maybeShowBrowserNeedsHumanNotification({
+				conversationId: data.conversation_id,
+				contactName: convRow?.contact?.fullName,
+			});
 			setConversations((prev) =>
 				prev.map((c) =>
 					c.id === data.conversation_id
@@ -245,12 +285,35 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 			);
 		};
 
+		const onHandoffBrief = (data: {
+			conversation_id: string;
+			handoff_brief?: import("@/lib/api").HandoffBrief;
+			summary?: string;
+		}) => {
+			if (data.handoff_brief) {
+				if (activeId === data.conversation_id) {
+					setHandoffBrief(data.handoff_brief);
+				}
+				setConversations((prev) =>
+					prev.map((c) =>
+						c.id === data.conversation_id
+							? {
+									...c,
+									summary: data.summary ?? data.handoff_brief?.summary ?? c.summary,
+								}
+							: c,
+					),
+				);
+			}
+		};
+
 		socket.on("connected", onConnected);
 		socket.on("conversation:new", onConversationNew);
 		socket.on("message:new", onMessageNew);
 		socket.on("conv:assigned", onConvAssigned);
 		socket.on("conv:needs_human", onNeedsHuman);
 		socket.on("conv:insights_updated", onInsightsUpdated);
+		socket.on("conv:handoff_brief", onHandoffBrief);
 
 		if (socket.connected) onConnected();
 
@@ -261,8 +324,16 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 			socket.off("conv:assigned", onConvAssigned);
 			socket.off("conv:needs_human", onNeedsHuman);
 			socket.off("conv:insights_updated", onInsightsUpdated);
+			socket.off("conv:handoff_brief", onHandoffBrief);
 		};
-	}, [workspaceId, userId, workspaceRole, reloadConversations]);
+	}, [
+		workspaceId,
+		userId,
+		workspaceRole,
+		reloadConversations,
+		activeId,
+		conversations,
+	]);
 
 	const filteredConversations = useMemo(() => {
 		const q = search.trim().toLowerCase();
@@ -277,7 +348,16 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 
 	const handleSelect = useCallback((id: string) => {
 		setActiveId(id);
+		setSuggestedReply(null);
+		setHandoffBrief(null);
 	}, []);
+
+	useEffect(() => {
+		if (!workspaceId || !activeId) return;
+		void fetchConversationDetail(workspaceId, activeId).then((d) => {
+			if (d?.handoff_brief) setHandoffBrief(d.handoff_brief);
+		});
+	}, [workspaceId, activeId]);
 
 	const activeConversation = useMemo(
 		() => conversations.find((c) => c.id === activeId) ?? null,
@@ -395,6 +475,14 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							workspaceRole={workspaceRole}
 							onUpdated={(patch) => handleConversationPatch(activeId, patch)}
 						/>
+						<HandoffBriefPanel
+							workspaceId={workspaceId}
+							conversationId={activeId}
+							needsHuman={activeConversation?.needsHuman}
+							initialBrief={handoffBrief}
+							onBriefChange={setHandoffBrief}
+							onUseSuggestedReply={setSuggestedReply}
+						/>
 						<VisitorInfoPanel
 							workspaceId={workspaceId}
 							conversationId={activeId}
@@ -405,6 +493,8 @@ export function Inbox({ workspaceId, userId, workspaceRole }: Props) {
 							conversationId={activeId}
 							userId={userId}
 							contactName={activeContactName}
+							suggestedReply={suggestedReply}
+							onSuggestedReplyApplied={() => setSuggestedReply(null)}
 						/>
 					</>
 				) : (

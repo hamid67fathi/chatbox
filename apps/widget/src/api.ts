@@ -32,6 +32,25 @@ export interface WidgetTheme {
 	show_branding?: boolean;
 	branding_label?: string;
 	branding_url?: string;
+	business_hours?: {
+		enabled: boolean;
+		is_open: boolean;
+		show_status: boolean;
+		status_label: string;
+		away_message: string | null;
+		timezone: string;
+	};
+	csat?: {
+		enabled: boolean;
+		prompt_message: string;
+		ask_comment: boolean;
+	};
+}
+
+export interface CsatPending {
+	pending: boolean;
+	prompt: string;
+	ask_comment: boolean;
 }
 
 export interface MessageAttachment {
@@ -314,4 +333,29 @@ export async function sendMessageHttp(
 	});
 	if (!res.ok) throw await readApiError(res);
 	return normalizeMessageRow((await res.json()) as Record<string, unknown>);
+}
+
+export async function fetchCsatPending(): Promise<CsatPending> {
+	const res = await fetch(`${apiBaseUrl}/widget/v1/csat/pending`, {
+		headers: authHeaders(),
+	});
+	if (!res.ok) {
+		return { pending: false, prompt: "", ask_comment: false };
+	}
+	return res.json() as Promise<CsatPending>;
+}
+
+export async function submitCsat(
+	score: number,
+	comment?: string,
+): Promise<void> {
+	const res = await fetch(`${apiBaseUrl}/widget/v1/csat`, {
+		method: "POST",
+		headers: authHeaders(),
+		body: JSON.stringify({
+			score,
+			...(comment?.trim() ? { comment: comment.trim() } : {}),
+		}),
+	});
+	if (!res.ok) throw await readApiError(res);
 }

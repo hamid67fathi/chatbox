@@ -22,6 +22,15 @@ import {
 import { saveWorkspaceUpload } from "../lib/uploads.js";
 import { isContactBanned } from "../lib/contact-ban.js";
 import { contactBanned, notFound, validationError } from "../lib/errors.js";
+import { ensureAwayMessageForConversation } from "../lib/business-hours-handler.js";
+import {
+	getCsatPendingForConversation,
+	submitCsatResponse,
+} from "../lib/csat-service.js";
+import {
+	processContactMessageInFlow,
+	tryStartWidgetFlow,
+} from "../lib/flow-engine/index.js";
 import {
 	broadcastNewConversation,
 	deliverNewMessage,
@@ -201,6 +210,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 			});
 
 			let conv = existingConv;
+			let isNewConversation = false;
 			if (!conv) {
 				await assertCanCreateConversation(ws.id);
 				[conv] = await db
@@ -212,6 +222,7 @@ export async function widgetRoutes(app: FastifyInstance) {
 						status: "open",
 					})
 					.returning();
+				isNewConversation = true;
 				broadcastNewConversation(conv, contact);
 				void notifyPlanUsageIfNeeded(ws.id);
 			}
@@ -221,6 +232,18 @@ export async function widgetRoutes(app: FastifyInstance) {
 				pageTitle: typeof page_title === "string" ? page_title : null,
 				metadata,
 			});
+
+			if (isNewConversation) {
+				void (async () => {
+					const closed = await ensureAwayMessageForConversation(
+						ws.id,
+						conv.id,
+					);
+					if (!closed) {
+						await tryStartWidgetFlow(ws.id, conv.id, contact.id);
+					}
+				})();
+			}
 
 			const token = await signVisitorToken(contact.id, ws.id, conv.id);
 			const prechat = parsePrechatConfig(ws.settings);
@@ -439,10 +462,53 @@ export async function widgetRoutes(app: FastifyInstance) {
 
 			await deliverNewMessage(msg, conversationId, workspaceId);
 			if (payload.type === "text") {
-				triggerAIReply(workspaceId, conversationId, payload.body, msg.id);
+				void ensureAwayMessageForConversation(workspaceId, conversationId);
+				const handled = await processContactMessageInFlow(
+					conversationId,
+					payload.body,
+				);
+				if (!handled) {
+					triggerAIReply(workspaceId, conversationId, payload.body, msg.id);
+				}
 			}
 
 			return reply.status(201).send(msg);
+		},
+	);
+
+	app.get(
+		"/widget/v1/csat/pending",
+		{ preHandler: [requireVisitorToken] },
+		async (request) => {
+			const { workspaceId, conversationId } = (request as VisitorRequest).visitor;
+			return getCsatPendingForConversation(workspaceId, conversationId);
+		},
+	);
+
+	app.post<{ Body: { score?: number; comment?: string | null } }>(
+		"/widget/v1/csat",
+		{ preHandler: [requireVisitorToken] },
+		async (request, reply) => {
+			const { workspaceId, conversationId, contactId } = (request as VisitorRequest)
+				.visitor;
+			const score = request.body?.score;
+			if (typeof score !== "number") {
+				throw validationError("score is required.", "score");
+			}
+
+			const result = await submitCsatResponse({
+				workspaceId,
+				conversationId,
+				contactId,
+				score,
+				comment: request.body?.comment,
+			});
+			if (!result.ok) {
+				return reply.status(400).send({
+					error: { message: result.error },
+				});
+			}
+			return reply.status(201).send({ ok: true });
 		},
 	);
 }

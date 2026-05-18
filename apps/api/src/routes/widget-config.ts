@@ -23,7 +23,30 @@ import {
 	parseWidgetConfig,
 	widgetConfigToPublic,
 } from "../lib/widget-settings.js";
+import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
+import type { AuthenticatedRequest } from "../lib/auth.js";
 import { getWorkspaceId } from "../lib/workspace.js";
+import {
+	businessHoursToPublic,
+	mergeBusinessHoursSettings,
+	parseBusinessHours,
+	parseBusinessHoursPatch,
+} from "../lib/business-hours.js";
+import {
+	aiLanguagesToPublic,
+	mergeAiLanguageSettings,
+	parseAiLanguageSettings,
+} from "../lib/ai-language-settings.js";
+import {
+	autoTagToPublic,
+	mergeAutoTagSettings,
+	parseAutoTagSettings,
+} from "../lib/auto-tag-settings.js";
+import {
+	csatToPublic,
+	mergeCsatSettings,
+	parseCsatSettings,
+} from "../lib/csat-settings.js";
 import {
 	DEFAULT_WIDGET_BRANDING,
 	shouldShowWidgetBranding,
@@ -102,6 +125,58 @@ function parsePrechatPatch(body: Record<string, unknown>): Partial<PrechatConfig
 	return patch;
 }
 
+function parseAiLanguagesPatch(body: Record<string, unknown>): Partial<{
+	default_language: "fa" | "en" | "ar";
+	translate_kb: boolean;
+}> {
+	const raw = body.ai_languages;
+	if (!raw || typeof raw !== "object") return {};
+	const o = raw as Record<string, unknown>;
+	const patch: Partial<{
+		default_language: "fa" | "en" | "ar";
+		translate_kb: boolean;
+	}> = {};
+	if (o.default_language === "fa" || o.default_language === "en" || o.default_language === "ar") {
+		patch.default_language = o.default_language;
+	}
+	if (typeof o.translate_kb === "boolean") patch.translate_kb = o.translate_kb;
+	return patch;
+}
+
+function parseAutoTagPatch(body: Record<string, unknown>): Partial<{
+	enabled: boolean;
+	auto_apply: boolean;
+}> {
+	const raw = body.auto_tagging;
+	if (!raw || typeof raw !== "object") return {};
+	const o = raw as Record<string, unknown>;
+	const patch: Partial<{ enabled: boolean; auto_apply: boolean }> = {};
+	if (typeof o.enabled === "boolean") patch.enabled = o.enabled;
+	if (typeof o.auto_apply === "boolean") patch.auto_apply = o.auto_apply;
+	return patch;
+}
+
+function parseCsatPatch(body: Record<string, unknown>): Partial<{
+	enabled: boolean;
+	prompt_message: string;
+	ask_comment: boolean;
+}> {
+	const raw = body.csat;
+	if (!raw || typeof raw !== "object") return {};
+	const o = raw as Record<string, unknown>;
+	const patch: Partial<{
+		enabled: boolean;
+		prompt_message: string;
+		ask_comment: boolean;
+	}> = {};
+	if (typeof o.enabled === "boolean") patch.enabled = o.enabled;
+	if (typeof o.prompt_message === "string") {
+		patch.prompt_message = o.prompt_message;
+	}
+	if (typeof o.ask_comment === "boolean") patch.ask_comment = o.ask_comment;
+	return patch;
+}
+
 function parseTriggersPatch(body: Record<string, unknown>): Partial<WidgetTriggersConfig> {
 	const raw = body.triggers ?? body.widget_triggers;
 	if (!raw || typeof raw !== "object") return {};
@@ -118,11 +193,16 @@ function parseTriggersPatch(body: Record<string, unknown>): Partial<WidgetTrigge
 	return patch;
 }
 
-function publicWidgetData(settings: unknown) {
+function publicWidgetData(settings: unknown, workspaceTimezone?: string) {
+	const businessHours = parseBusinessHours(settings, workspaceTimezone);
 	return {
 		...widgetConfigToPublic(parseWidgetConfig(settings)),
 		prechat: prechatToPublic(parsePrechatConfig(settings)),
 		triggers: triggersToPublic(parseWidgetTriggers(settings)),
+		business_hours: businessHoursToPublic(businessHours),
+		csat: csatToPublic(parseCsatSettings(settings)),
+		auto_tagging: autoTagToPublic(parseAutoTagSettings(settings)),
+		ai_languages: aiLanguagesToPublic(parseAiLanguageSettings(settings)),
 	};
 }
 
@@ -135,7 +215,7 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 				where: eq(workspaces.id, request.params.id),
 			});
 			if (!ws) throw notFound("Workspace not found.");
-			return { data: publicWidgetData(ws.settings) };
+			return { data: publicWidgetData(ws.settings, ws.timezone) };
 		},
 	);
 
@@ -153,17 +233,29 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 			const themePatch = parsePatch(body);
 			const prechatPatch = parsePrechatPatch(body);
 			const triggersPatch = parseTriggersPatch(body);
+			const businessHoursPatch = parseBusinessHoursPatch(body);
+			const csatPatch = parseCsatPatch(body);
+			const autoTagPatch = parseAutoTagPatch(body);
+			const aiLanguagesPatch = parseAiLanguagesPatch(body);
 
 			const hasPrechatPatch =
 				prechatPatch.enabled !== undefined ||
 				(prechatPatch.fields &&
 					Object.keys(prechatPatch.fields).length > 0);
 			const hasTriggersPatch = Object.keys(triggersPatch).length > 0;
+			const hasBusinessHoursPatch = Object.keys(businessHoursPatch).length > 0;
+			const hasCsatPatch = Object.keys(csatPatch).length > 0;
+			const hasAutoTagPatch = Object.keys(autoTagPatch).length > 0;
+			const hasAiLanguagesPatch = Object.keys(aiLanguagesPatch).length > 0;
 
 			if (
 				Object.keys(themePatch).length === 0 &&
 				!hasPrechatPatch &&
-				!hasTriggersPatch
+				!hasTriggersPatch &&
+				!hasBusinessHoursPatch &&
+				!hasCsatPatch &&
+				!hasAutoTagPatch &&
+				!hasAiLanguagesPatch
 			) {
 				throw validationError("No valid fields to update.");
 			}
@@ -181,6 +273,21 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 			if (hasTriggersPatch) {
 				nextSettings = mergeWidgetTriggers(nextSettings, triggersPatch);
 			}
+			if (hasBusinessHoursPatch) {
+				nextSettings = mergeBusinessHoursSettings(
+					nextSettings,
+					businessHoursPatch,
+				);
+			}
+			if (hasCsatPatch) {
+				nextSettings = mergeCsatSettings(nextSettings, csatPatch);
+			}
+			if (hasAutoTagPatch) {
+				nextSettings = mergeAutoTagSettings(nextSettings, autoTagPatch);
+			}
+			if (hasAiLanguagesPatch) {
+				nextSettings = mergeAiLanguageSettings(nextSettings, aiLanguagesPatch);
+			}
 
 			const [updated] = await db
 				.update(workspaces)
@@ -189,7 +296,17 @@ export async function widgetConfigRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Workspace not found.");
-			return { data: publicWidgetData(updated.settings) };
+			const user = (request as AuthenticatedRequest).user;
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.WIDGET_CONFIG_UPDATE,
+				targetType: "workspace",
+				targetId: wsId,
+			});
+			return {
+				data: publicWidgetData(updated.settings, updated.timezone),
+			};
 		},
 	);
 }
@@ -211,7 +328,7 @@ export async function publicWidgetConfigHandler(
 	return {
 		workspace_id: ws.id,
 		slug: ws.slug,
-		...publicWidgetData(ws.settings),
+		...publicWidgetData(ws.settings, ws.timezone),
 		show_branding: showBranding,
 		branding_label: DEFAULT_WIDGET_BRANDING.label,
 		branding_url: DEFAULT_WIDGET_BRANDING.url,

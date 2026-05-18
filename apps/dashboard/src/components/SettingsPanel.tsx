@@ -14,13 +14,22 @@ import {
 	testEmailIntegration,
 	fetchApiTokens,
 	fetchBannedIps,
+	fetchDashboardIpWhitelist,
+	fetchRequire2fa,
 	fetchIntegrations,
+	fetchSlaPolicy,
+	fetchAiPersona,
 	fetchWidgetConfig,
+	previewAiPersona,
+	updateAiPersona,
 	fetchWorkspaceDetail,
 	revokeApiToken,
 	updateBannedIps,
+	updateDashboardIpWhitelist,
+	updateRequire2fa,
 	removeUserAvatar,
 	updateProfile,
+	updateSlaPolicy,
 	updateWidgetConfig,
 	updateWorkspace,
 	uploadUserAvatar,
@@ -31,9 +40,12 @@ import {
 	type WhatsappIntegrationPublic,
 	type WidgetConfigPublic,
 } from "@/lib/api";
+import { TwoFactorProfileSection } from "@/components/TwoFactorProfileSection";
 import { refreshAuthUser } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 import { AgentAvatar } from "@/components/AgentAvatar";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
@@ -52,6 +64,33 @@ const TIMEZONES = [
 	{ value: "UTC", label: "UTC" },
 ];
 
+const BH_WEEKDAYS = [
+	{ key: "sat", label: "شنبه" },
+	{ key: "sun", label: "یکشنبه" },
+	{ key: "mon", label: "دوشنبه" },
+	{ key: "tue", label: "سه‌شنبه" },
+	{ key: "wed", label: "چهارشنبه" },
+	{ key: "thu", label: "پنجشنبه" },
+	{ key: "fri", label: "جمعه" },
+] as const;
+
+type BhDayKey = (typeof BH_WEEKDAYS)[number]["key"];
+
+function defaultBhSchedule(): Record<
+	BhDayKey,
+	{ enabled: boolean; start: string; end: string }
+> {
+	return {
+		sat: { enabled: true, start: "09:00", end: "18:00" },
+		sun: { enabled: true, start: "09:00", end: "18:00" },
+		mon: { enabled: true, start: "09:00", end: "18:00" },
+		tue: { enabled: true, start: "09:00", end: "18:00" },
+		wed: { enabled: true, start: "09:00", end: "18:00" },
+		thu: { enabled: true, start: "09:00", end: "18:00" },
+		fri: { enabled: false, start: "09:00", end: "18:00" },
+	};
+}
+
 export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) {
 	const [tab, setTab] = useState<
 		| "profile"
@@ -60,8 +99,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		| "telegram"
 		| "email"
 		| "whatsapp"
+		| "hours"
+		| "sla"
+		| "csat"
+		| "ai"
 		| "api"
 		| "security"
+		| "notifications"
 	>("profile");
 	const canEditWorkspace = workspaceRole === "owner" || workspaceRole === "admin";
 
@@ -108,6 +152,8 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [apiError, setApiError] = useState("");
 
 	const [bannedIpsText, setBannedIpsText] = useState("");
+	const [dashboardIpWhitelistText, setDashboardIpWhitelistText] = useState("");
+	const [require2faEnabled, setRequire2faEnabled] = useState(false);
 	const [securityMsg, setSecurityMsg] = useState("");
 	const [securityError, setSecurityError] = useState("");
 
@@ -144,6 +190,45 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	const [whatsappMsg, setWhatsappMsg] = useState("");
 	const [whatsappError, setWhatsappError] = useState("");
 	const [whatsappLoading, setWhatsappLoading] = useState(false);
+
+	const [bhEnabled, setBhEnabled] = useState(false);
+	const [bhTimezone, setBhTimezone] = useState("Asia/Tehran");
+	const [bhAwayMessage, setBhAwayMessage] = useState("");
+	const [bhShowStatus, setBhShowStatus] = useState(true);
+	const [bhHolidays, setBhHolidays] = useState("");
+	const [bhSchedule, setBhSchedule] = useState(defaultBhSchedule);
+	const [hoursMsg, setHoursMsg] = useState("");
+	const [hoursError, setHoursError] = useState("");
+
+	const [slaEnabled, setSlaEnabled] = useState(true);
+	const [slaFirstMin, setSlaFirstMin] = useState(15);
+	const [slaResMin, setSlaResMin] = useState(1440);
+	const [slaWarnPct, setSlaWarnPct] = useState(80);
+	const [slaMsg, setSlaMsg] = useState("");
+	const [slaError, setSlaError] = useState("");
+
+	const [csatEnabled, setCsatEnabled] = useState(true);
+	const [csatPrompt, setCsatPrompt] = useState(
+		"از ۱ تا ۵ چقدر از پشتیبانی راضی بودید؟",
+	);
+	const [csatAskComment, setCsatAskComment] = useState(true);
+	const [csatMsg, setCsatMsg] = useState("");
+	const [csatError, setCsatError] = useState("");
+
+	const [autoTagEnabled, setAutoTagEnabled] = useState(true);
+	const [autoTagApply, setAutoTagApply] = useState(true);
+	const [aiDefaultLang, setAiDefaultLang] = useState<"fa" | "en" | "ar">("fa");
+	const [aiTranslateKb, setAiTranslateKb] = useState(false);
+	const [personaEnabled, setPersonaEnabled] = useState(true);
+	const [personaName, setPersonaName] = useState("");
+	const [personaTone, setPersonaTone] = useState<
+		"formal" | "friendly" | "technical"
+	>("friendly");
+	const [personaInstructions, setPersonaInstructions] = useState("");
+	const [personaPreview, setPersonaPreview] = useState("");
+	const [personaPreviewLoading, setPersonaPreviewLoading] = useState(false);
+	const [aiMsg, setAiMsg] = useState("");
+	const [aiError, setAiError] = useState("");
 
 	const loadProfile = useCallback(async () => {
 		const auth = await refreshAuthUser();
@@ -197,8 +282,14 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 
 	const loadSecurity = useCallback(async () => {
 		if (!canEditWorkspace) return;
-		const ips = await fetchBannedIps(workspaceId);
-		setBannedIpsText(ips.join("\n"));
+		const [banned, whitelist, require2fa] = await Promise.all([
+			fetchBannedIps(workspaceId),
+			fetchDashboardIpWhitelist(workspaceId),
+			fetchRequire2fa(workspaceId),
+		]);
+		setBannedIpsText(banned.join("\n"));
+		setDashboardIpWhitelistText(whitelist.join("\n"));
+		setRequire2faEnabled(require2fa);
 	}, [workspaceId, canEditWorkspace]);
 
 	useEffect(() => {
@@ -250,6 +341,58 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 	useEffect(() => {
 		if (tab === "whatsapp") void loadWhatsapp();
 	}, [tab, loadWhatsapp]);
+
+	const loadSla = useCallback(async () => {
+		const policy = await fetchSlaPolicy(workspaceId);
+		if (policy) {
+			setSlaEnabled(policy.enabled);
+			setSlaFirstMin(policy.first_response_minutes);
+			setSlaResMin(policy.resolution_minutes);
+			setSlaWarnPct(policy.warn_at_percent);
+		}
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (tab === "sla") void loadSla();
+	}, [tab, loadSla]);
+
+	const loadCsat = useCallback(async () => {
+		const cfg = await fetchWidgetConfig(workspaceId);
+		if (cfg?.csat) {
+			setCsatEnabled(cfg.csat.enabled);
+			setCsatPrompt(cfg.csat.prompt_message);
+			setCsatAskComment(cfg.csat.ask_comment);
+		}
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (tab === "csat") void loadCsat();
+	}, [tab, loadCsat]);
+
+	const loadAi = useCallback(async () => {
+		const [cfg, persona] = await Promise.all([
+			fetchWidgetConfig(workspaceId),
+			fetchAiPersona(workspaceId),
+		]);
+		if (cfg?.auto_tagging) {
+			setAutoTagEnabled(cfg.auto_tagging.enabled);
+			setAutoTagApply(cfg.auto_tagging.auto_apply);
+		}
+		if (cfg?.ai_languages) {
+			setAiDefaultLang(cfg.ai_languages.default_language);
+			setAiTranslateKb(cfg.ai_languages.translate_kb);
+		}
+		if (persona) {
+			setPersonaEnabled(persona.enabled);
+			setPersonaName(persona.name ?? "");
+			setPersonaTone(persona.tone);
+			setPersonaInstructions(persona.custom_instructions ?? "");
+		}
+	}, [workspaceId]);
+
+	useEffect(() => {
+		if (tab === "ai") void loadAi();
+	}, [tab, loadAi]);
 
 	async function saveProfile(e: React.FormEvent) {
 		e.preventDefault();
@@ -343,6 +486,29 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		await loadSecurity();
 	}
 
+	async function saveDashboardIpWhitelist(e: React.FormEvent) {
+		e.preventDefault();
+		setSecurityMsg("");
+		setSecurityError("");
+		const ips = dashboardIpWhitelistText
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+		const ok = await updateDashboardIpWhitelist(workspaceId, ips);
+		if (!ok) {
+			setSecurityError(
+				"ذخیره لیست مجاز داشبورد ناموفق بود. فرمت را بررسی کنید.",
+			);
+			return;
+		}
+		setSecurityMsg(
+			ips.length > 0
+				? "محدودیت IP داشبورد فعال شد."
+				: "محدودیت IP داشبورد غیرفعال شد (لیست خالی).",
+		);
+		await loadSecurity();
+	}
+
 	async function saveWidget(e: React.FormEvent) {
 		e.preventDefault();
 		setWidgetMsg("");
@@ -378,6 +544,100 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 		await loadWidget();
 	}
 
+	async function saveBusinessHours(e: React.FormEvent) {
+		e.preventDefault();
+		setHoursMsg("");
+		setHoursError("");
+		const holidays = bhHolidays
+			.split(/[\n,]+/)
+			.map((h) => h.trim())
+			.filter((h) => /^\d{4}-\d{2}-\d{2}$/.test(h));
+		const result = await updateWidgetConfig(workspaceId, {
+			business_hours: {
+				enabled: bhEnabled,
+				timezone: bhTimezone,
+				away_message: bhAwayMessage,
+				show_status_in_widget: bhShowStatus,
+				holidays,
+				schedule: bhSchedule,
+			},
+		});
+		if (!result.ok) {
+			setHoursError(result.error ?? "ذخیره ناموفق بود.");
+			return;
+		}
+		setHoursMsg("ساعات کاری ذخیره شد.");
+		await loadWidget();
+	}
+
+	async function saveSla(e: React.FormEvent) {
+		e.preventDefault();
+		setSlaMsg("");
+		setSlaError("");
+		const result = await updateSlaPolicy(workspaceId, {
+			enabled: slaEnabled,
+			first_response_minutes: slaFirstMin,
+			resolution_minutes: slaResMin,
+			warn_at_percent: slaWarnPct,
+		});
+		if (!result.ok) {
+			setSlaError(result.error ?? "خطا");
+			return;
+		}
+		setSlaMsg("تنظیمات SLA ذخیره شد.");
+	}
+
+	async function saveAi(e: React.FormEvent) {
+		e.preventDefault();
+		setAiMsg("");
+		setAiError("");
+		const [cfgResult, personaResult] = await Promise.all([
+			updateWidgetConfig(workspaceId, {
+				auto_tagging: {
+					enabled: autoTagEnabled,
+					auto_apply: autoTagApply,
+				},
+				ai_languages: {
+					default_language: aiDefaultLang,
+					translate_kb: aiTranslateKb,
+				},
+			}),
+			updateAiPersona(workspaceId, {
+				enabled: personaEnabled,
+				name: personaName.trim() || null,
+				tone: personaTone,
+				custom_instructions: personaInstructions.trim(),
+			}),
+		]);
+		if (!cfgResult.ok || !personaResult.ok) {
+			setAiError(
+				cfgResult.error ?? personaResult.error ?? "ذخیره ناموفق بود.",
+			);
+			return;
+		}
+		setAiMsg("تنظیمات AI ذخیره شد.");
+		await loadAi();
+	}
+
+	async function saveCsat(e: React.FormEvent) {
+		e.preventDefault();
+		setCsatMsg("");
+		setCsatError("");
+		const result = await updateWidgetConfig(workspaceId, {
+			csat: {
+				enabled: csatEnabled,
+				prompt_message: csatPrompt.trim(),
+				ask_comment: csatAskComment,
+			},
+		});
+		if (!result.ok) {
+			setCsatError(result.error ?? "ذخیره ناموفق بود.");
+			return;
+		}
+		setCsatMsg("تنظیمات CSAT ذخیره شد.");
+		await loadCsat();
+	}
+
 	const embedSnippet = wsSlug
 		? `<script src="${API_URL}/widget-demo/dist/index.global.js"\n  data-api-url="${API_URL}"\n  data-workspace-slug="${wsSlug}"></script>`
 		: "";
@@ -407,8 +667,13 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						"telegram",
 						"email",
 						"whatsapp",
+						"hours",
+						"sla",
+						"csat",
+						"ai",
 						"api",
 						"security",
+						"notifications",
 					] as const
 				).map((t) => (
 					<button
@@ -434,9 +699,19 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 											? "ایمیل"
 											: t === "whatsapp"
 												? "واتساپ"
-												: t === "api"
-													? "API"
-													: "امنیت"}
+												: t === "hours"
+													? "ساعات کاری"
+													: t === "sla"
+														? "SLA"
+														: t === "csat"
+															? "CSAT"
+															: t === "ai"
+																? "هوش مصنوعی"
+																: t === "api"
+																	? "API"
+																	: t === "notifications"
+																		? "اعلان‌ها"
+																		: "امنیت"}
 					</button>
 				))}
 			</div>
@@ -582,6 +857,10 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						)}
 						<Button type="submit">ذخیره پروفایل</Button>
 					</form>
+				)}
+				{tab === "profile" && <TwoFactorProfileSection />}
+				{tab === "notifications" && (
+					<NotificationSettings workspaceId={workspaceId} />
 				)}
 				{tab === "widget" && (
 					<form
@@ -1435,6 +1714,424 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 						)}
 					</div>
 				)}
+				{tab === "hours" && (
+					<form
+						onSubmit={saveBusinessHours}
+						className="mx-auto flex max-w-2xl flex-col gap-4"
+					>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر می‌تواند ساعات کاری را ویرایش کند.
+							</p>
+						) : (
+							<>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={bhEnabled}
+										onChange={(e) => setBhEnabled(e.target.checked)}
+									/>
+									فعال‌سازی ساعات کاری
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">منطقه زمانی</span>
+									<select
+										className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2"
+										value={bhTimezone}
+										onChange={(e) => setBhTimezone(e.target.value)}
+									>
+										{TIMEZONES.map((tz) => (
+											<option key={tz.value} value={tz.value}>
+												{tz.label}
+											</option>
+										))}
+									</select>
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										پیام خارج از ساعت کاری
+									</span>
+									<textarea
+										className="mt-1 w-full rounded-md border border-input bg-background p-2"
+										rows={3}
+										value={bhAwayMessage}
+										onChange={(e) => setBhAwayMessage(e.target.value)}
+									/>
+								</label>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={bhShowStatus}
+										onChange={(e) => setBhShowStatus(e.target.checked)}
+									/>
+									نمایش وضعیت «آنلاین / خارج از ساعت کاری» در ویجت
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										تعطیلات (هر خط یک تاریخ YYYY-MM-DD)
+									</span>
+									<textarea
+										className="mt-1 w-full rounded-md border border-input bg-background p-2 font-mono text-xs"
+										rows={3}
+										dir="ltr"
+										value={bhHolidays}
+										onChange={(e) => setBhHolidays(e.target.value)}
+										placeholder="2026-03-20"
+									/>
+								</label>
+								<div className="space-y-2">
+									<p className="text-sm font-medium">برنامه هفتگی</p>
+									{BH_WEEKDAYS.map((d) => (
+										<div
+											key={d.key}
+											className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm"
+										>
+											<label className="flex w-24 items-center gap-2">
+												<input
+													type="checkbox"
+													checked={bhSchedule[d.key].enabled}
+													onChange={(e) =>
+														setBhSchedule((s) => ({
+															...s,
+															[d.key]: {
+																...s[d.key],
+																enabled: e.target.checked,
+															},
+														}))
+													}
+												/>
+												{d.label}
+											</label>
+											<input
+												type="time"
+												className="rounded border border-input px-2 py-1"
+												value={bhSchedule[d.key].start}
+												disabled={!bhSchedule[d.key].enabled}
+												onChange={(e) =>
+													setBhSchedule((s) => ({
+														...s,
+														[d.key]: { ...s[d.key], start: e.target.value },
+													}))
+												}
+											/>
+											<span>تا</span>
+											<input
+												type="time"
+												className="rounded border border-input px-2 py-1"
+												value={bhSchedule[d.key].end}
+												disabled={!bhSchedule[d.key].enabled}
+												onChange={(e) =>
+													setBhSchedule((s) => ({
+														...s,
+														[d.key]: { ...s[d.key], end: e.target.value },
+													}))
+												}
+											/>
+										</div>
+									))}
+								</div>
+								<Button type="submit">ذخیره ساعات کاری</Button>
+							</>
+						)}
+						{hoursError && (
+							<p className="text-sm text-destructive">{hoursError}</p>
+						)}
+						{hoursMsg && <p className="text-sm text-primary">{hoursMsg}</p>}
+					</form>
+				)}
+				{tab === "sla" && (
+					<form
+						onSubmit={saveSla}
+						className="mx-auto flex max-w-md flex-col gap-4"
+					>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر می‌تواند SLA را ویرایش کند.
+							</p>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground">
+									زمان اولین پاسخ و زمان حل مکالمه. پیش‌فرض‌ها بر اساس پلن
+									ورک‌اسپیس اعمال می‌شود تا زمانی که ذخیره کنید.
+								</p>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={slaEnabled}
+										onChange={(e) => setSlaEnabled(e.target.checked)}
+									/>
+									فعال‌سازی SLA
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										اولین پاسخ (دقیقه)
+									</span>
+									<Input
+										type="number"
+										min={1}
+										max={1440}
+										className="mt-1"
+										value={slaFirstMin}
+										onChange={(e) =>
+											setSlaFirstMin(Number(e.target.value) || 1)
+										}
+									/>
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">حل مکالمه (دقیقه)</span>
+									<Input
+										type="number"
+										min={5}
+										max={10080}
+										className="mt-1"
+										value={slaResMin}
+										onChange={(e) =>
+											setSlaResMin(Number(e.target.value) || 5)
+										}
+									/>
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										هشدار در ٪ زمان سپری‌شده
+									</span>
+									<Input
+										type="number"
+										min={50}
+										max={99}
+										className="mt-1"
+										value={slaWarnPct}
+										onChange={(e) =>
+											setSlaWarnPct(Number(e.target.value) || 80)
+										}
+									/>
+								</label>
+								<Button type="submit">ذخیره SLA</Button>
+							</>
+						)}
+						{slaError && (
+							<p className="text-sm text-destructive">{slaError}</p>
+						)}
+						{slaMsg && <p className="text-sm text-primary">{slaMsg}</p>}
+					</form>
+				)}
+				{tab === "csat" && (
+					<form
+						onSubmit={saveCsat}
+						className="mx-auto flex max-w-md flex-col gap-4"
+					>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر می‌تواند CSAT را ویرایش کند.
+							</p>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground">
+									پس از بستن یا حل مکالمه، از بازدیدکننده امتیاز ۱ تا ۵
+									پرسیده می‌شود.
+								</p>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={csatEnabled}
+										onChange={(e) => setCsatEnabled(e.target.checked)}
+									/>
+									فعال‌سازی CSAT
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">متن پرسش</span>
+									<textarea
+										className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+										rows={3}
+										value={csatPrompt}
+										onChange={(e) => setCsatPrompt(e.target.value)}
+										maxLength={500}
+									/>
+								</label>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={csatAskComment}
+										onChange={(e) => setCsatAskComment(e.target.checked)}
+									/>
+									درخواست نظر اختیاری
+								</label>
+								<Button type="submit">ذخیره CSAT</Button>
+							</>
+						)}
+						{csatError && (
+							<p className="text-sm text-destructive">{csatError}</p>
+						)}
+						{csatMsg && <p className="text-sm text-primary">{csatMsg}</p>}
+					</form>
+				)}
+				{tab === "ai" && (
+					<form
+						onSubmit={saveAi}
+						className="mx-auto flex max-w-lg flex-col gap-4"
+					>
+						{!canEditWorkspace ? (
+							<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+								فقط مدیر می‌تواند تنظیمات AI را ویرایش کند.
+							</p>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground">
+									پس از حل یا بستن مکالمه، AI موضوع را تحلیل و تگ پیشنهاد
+									می‌دهد.
+								</p>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={autoTagEnabled}
+										onChange={(e) => setAutoTagEnabled(e.target.checked)}
+									/>
+									فعال‌سازی تگ‌گذاری خودکار
+								</label>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={autoTagApply}
+										onChange={(e) => setAutoTagApply(e.target.checked)}
+									/>
+									اعمال خودکار تگ‌ها (بدون تأیید اپراتور)
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										زبان پیش‌فرض پاسخ AI
+									</span>
+									<select
+										className="mt-1 w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
+										value={aiDefaultLang}
+										onChange={(e) =>
+											setAiDefaultLang(e.target.value as "fa" | "en" | "ar")
+										}
+									>
+										<option value="fa">فارسی</option>
+										<option value="en">English</option>
+										<option value="ar">العربية</option>
+									</select>
+								</label>
+								<p className="text-xs text-muted-foreground">
+									اگر زبان پیام مشتری تشخیص داده شود، پاسخ به همان زبان
+									ارسال می‌شود.
+								</p>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={aiTranslateKb}
+										onChange={(e) => setAiTranslateKb(e.target.checked)}
+									/>
+									ترجمه خودکار محتوای پایگاه دانش (آزمایشی)
+								</label>
+								<hr className="border-border" />
+								<p className="text-sm font-medium">شخصیت AI (Persona)</p>
+								<label className="flex items-center gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={personaEnabled}
+										onChange={(e) => setPersonaEnabled(e.target.checked)}
+									/>
+									فعال‌سازی شخصیت سفارشی
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">نام دستیار</span>
+									<Input
+										className="mt-1"
+										value={personaName}
+										onChange={(e) => setPersonaName(e.target.value)}
+										placeholder="مثلاً سارا"
+										maxLength={80}
+									/>
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">لحن</span>
+									<select
+										className="mt-1 w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
+										value={personaTone}
+										onChange={(e) =>
+											setPersonaTone(
+												e.target.value as
+													| "formal"
+													| "friendly"
+													| "technical",
+											)
+										}
+									>
+										<option value="friendly">دوستانه</option>
+										<option value="formal">رسمی</option>
+										<option value="technical">فنی</option>
+									</select>
+								</label>
+								<label className="block text-sm">
+									<span className="text-muted-foreground">
+										دستورالعمل اضافی
+									</span>
+									<textarea
+										className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+										rows={4}
+										value={personaInstructions}
+										onChange={(e) =>
+											setPersonaInstructions(e.target.value)
+										}
+										maxLength={2000}
+										placeholder="مثلاً: همیشه کوتاه پاسخ بده و به محصول X اشاره کن."
+									/>
+								</label>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										disabled={personaPreviewLoading}
+										onClick={() => {
+											void (async () => {
+												setPersonaPreviewLoading(true);
+												setPersonaPreview("");
+												const result = await previewAiPersona(
+													workspaceId,
+													{
+														persona: {
+															enabled: personaEnabled,
+															name: personaName.trim() || null,
+															tone: personaTone,
+															custom_instructions:
+																personaInstructions.trim(),
+														},
+													},
+												);
+												setPersonaPreviewLoading(false);
+												if (!result) {
+													setAiError(
+														"پیش‌نمایش ناموفق بود. ai-service را بررسی کنید.",
+													);
+													return;
+												}
+												setPersonaPreview(result.reply);
+											})();
+										}}
+									>
+										{personaPreviewLoading
+											? "در حال پیش‌نمایش…"
+											: "پیش‌نمایش پاسخ"}
+									</Button>
+								</div>
+								{personaPreview && (
+									<div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+										<p className="mb-1 text-xs text-muted-foreground">
+											نمونه پاسخ:
+										</p>
+										<p className="whitespace-pre-wrap">{personaPreview}</p>
+									</div>
+								)}
+								<Button type="submit">ذخیره</Button>
+							</>
+						)}
+						{aiError && (
+							<p className="text-sm text-destructive">{aiError}</p>
+						)}
+						{aiMsg && <p className="text-sm text-primary">{aiMsg}</p>}
+					</form>
+				)}
 				{tab === "security" && (
 					<form
 						onSubmit={saveSecurity}
@@ -1473,6 +2170,78 @@ export function SettingsPanel({ workspaceId, workspaceRole, userEmail }: Props) 
 							</>
 						)}
 					</form>
+				)}
+				{tab === "security" && canEditWorkspace && (
+					<form
+						onSubmit={saveDashboardIpWhitelist}
+						className="mx-auto mt-8 flex max-w-lg flex-col gap-4 border-t border-border pt-6"
+					>
+						<p className="text-sm font-medium">محدودیت IP داشبورد اپراتور</p>
+						<p className="text-sm text-muted-foreground">
+							فقط برای API داشبورد (نه ویجت). اگر لیست خالی باشد، همه IPها
+							مجازند. پس از فعال‌سازی، IP فعلی خود را در لیست بگذارید.
+						</p>
+						<label className="flex flex-col gap-1 text-sm font-medium">
+							IPهای مجاز (هر خط یک مورد)
+							<textarea
+								value={dashboardIpWhitelistText}
+								onChange={(e) => setDashboardIpWhitelistText(e.target.value)}
+								rows={8}
+								dir="ltr"
+								className="rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+								placeholder={"203.0.113.10\n192.168.1.*\n10.0.0.0/8"}
+							/>
+						</label>
+						<Button type="submit">ذخیره لیست مجاز داشبورد</Button>
+					</form>
+				)}
+				{tab === "security" && workspaceRole === "owner" && (
+					<form
+						className="mx-auto mt-8 flex max-w-lg flex-col gap-4 border-t border-border pt-6"
+						onSubmit={async (e) => {
+							e.preventDefault();
+							setSecurityMsg("");
+							setSecurityError("");
+							const ok = await updateRequire2fa(workspaceId, require2faEnabled);
+							if (!ok) {
+								setSecurityError("ذخیره الزام 2FA ناموفق بود.");
+								return;
+							}
+							setSecurityMsg(
+								require2faEnabled
+									? "ورود با 2FA برای همه اعضای workspace الزامی شد."
+									: "الزام 2FA غیرفعال شد.",
+							);
+						}}
+					>
+						<p className="text-sm font-medium">الزام 2FA برای اعضا</p>
+						<p className="text-sm text-muted-foreground">
+							اعضایی که 2FA فعال نکرده‌اند به API این workspace دسترسی ندارند.
+						</p>
+						<label className="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								checked={require2faEnabled}
+								onChange={(e) => setRequire2faEnabled(e.target.checked)}
+							/>
+							ورود دو مرحله‌ای اجباری
+						</label>
+						<Button type="submit">ذخیره سیاست 2FA</Button>
+					</form>
+				)}
+				{canEditWorkspace && tab === "security" && (
+					<div className="mx-auto mt-6 max-w-lg rounded-lg border border-border bg-card p-4">
+						<p className="text-sm font-medium">لاگ حسابرسی</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							ورود، تغییر تنظیمات و export — نگهداری تا ۱ سال.
+						</p>
+						<Link
+							href="/settings/audit"
+							className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+						>
+							باز کردن لاگ حسابرسی →
+						</Link>
+					</div>
 				)}
 			</div>
 		</div>

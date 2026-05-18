@@ -7,8 +7,10 @@ import {
 	VISITOR_BLOCKED_MESSAGE,
 	attachmentFullUrl,
 	createSession,
+	fetchCsatPending,
 	fetchMessages,
 	fetchWidgetTheme,
+	submitCsat,
 	isVisitorBlockedError,
 	sendMessageHttp,
 	setApiBaseUrl,
@@ -25,6 +27,20 @@ import {
 	bindPageNavigation,
 	pageContextPayload,
 } from "./page-context.js";
+import {
+	loadWidgetBrowserPrefs,
+	maybeShowWidgetBrowserNotification,
+	requestWidgetBrowserPermission,
+	saveWidgetBrowserPrefs,
+} from "./widget-browser-notifications.js";
+import {
+	loadWidgetSoundPrefs,
+	maybePlayWidgetIncomingSound,
+	previewWidgetSound,
+	saveWidgetSoundPrefs,
+	type WidgetSoundPrefs,
+} from "./widget-sound-prefs.js";
+import { NOTIFICATION_SOUND_IDS } from "@chatbox/shared/notification-sound";
 
 const CHAT_ICON = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`;
 const CLOSE_ICON = "✕";
@@ -54,6 +70,7 @@ export class ChatBoxWidget {
 	private root!: ShadowRoot;
 	private containerEl!: HTMLElement;
 	private headerTitleEl!: HTMLElement;
+	private headerStatusEl!: HTMLElement | null;
 	private headerAvatarEl!: HTMLImageElement | null;
 	private welcomeEl!: HTMLElement;
 	private messagesEl!: HTMLElement;
@@ -82,7 +99,15 @@ export class ChatBoxWidget {
 	private presenceTimer: ReturnType<typeof setInterval> | null = null;
 	private brandingEl: HTMLElement | null = null;
 	private blockedBannerEl!: HTMLElement;
+	private csatEl!: HTMLElement;
+	private csatTitleEl!: HTMLElement;
+	private csatStarsEl!: HTMLElement;
+	private csatCommentEl!: HTMLTextAreaElement;
+	private csatSubmitBtn!: HTMLButtonElement;
+	private csatSelected = 0;
 	private isBlocked = false;
+	private soundMenuEl!: HTMLElement;
+	private soundPrefs: WidgetSoundPrefs = loadWidgetSoundPrefs();
 
 	constructor(config: WidgetConfig) {
 		this.config = config;
@@ -114,9 +139,16 @@ export class ChatBoxWidget {
 					<div class="cb-header">
 						<div class="cb-header-main">
 							${avatarHtml}
-							<span id="cb-title">${this.escapeHtml(this.theme.title)}</span>
+							<div class="cb-header-text">
+								<span id="cb-title">${this.escapeHtml(this.theme.title)}</span>
+								<span class="cb-status hidden" id="cb-status"></span>
+							</div>
 						</div>
-						<button class="cb-close" id="cb-close" type="button">${CLOSE_ICON}</button>
+						<div class="cb-header-actions">
+							<button class="cb-sound-btn" id="cb-sound-btn" type="button" title="تنظیم صدا">🔔</button>
+							<button class="cb-close" id="cb-close" type="button">${CLOSE_ICON}</button>
+						</div>
+						<div class="cb-sound-menu hidden" id="cb-sound-menu"></div>
 					</div>
 					<div class="cb-prechat" id="cb-prechat">
 						<p class="cb-prechat-title">قبل از شروع گفتگو</p>
@@ -127,6 +159,13 @@ export class ChatBoxWidget {
 					<div class="cb-blocked-banner" id="cb-blocked-banner"></div>
 					<div class="cb-messages" id="cb-messages">
 						<div class="cb-welcome" id="cb-welcome"></div>
+					</div>
+
+					<div class="cb-csat" id="cb-csat">
+						<p class="cb-csat-title" id="cb-csat-title"></p>
+						<div class="cb-csat-stars" id="cb-csat-stars"></div>
+						<textarea class="cb-csat-comment hidden" id="cb-csat-comment" placeholder="نظر شما (اختیاری)"></textarea>
+						<button type="button" class="cb-csat-submit" id="cb-csat-submit">ارسال امتیاز</button>
 					</div>
 					<div class="cb-typing" id="cb-typing">در حال نوشتن...</div>
 					<div class="cb-emoji-picker" id="cb-emoji-picker"></div>
@@ -147,6 +186,7 @@ export class ChatBoxWidget {
 		this.containerEl = this.root.getElementById("cb-container") as HTMLElement;
 		this.windowEl = this.root.getElementById("cb-window") as HTMLElement;
 		this.headerTitleEl = this.root.getElementById("cb-title") as HTMLElement;
+		this.headerStatusEl = this.root.getElementById("cb-status");
 		this.headerAvatarEl = this.root.getElementById(
 			"cb-avatar",
 		) as HTMLImageElement | null;
@@ -171,7 +211,20 @@ export class ChatBoxWidget {
 		this.blockedBannerEl = this.root.getElementById(
 			"cb-blocked-banner",
 		) as HTMLElement;
+		this.csatEl = this.root.getElementById("cb-csat") as HTMLElement;
+		this.csatTitleEl = this.root.getElementById("cb-csat-title") as HTMLElement;
+		this.csatStarsEl = this.root.getElementById("cb-csat-stars") as HTMLElement;
+		this.csatCommentEl = this.root.getElementById(
+			"cb-csat-comment",
+		) as HTMLTextAreaElement;
+		this.csatSubmitBtn = this.root.getElementById(
+			"cb-csat-submit",
+		) as HTMLButtonElement;
+		this.soundMenuEl = this.root.getElementById(
+			"cb-sound-menu",
+		) as HTMLElement;
 
+		this.buildSoundMenu();
 		this.buildPrechatForm();
 		this.applyTheme();
 		this.buildEmojiPicker();
@@ -183,7 +236,12 @@ export class ChatBoxWidget {
 		this.root
 			.getElementById("cb-close")
 			?.addEventListener("click", () => this.toggle());
+		this.root.getElementById("cb-sound-btn")?.addEventListener("click", (e) => {
+			e.stopPropagation();
+			this.soundMenuEl.classList.toggle("hidden");
+		});
 		this.sendBtn.addEventListener("click", () => this.send());
+		this.csatSubmitBtn.addEventListener("click", () => void this.submitCsatForm());
 		this.root.getElementById("cb-emoji-btn")?.addEventListener("click", () => {
 			this.emojiPickerEl.classList.toggle("open");
 		});
@@ -361,7 +419,94 @@ export class ChatBoxWidget {
 			this.headerAvatarEl.alt = this.theme.title;
 		}
 
+		this.applyBusinessHoursStatus();
 		this.applyBranding();
+	}
+
+	private buildCsatStars() {
+		this.csatStarsEl.innerHTML = "";
+		for (let i = 1; i <= 5; i++) {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "cb-csat-star";
+			btn.textContent = "★";
+			btn.setAttribute("aria-label", String(i));
+			btn.addEventListener("click", () => {
+				this.csatSelected = i;
+				this.csatStarsEl
+					.querySelectorAll(".cb-csat-star")
+					.forEach((el, idx) => {
+						el.classList.toggle("active", idx < i);
+					});
+			});
+			this.csatStarsEl.appendChild(btn);
+		}
+	}
+
+	private showCsatPanel(prompt: string, askComment: boolean) {
+		if (!this.theme.csat?.enabled) return;
+		this.buildCsatStars();
+		this.csatSelected = 0;
+		this.csatTitleEl.textContent = prompt || this.theme.csat?.prompt_message || "";
+		this.csatCommentEl.value = "";
+		this.csatCommentEl.classList.toggle("hidden", !askComment);
+		this.csatEl.classList.add("visible");
+		this.inputAreaEl.style.display = "none";
+	}
+
+	private hideCsatPanel(thanks?: string) {
+		this.csatEl.classList.remove("visible");
+		this.inputAreaEl.style.display = "";
+		if (thanks) {
+			this.csatTitleEl.textContent = thanks;
+			this.csatStarsEl.innerHTML = "";
+			this.csatCommentEl.classList.add("hidden");
+			this.csatSubmitBtn.style.display = "none";
+			this.csatEl.classList.add("visible");
+		}
+	}
+
+	private async checkCsatPending() {
+		if (!this.theme.csat?.enabled || !this.conversationId) return;
+		const pending = await fetchCsatPending();
+		if (pending.pending) {
+			this.showCsatPanel(pending.prompt, pending.ask_comment);
+		}
+	}
+
+	private async submitCsatForm() {
+		if (this.csatSelected < 1) return;
+		this.csatSubmitBtn.disabled = true;
+		try {
+			await submitCsat(
+				this.csatSelected,
+				this.csatCommentEl.classList.contains("hidden")
+					? undefined
+					: this.csatCommentEl.value,
+			);
+			this.hideCsatPanel("ممنون از بازخورد شما!");
+		} catch (err) {
+			console.error("[ChatBox] CSAT submit failed:", err);
+		} finally {
+			this.csatSubmitBtn.disabled = false;
+		}
+	}
+
+	private applyBusinessHoursStatus() {
+		if (!this.headerStatusEl) return;
+		const bh = this.theme.business_hours;
+		if (!bh?.enabled || !bh.show_status) {
+			this.headerStatusEl.classList.add("hidden");
+			this.headerStatusEl.textContent = "";
+			return;
+		}
+		this.headerStatusEl.classList.remove("hidden");
+		this.headerStatusEl.textContent = bh.status_label;
+		this.headerStatusEl.classList.toggle("cb-status-open", bh.is_open);
+		this.headerStatusEl.classList.toggle("cb-status-closed", !bh.is_open);
+		if (!bh.is_open && bh.away_message) {
+			this.welcomeEl.textContent = bh.away_message;
+		}
 	}
 
 	private applyBranding() {
@@ -477,6 +622,11 @@ export class ChatBoxWidget {
 					this.hideWelcome();
 					this.appendMessage(msg);
 					if (msg.senderType === "agent" || msg.senderType === "ai") {
+						maybePlayWidgetIncomingSound(msg.senderType);
+						maybeShowWidgetBrowserNotification(
+							msg.senderType,
+							msg.body,
+						);
 						this.markIncomingRead(msg);
 					}
 				},
@@ -488,8 +638,18 @@ export class ChatBoxWidget {
 						readAt: new Date().toISOString(),
 					});
 				},
+				onStatusChanged: ({ status }) => {
+					if (status === "resolved" || status === "closed") {
+						void this.checkCsatPending();
+					}
+				},
+				onCsatRequested: ({ prompt, ask_comment }) => {
+					this.showCsatPanel(prompt, ask_comment);
+				},
 			},
 		);
+
+		void this.checkCsatPending();
 	}
 
 	private showWelcome() {
@@ -500,6 +660,77 @@ export class ChatBoxWidget {
 
 	private hideWelcome() {
 		this.welcomeEl.style.display = "none";
+	}
+
+	private buildSoundMenu() {
+		const p = this.soundPrefs;
+		this.soundMenuEl.innerHTML = `
+			<label><input type="checkbox" id="cb-sound-enabled" ${p.sound_enabled ? "checked" : ""} /> صدای پیام اپراتور</label>
+			<label>نوع صدا
+				<select id="cb-sound-id">
+					${NOTIFICATION_SOUND_IDS.map(
+						(id) =>
+							`<option value="${id}" ${p.sound_id === id ? "selected" : ""}>${
+								id === "default" ? "پیش‌فرض" : id === "chime" ? "زنگ" : "ملایم"
+							}</option>`,
+					).join("")}
+				</select>
+			</label>
+			<label><input type="checkbox" id="cb-sound-hidden" ${p.sound_when_hidden ? "checked" : ""} /> وقتی تب در پس‌زمینه</label>
+			<button type="button" class="cb-sound-preview" id="cb-sound-preview">پیش‌نمایش صدا</button>
+			<hr style="border:none;border-top:1px solid var(--cb-border);margin:4px 0" />
+			<label><input type="checkbox" id="cb-browser-enabled" ${loadWidgetBrowserPrefs().enabled ? "checked" : ""} /> اعلان مرورگر (تب پس‌زمینه)</label>
+			<button type="button" class="cb-sound-preview" id="cb-browser-perm">اجازه اعلان</button>
+		`;
+
+		const persist = () => {
+			const enabled = (
+				this.soundMenuEl.querySelector("#cb-sound-enabled") as HTMLInputElement
+			).checked;
+			const soundId = (
+				this.soundMenuEl.querySelector("#cb-sound-id") as HTMLSelectElement
+			).value;
+			const whenHidden = (
+				this.soundMenuEl.querySelector("#cb-sound-hidden") as HTMLInputElement
+			).checked;
+			this.soundPrefs = {
+				sound_enabled: enabled,
+				sound_id: soundId as WidgetSoundPrefs["sound_id"],
+				sound_when_hidden: whenHidden,
+			};
+			saveWidgetSoundPrefs(this.soundPrefs);
+		};
+
+		this.soundMenuEl
+			.querySelector("#cb-sound-enabled")
+			?.addEventListener("change", persist);
+		this.soundMenuEl
+			.querySelector("#cb-sound-id")
+			?.addEventListener("change", persist);
+		this.soundMenuEl
+			.querySelector("#cb-sound-hidden")
+			?.addEventListener("change", persist);
+		this.soundMenuEl
+			.querySelector("#cb-sound-preview")
+			?.addEventListener("click", () => {
+				persist();
+				previewWidgetSound(this.soundPrefs.sound_id);
+			});
+		this.soundMenuEl
+			.querySelector("#cb-browser-enabled")
+			?.addEventListener("change", () => {
+				const enabled = (
+					this.soundMenuEl.querySelector(
+						"#cb-browser-enabled",
+					) as HTMLInputElement
+				).checked;
+				saveWidgetBrowserPrefs({ enabled });
+			});
+		this.soundMenuEl
+			.querySelector("#cb-browser-perm")
+			?.addEventListener("click", () => {
+				void requestWidgetBrowserPermission();
+			});
 	}
 
 	private buildEmojiPicker() {

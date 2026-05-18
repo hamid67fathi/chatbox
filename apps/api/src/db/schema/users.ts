@@ -19,8 +19,11 @@ export const users = pgTable(
 		avatarUrl: text("avatar_url"),
 		locale: text("locale").notNull().default("fa-IR"),
 		totpSecret: text("totp_secret"),
+		totpRecoveryHashes: text("totp_recovery_hashes"),
 		emailVerified: boolean("email_verified").notNull().default(false),
 		phoneVerified: boolean("phone_verified").notNull().default(false),
+		oauthProvider: text("oauth_provider"),
+		oauthProviderId: text("oauth_provider_id"),
 		lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()

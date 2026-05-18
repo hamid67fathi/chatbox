@@ -10,6 +10,11 @@ from .chunker import chunk_text
 from .copilot import generate_copilot_suggestions, stream_copilot_suggestions
 from .sentiment import analyze_sentiment
 from .summarizer import summarize_conversation
+from .handoff_brief import generate_handoff_brief
+from .tagger import suggest_conversation_tags
+from .translator import translate_text
+from .llm import generate_reply
+from .language import detect_language, normalize_lang
 from .db import close_pool, get_pool
 from .embeddings import embed_texts
 from .cache import answer_cache, embedding_cache, intent_cache, retrieval_cache
@@ -114,6 +119,7 @@ class AskRequest(BaseModel):
     question: str
     conversation_id: str | None = None
     top_k: int | None = None
+    default_language: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -124,6 +130,8 @@ class AskResponse(BaseModel):
     intent: str
     route: str
     intent_confidence: float
+    language: str
+    language_confidence: float
     retrieved_chunks: list[dict]
     input_tokens: int
     output_tokens: int
@@ -131,11 +139,14 @@ class AskResponse(BaseModel):
 
 @app.post("/v1/ask", response_model=AskResponse)
 async def ask(req: AskRequest):
+    persona_dict = req.ai_persona.model_dump() if req.ai_persona else None
     result = await route_and_answer(
         req.workspace_id,
         req.question,
         req.top_k,
         req.conversation_id,
+        req.default_language,
+        persona_dict,
     )
 
     return AskResponse(
@@ -146,9 +157,43 @@ async def ask(req: AskRequest):
         intent=result["intent"],
         route=result["route"],
         intent_confidence=result["intent_confidence"],
+        language=result.get("language", "fa"),
+        language_confidence=float(result.get("language_confidence", 0.5)),
         retrieved_chunks=result["retrieved_chunks"],
         input_tokens=result["input_tokens"],
         output_tokens=result["output_tokens"],
+    )
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_language: str
+    source_language: str | None = None
+
+
+class TranslateResponse(BaseModel):
+    text: str
+    model: str
+    target_language: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
+@app.post("/v1/translate", response_model=TranslateResponse)
+async def translate(req: TranslateRequest):
+    if not req.text.strip():
+        raise HTTPException(400, "text is required")
+    result = await translate_text(
+        req.text,
+        req.target_language,
+        source_lang=req.source_language,
+    )
+    return TranslateResponse(
+        text=result["text"],
+        model=result["model"],
+        target_language=result["target_lang"],
+        input_tokens=result.get("input_tokens", 0),
+        output_tokens=result.get("output_tokens", 0),
     )
 
 
@@ -189,6 +234,7 @@ class CopilotRequest(BaseModel):
     messages: list[CopilotMessage]
     contact_name: str | None = None
     conversation_id: str | None = None
+    ai_persona: AiPersonaPayload | None = None
 
 
 class CopilotSuggestion(BaseModel):
@@ -214,10 +260,12 @@ async def copilot(req: CopilotRequest):
                 "content": "مکالمه هنوز متنی ندارد. پیشنهاد شروع گفتگوی مودبانه به فارسی بده.",
             }
         ]
+    persona_dict = req.ai_persona.model_dump() if req.ai_persona else None
     result = await generate_copilot_suggestions(
         req.workspace_id,
         payload,
         req.contact_name,
+        persona_dict,
     )
     return CopilotResponse(
         suggestions=result["suggestions"],
@@ -239,10 +287,12 @@ async def copilot_stream(req: CopilotRequest):
         ]
 
     async def event_generator():
+        persona_dict = req.ai_persona.model_dump() if req.ai_persona else None
         async for event in stream_copilot_suggestions(
             req.workspace_id,
             payload,
             req.contact_name,
+            persona_dict,
         ):
             yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
@@ -254,6 +304,122 @@ async def copilot_stream(req: CopilotRequest):
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+# ── Auto-tagging ─────────────────────────────────────
+
+
+class TagRequest(BaseModel):
+	workspace_id: str
+	messages: list[CopilotMessage]
+	contact_name: str | None = None
+	conversation_id: str | None = None
+	existing_tags: list[str] = []
+
+
+class TagResponse(BaseModel):
+	tags: list[str]
+	model: str
+	input_tokens: int
+	output_tokens: int
+
+
+@app.post("/v1/tag", response_model=TagResponse)
+async def tag_conversation(req: TagRequest):
+	if not req.messages:
+		raise HTTPException(400, "messages is required")
+	payload = [m.model_dump() for m in req.messages]
+	result = await suggest_conversation_tags(
+		payload,
+		req.contact_name,
+		req.existing_tags,
+	)
+	return TagResponse(
+		tags=result["tags"],
+		model=result["model"],
+		input_tokens=result["input_tokens"],
+		output_tokens=result["output_tokens"],
+	)
+
+
+# ── Persona preview ──────────────────────────────────
+
+
+class PersonaPreviewRequest(BaseModel):
+    workspace_id: str
+    question: str
+    persona: AiPersonaPayload | None = None
+    default_language: str | None = None
+
+
+class PersonaPreviewResponse(BaseModel):
+    reply: str
+    language: str
+    model: str
+
+
+@app.post("/v1/persona/preview", response_model=PersonaPreviewResponse)
+async def persona_preview(req: PersonaPreviewRequest):
+    if not req.question.strip():
+        raise HTTPException(400, "question is required")
+    default_lang = normalize_lang(req.default_language, "fa")
+    lang, _ = detect_language(req.question, default_lang)
+    persona_dict = req.persona.model_dump() if req.persona else None
+    result = await generate_reply(
+        req.question.strip(),
+        [],
+        language=lang,
+        persona=persona_dict,
+        use_cache=False,
+    )
+    return PersonaPreviewResponse(
+        reply=result["reply"],
+        language=lang,
+        model=result["model"],
+    )
+
+
+# ── Handoff brief ────────────────────────────────────
+
+
+class HandoffContext(BaseModel):
+    channel: str | None = None
+    subject: str | None = None
+    tags: list[str] = []
+
+
+class HandoffBriefRequest(BaseModel):
+    workspace_id: str
+    messages: list[CopilotMessage]
+    contact_name: str | None = None
+    conversation_id: str | None = None
+    context: HandoffContext | None = None
+
+
+class HandoffBriefResponse(BaseModel):
+    summary: str
+    key_points: list[str]
+    suggested_reply: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+
+
+@app.post("/v1/handoff-brief", response_model=HandoffBriefResponse)
+async def handoff_brief(req: HandoffBriefRequest):
+    if not req.messages:
+        raise HTTPException(400, "messages is required")
+    payload = [m.model_dump() for m in req.messages]
+    ctx = req.context.model_dump() if req.context else {}
+    result = await generate_handoff_brief(payload, req.contact_name, ctx)
+    return HandoffBriefResponse(
+        summary=result["summary"],
+        key_points=result.get("key_points") or [],
+        suggested_reply=result["suggested_reply"],
+        model=result["model"],
+        input_tokens=result["input_tokens"],
+        output_tokens=result["output_tokens"],
     )
 
 

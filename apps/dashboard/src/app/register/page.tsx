@@ -1,5 +1,6 @@
 "use client";
 
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type AuthData, setAuth } from "@/lib/auth-store";
@@ -91,6 +92,8 @@ export default function RegisterPage() {
 				<Button type="submit" disabled={loading} className="mt-2">
 					{loading ? "لطفاً صبر کنید…" : "ثبت‌نام"}
 				</Button>
+
+				<GoogleSignInButton />
 
 				<p className="text-center text-sm text-muted-foreground">
 					حساب دارید؟{" "}

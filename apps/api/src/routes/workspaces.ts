@@ -13,6 +13,7 @@ import {
 } from "../lib/plan-limits.js";
 import { presenceCounts } from "../lib/presence.js";
 import { listOnlineVisitors } from "../lib/visitor-presence.js";
+import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -146,6 +147,15 @@ export async function workspaceRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Workspace not found.");
+			const user = (request as AuthenticatedRequest).user;
+			auditLogFromRequest(request, {
+				workspaceId: request.params.id,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.WORKSPACE_UPDATE,
+				targetType: "workspace",
+				targetId: request.params.id,
+				diff: updates,
+			});
 			return updated;
 		},
 	);

@@ -848,7 +848,7 @@ rule: &gt;
 
       <pre><code class="language-yaml">phase: 2
 backlog_prefix: FL
-range: FL-15 .. FL-53
+range: FL-15 .. FL-55
 status_enum: [not_started, planned, in_progress, blocked, done]
 agent_note: >
   Before implementing any FL-2x item, read sec-agent-context below.
@@ -929,12 +929,12 @@ agent_note: >
                 ویرایشگر drag-and-drop برای طراحی جریان مکالمه؛ نودهای: پیام/سوال/شرط/اقدام/انتقال به اپراتور؛
                 ذخیره در DB؛ اجرا توسط flow-engine
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جداول <code>flows</code>, <code>flow_nodes</code>, <code>flow_sessions</code>؛
-                <code>packages/flow-engine/</code>؛ UI: React Flow یا X6؛
-                صفحه <code>/flows</code> در داشبورد
+                <code>apps/api/src/lib/flow-engine/</code>؛ جداول <code>flows</code> + <code>flow_sessions</code>؛
+                <code>/v1/flows</code>؛ اجرا روی ویجت (<code>widget_start</code>)؛
+                صفحه <code>/flows</code> با React Flow
               </td>
             </tr>
             <tr>
@@ -944,12 +944,14 @@ agent_note: >
                 Rule engine: اگر [کلیدواژه/کانال/زبان/ساعت] → [تیم/اپراتور/بات]؛
                 اولویت‌بندی قوانین؛ round-robin assignment؛ UI مدیریت قوانین
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جدول <code>routing_rules</code>؛
-                <code>apps/api/src/routing/</code>؛
-                اجرا در hook <code>conversation:created</code>
+                جدول <code>routing_rules</code>؛
+                <code>apps/api/src/lib/routing/</code>؛
+                <code>/v1/routing-rules</code>؛
+                اجرا روی <code>conversation:new</code> و پیام contact؛
+                صفحه <code>/routing</code> — MVP: کانال، کلیدواژه، assign، round-robin، AI، اولویت
               </td>
             </tr>
             <tr>
@@ -960,12 +962,13 @@ agent_note: >
                 پیام خودکار خارج از ساعت کاری؛ holiday list؛
                 نمایش وضعیت در ویجت («آنلاین / خارج از ساعت کاری»)
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>settings.business_hours</code> (JSONB)؛
-                <code>packages/shared/src/business-hours.ts</code>؛
-                تب «ساعات کاری» در Settings
+                <code>settings.business_hours</code> در workspace؛
+                <code>apps/api/src/lib/business-hours.ts</code>؛
+                تب «ساعات کاری» در Settings؛ پیام غیبت + وضعیت در ویجت؛
+                AI/flow غیرفعال خارج از ساعت
               </td>
             </tr>
             <tr>
@@ -976,11 +979,13 @@ agent_note: >
                 هشدار نزدیک انقضا (رنگ قرمز/زرد)؛ گزارش SLA violations؛
                 per-plan priorities
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> فیلدهای <code>first_response_at</code>, <code>resolved_at</code> در conversations؛
-                <code>sla_policies</code> جدول جدید؛ cron job برای بررسی هر ۵ دقیقه
+                <code>first_response_at</code>، <code>resolved_at</code>؛ جدول <code>sla_policies</code>؛
+                <code>/v1/sla-policy</code>؛ <code>/v1/reports/sla-violations</code>؛
+                شمارش SLA در inbox؛ مانیتور هر ۵ دقیقه (<code>SLA_MONITOR_MS</code>)؛
+                تب SLA در Settings
               </td>
             </tr>
 
@@ -993,13 +998,12 @@ agent_note: >
                 ارسال نظرسنجی ⭐ (1-5) پس از بستن مکالمه؛ ذخیره امتیاز و کامنت؛
                 داشبورد میانگین CSAT per-agent و per-period؛ widget follow-up message
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جدول <code>csat_responses</code>؛
-                trigger در <code>conversation:resolved</code>؛
-                صفحه ویجت جداگانه برای بازخورد؛
-                API <code>POST /v1/csat/:token</code>
+                جدول <code>csat_responses</code>؛ ویجت ⭐ ۱–۵ پس از بستن مکالمه؛
+                <code>POST /widget/v1/csat</code> و <code>POST /v1/csat/:token</code>؛
+                گزارش <code>/v1/reports/csat-summary</code>؛ تب CSAT در Settings
               </td>
             </tr>
             <tr>
@@ -1009,13 +1013,14 @@ agent_note: >
                 آمار per-agent: تعداد مکالمه، زمان پاسخ میانگین، CSAT، رزولوشن rate؛
                 مقایسه تیمی؛ فیلتر بازه زمانی؛ export CSV/Excel
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> view ماتریالایز در Postgres؛
-                <code>GET /v1/reports/agents</code>؛
+                <strong>Agent:</strong> materialized view
+                <code>agent_performance_daily</code>؛
+                <code>GET /v1/reports/agents</code> + CSV export؛
                 صفحه <code>/reports/agents</code>؛
-                cron refresh هر ساعت
+                cron refresh ساعتی
               </td>
             </tr>
             <tr>
@@ -1025,11 +1030,11 @@ agent_note: >
                 نمودار مکالمات over time؛ heatmap ساعت‌های اوج؛ کانال distribution؛
                 تگ‌های پرکاربرد؛ funnel ورود→رزولوشن؛ export PDF/Excel
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>GET /v1/reports/overview</code>؛
-                Chart.js یا Recharts در داشبورد؛
+                <strong>Agent:</strong> <code>GET /v1/reports/overview</code> + CSV؛
+                Recharts + heatmap؛
                 صفحه <code>/reports/overview</code>
               </td>
             </tr>
@@ -1043,12 +1048,13 @@ agent_note: >
                 پس از بستن مکالمه، AI موضوع را استخراج می‌کند و تگ مناسب پیشنهاد/اعمال می‌کند؛
                 مدل قابل fine-tune؛ قابل override توسط اپراتور
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> endpoint جدید <code>POST /v1/ai/tag</code> در ai-service؛
-                hook در <code>conversation:resolved</code>؛
-                ذخیره در <code>conversation_tags</code>
+                <strong>Agent:</strong> <code>POST /v1/tag</code> در ai-service؛
+                <code>POST /v1/ai/tag</code> در API؛
+                hook پس از resolved/closed؛
+                تب هوش مصنوعی در Settings؛ پیشنهاد تگ در toolbar
               </td>
             </tr>
             <tr>
@@ -1059,12 +1065,13 @@ agent_note: >
                 ترجمه خودکار KB برای زبان‌های مختلف؛
                 تنظیم زبان پیش‌فرض per-workspace
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>langdetect</code> در ai-service؛
-                فیلد <code>language</code> در ai_interactions؛
-                prompt template چندزبانه در <code>ai-service/prompts/</code>
+                <strong>Agent:</strong> <code>langdetect</code> + heuristic؛
+                <code>language</code> در ai_interactions (migration 0013)؛
+                <code>ai-service/prompts/</code> (fa/en/ar)؛
+                <code>POST /v1/translate</code>؛ تنظیم زبان در تب هوش مصنوعی
               </td>
             </tr>
             <tr>
@@ -1074,12 +1081,14 @@ agent_note: >
                 تعریف نام، لحن (رسمی/دوستانه/فنی)، دستورالعمل سیستمی سفارشی؛
                 per-workspace persona؛ preview در داشبورد
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td>انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> فیلد <code>ai_persona</code> (JSONB) در جدول workspaces؛
-                inject در system prompt هنگام LLM call؛
-                تب «تنظیمات AI» در Settings
+                <strong>Agent:</strong> ستون <code>ai_persona</code> (migration 0014)؛
+                inject در RAG/copilot؛
+                <code>GET/PATCH /v1/ai-persona</code>؛
+                <code>POST /v1/ai/persona/preview</code>؛
+                تب هوش مصنوعی در Settings
               </td>
             </tr>
             <tr>
@@ -1089,12 +1098,15 @@ agent_note: >
                 هنگام escalation به اپراتور، AI خلاصه مکالمه + context + پیشنهاد پاسخ را
                 به اپراتور نشان می‌دهد؛ اپراتور را سریع‌تر آماده می‌کند
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> event <code>conversation:needs_human</code>؛
-                call به <code>POST /v1/ai/summarize</code>؛
-                نمایش در پنل جانبی inbox هنگام assign
+                <strong>Agent:</strong>
+                <code>POST /v1/handoff-brief</code> (ai-service)؛
+                <code>GET/POST /v1/conversations/:id/handoff-brief</code>؛
+                trigger روی AI handoff و flow handoff؛
+                event <code>conv:handoff_brief</code>؛
+                پنل <code>HandoffBriefPanel</code> در inbox + «استفاده در پاسخ»
               </td>
             </tr>
 
@@ -1108,11 +1120,13 @@ agent_note: >
                 dynamic segments (به‌روزرسانی خودکار)؛
                 استفاده در routing rules و کمپین
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جدول <code>contact_segments</code>؛
-                query builder در <code>packages/shared/src/segments.ts</code>؛
+                <strong>Agent:</strong> migration <code>0015_contact_segments</code>؛
+                <code>@chatbox/shared</code> + <code>parseSegmentFilters</code>؛
+                <code>GET/POST/PATCH/DELETE /v1/contact-segments</code> + preview؛
+                <code>segment_id</code> در routing؛
                 صفحه <code>/contacts/segments</code>
               </td>
             </tr>
@@ -1124,12 +1138,12 @@ agent_note: >
                 فیلتر بر اساس کانال و بازه زمانی؛
                 نمایش در صفحه contact detail
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
                 <strong>Agent:</strong> <code>GET /v1/contacts/:id/timeline</code>؛
-                aggregate از conversations + messages + notes؛
-                صفحه <code>/contacts/:id</code>
+                aggregate از conversations + messages + notes + tags؛
+                صفحات <code>/contacts</code> و <code>/contacts/:id</code> با فیلتر کانال/تاریخ
               </td>
             </tr>
             <tr>
@@ -1139,12 +1153,12 @@ agent_note: >
                 انتخاب چند contact → تگ‌گذاری دسته‌ای، export، ban، merge duplicates؛
                 import CSV مخاطبان جدید
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>POST /v1/contacts/bulk</code>؛
-                <code>POST /v1/contacts/import</code> (CSV parse با papaparse)؛
-                UI checkbox multi-select در <code>/contacts</code>
+                <strong>Agent:</strong> <code>POST /v1/contacts/bulk</code> (تگ، ban، unban، merge)؛
+                <code>POST /v1/contacts/export</code> + <code>POST /v1/contacts/import</code>؛
+                papaparse در داشبورد؛ checkbox multi-select در <code>/contacts</code>
               </td>
             </tr>
 
@@ -1157,13 +1171,14 @@ agent_note: >
                 Service Worker + Web Push API؛ اعلان مکالمه جدید / پیام جدید برای اپراتور آفلاین؛
                 کانفیگ VAPID keys؛ تنظیمات دریافت اعلان per-user
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
                 <strong>Agent:</strong> <code>apps/dashboard/public/sw.js</code>؛
-                <code>web-push</code> npm package؛
-                جدول <code>push_subscriptions</code>؛
-                تنظیمات در پروفایل کاربر
+                <code>web-push</code> + VAPID env؛
+                جدول <code>push_subscriptions</code> + <code>notification_preferences</code>؛
+                <code>GET/PATCH /v1/notification-preferences</code>؛
+                تب «اعلان‌ها» در Settings
               </td>
             </tr>
             <tr>
@@ -1173,11 +1188,14 @@ agent_note: >
                 ارسال ایمیل برای: مکالمه جدید، assign به اپراتور، mention در یادداشت؛
                 قالب HTML RTL؛ unsubscribe link؛ کانفیگ SMTP per-workspace
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>packages/mailer/</code> (nodemailer + React Email)؛
-                queue با BullMQ؛ جدول <code>notification_preferences</code>
+                <strong>Agent:</strong> <code>@chatbox/mailer</code> + قالب RTL؛
+                BullMQ <code>email-notifications</code>؛
+                SMTP ورک‌اسپیس یا <code>NOTIFICATION_SMTP_*</code>؛
+                <code>GET /v1/notifications/unsubscribe</code>؛
+                تنظیمات ایمیل در تب اعلان‌ها
               </td>
             </tr>
             <tr>
@@ -1187,13 +1205,49 @@ agent_note: >
                 ارسال رویدادها (مکالمه جدید / پیام / رزولوشن) به URL خارجی (Zapier/Make/سیستم‌های سفارشی)؛
                 retry logic؛ log وضعیت؛ امضای HMAC
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جدول <code>webhook_endpoints</code>؛
-                <code>apps/api/src/webhooks/dispatcher.ts</code>؛
-                HMAC-SHA256 signature header؛
-                retry با exponential backoff (BullMQ)
+                <strong>Agent:</strong> migration <code>0017_webhook_endpoints</code>؛
+                <code>apps/api/src/lib/webhooks/</code> (dispatcher، HMAC، BullMQ)؛
+                <code>GET/POST/PATCH/DELETE /v1/webhook-endpoints</code>؛
+                صفحه <code>/webhooks</code> + لاگ تحویل
+              </td>
+            </tr>
+            <tr>
+              <td>FL-54</td>
+              <td>صدای اعلان پیام جدید</td>
+              <td>
+                پخش صدای کوتاه هنگام دریافت پیام جدید (realtime)؛
+                هم در <strong>ویجت</strong> (بازدیدکننده/مشتری) و هم در <strong>داشبورد اپراتور</strong>؛
+                فقط وقتی تب فعال است یا طبق تنظیم کاربر؛
+                امکان خاموش/روشن و انتخاب صدا در تنظیمات
+              </td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
+              <td>
+                <strong>Agent:</strong> <code>@chatbox/shared/notification-sound</code> (Web Audio)؛
+                <code>Inbox.tsx</code> روی <code>message:new</code>؛
+                ویجت: localStorage + منوی 🔔؛
+                <code>notification_preferences.sound_*</code> در تب اعلان‌ها
+              </td>
+            </tr>
+            <tr>
+              <td>FL-55</td>
+              <td>اعلان مرورگر (Chrome و سایر مرورگرها)</td>
+              <td>
+                استفاده از <strong>Web Notifications API</strong> برای نمایش اعلان دسکتاپ/موبایل
+                هنگام پیام یا مکالمه جدید (وقتی تب در پس‌زمینه یا بسته است)؛
+                درخواست مجوز <code>Notification.requestPermission()</code>؛
+                پشتیبانی Chrome، Edge، Firefox (با محدودیت‌های هر مرورگر)
+              </td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
+              <td>
+                <strong>Agent:</strong> <code>browser-notifications.ts</code> + <code>Inbox</code>؛
+                <code>browser_*</code> در notification_preferences؛
+                تب پس‌زمینه (<code>visibilityState</code>)؛
+                ویجت: اعلان پاسخ اپراتور در منوی 🔔
               </td>
             </tr>
 
@@ -1207,12 +1261,13 @@ agent_note: >
                 پشتیبانی از Google Workspace domain restriction؛
                 ترکیب با JWT موجود
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> <code>passport-google-oauth20</code>؛
+                <strong>Agent:</strong> migration <code>0018_google_oauth</code>؛
                 <code>GET /v1/auth/google</code> + callback؛
-                فیلد <code>oauth_provider</code> در جدول users
+                <code>oauth_provider</code> / <code>oauth_provider_id</code>؛
+                <code>GOOGLE_OAUTH_*</code> env؛ دکمه ورود در login/register
               </td>
             </tr>
             <tr>
@@ -1222,13 +1277,13 @@ agent_note: >
                 ثبت تمام اقدامات حساس: login، تغییر تنظیمات، دسترسی داده، export؛
                 قابل جستجو و فیلتر؛ export برای بازرسی؛ نگهداری ۱ سال
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
-                <strong>Agent:</strong> جدول <code>audit_logs</code> (actor, action, resource, ip, timestamp)؛
-                middleware <code>auditLog()</code>؛
-                <code>GET /v1/audit-logs</code> (فقط owner/admin)؛
-                صفحه <code>/settings/audit</code>
+                <strong>Agent:</strong> migration <code>0019_audit_logs</code>؛
+                <code>writeAuditLog</code> + hooks (auth، export، security، API token)؛
+                <code>GET /v1/audit-logs</code> + export CSV؛
+                <code>/settings/audit</code>
               </td>
             </tr>
             <tr>
@@ -1239,12 +1294,13 @@ agent_note: >
                 کانفیگ per-workspace؛
                 هشدار email هنگام login از IP مشکوک
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
                 <strong>Agent:</strong> <code>settings.security.dashboard_ip_whitelist</code>؛
-                middleware قبل از <code>requireAuth</code>؛
-                مکمل FL-14 (IP ban)
+                بررسی در <code>requireWorkspace</code>؛
+                <code>GET/PUT /v1/security/dashboard-ip-whitelist</code>؛
+                ایمیل به owner/admin هنگام ورود از IP غیرمجاز
               </td>
             </tr>
             <tr>
@@ -1254,12 +1310,13 @@ agent_note: >
                 TOTP (Google Authenticator/Authy)؛ QR code setup؛
                 recovery codes؛ enforce 2FA per-workspace (توسط owner)
               </td>
-              <td>شروع نشده</td>
-              <td>—</td>
+              <td class="done">انجام شد</td>
+              <td>2026-05-16</td>
               <td>
                 <strong>Agent:</strong> <code>otplib</code> + <code>qrcode</code>؛
-                فیلد <code>totp_secret</code> در users؛
-                <code>POST /v1/auth/2fa/setup|verify|disable</code>
+                <code>POST /v1/auth/2fa/setup|verify|disable</code>؛
+                <code>POST /v1/auth/login/2fa</code>؛
+                <code>settings.security.require_2fa</code> (owner)
               </td>
             </tr>
 
@@ -1738,6 +1795,8 @@ socket.on('resource:event', (data) => { /* update state */ })
     - FL-20   # ساعات کاری — پایه هر کسب‌وکار
     - FL-22   # CSAT — بازخورد کاربر، ضروری برای رشد
     - FL-32   # Push notifications — نگه داشتن اپراتور آگاه
+    - FL-54   # صدای پیام جدید — ویجت + داشبورد (درخواست کاربر)
+    - FL-55   # اعلان مرورگر Chrome/… — Notification API (درخواست کاربر)
     - FL-33   # Email notifications
     - FL-34   # Webhook outbound — اتصال به ابزارهای دیگر
 
@@ -1761,6 +1820,8 @@ socket.on('resource:event', (data) => { /* update state */ })
 
 dependencies:
   FL-32 → FL-39  # PWA نیاز به service worker دارد
+  FL-55 → FL-32  # Web Push کامل اختیاری بعد از Notification API ساده
+  FL-54 → —      # صدا مستقل؛ می‌توان قبل از FL-55 پیاده کرد
   FL-22 → FL-21  # SLA نیاز به ساعات کاری دارد
   FL-29 → FL-31  # bulk actions نیاز به segments دارد
   FL-34 → FL-42  # marketplace بر Webhook بنا می‌شود

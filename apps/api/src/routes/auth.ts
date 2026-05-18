@@ -1,13 +1,13 @@
 import { and, eq, gt } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
-import { randomBytes } from "node:crypto";
 import { db } from "../db/index.js";
+import { sessions, users } from "../db/schema/index.js";
 import {
-	sessions,
-	users,
-	workspaceMembers,
-	workspaces,
-} from "../db/schema/index.js";
+	createAuthSession,
+	ensureDemoWorkspaceMembership,
+	loadUserWorkspaces,
+} from "../lib/auth-sessions.js";
+import { maybeRequire2faForLogin } from "./two-factor.js";
 import {
 	type AuthenticatedRequest,
 	type RefreshTokenPayload,
@@ -20,6 +20,8 @@ import {
 	verifyToken,
 } from "../lib/auth.js";
 import { ApiError, validationError } from "../lib/errors.js";
+import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
+import { isTotpEnabled } from "../lib/two-factor.js";
 import { saveUserAvatar } from "../lib/user-avatar.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -62,8 +64,6 @@ async function readUploadBuffer(
 		buffer: Buffer.concat(chunks),
 	};
 }
-const REFRESH_DAYS = 7;
-
 export async function authRoutes(app: FastifyInstance) {
 	app.post<{
 		Body: { email: string; password: string; fullName?: string };
@@ -96,7 +96,7 @@ export async function authRoutes(app: FastifyInstance) {
 			.returning({ id: users.id, email: users.email });
 
 		const accessToken = await signAccessToken(user.id, user.email!);
-		const { refreshToken, sessionId } = await createSession(
+		const { refreshToken, sessionId } = await createAuthSession(
 			user.id,
 			request.headers["user-agent"],
 			request.ip,
@@ -132,6 +132,7 @@ export async function authRoutes(app: FastifyInstance) {
 				email: users.email,
 				passwordHash: users.passwordHash,
 				fullName: users.fullName,
+				totpSecret: users.totpSecret,
 			})
 			.from(users)
 			.where(eq(users.email, email.toLowerCase()))
@@ -143,34 +144,21 @@ export async function authRoutes(app: FastifyInstance) {
 		const valid = await comparePassword(password, user.passwordHash);
 		if (!valid) throw unauthorized("Invalid email or password.");
 
-		await db
-			.update(users)
-			.set({ lastLoginAt: new Date() })
-			.where(eq(users.id, user.id));
-
-		const accessToken = await signAccessToken(user.id, user.email!);
-		const { refreshToken, sessionId } = await createSession(
-			user.id,
-			request.headers["user-agent"],
-			request.ip,
-		);
-
-		const memberships = await ensureDemoWorkspaceMembership(user.id);
-
-		return reply.send({
-			access_token: accessToken,
-			refresh_token: refreshToken,
-			session_id: sessionId,
-			user: {
-				id: user.id,
-				email: user.email,
-				full_name: user.fullName,
-				workspaces: memberships.map((m) => ({
-					id: m.workspaceId,
-					role: m.role,
-				})),
-			},
+		const loginStep = await maybeRequire2faForLogin(request, {
+			id: user.id,
+			email: user.email!,
+			fullName: user.fullName,
+			totpSecret: user.totpSecret,
 		});
+
+		if (loginStep.requires_2fa) {
+			return reply.send({
+				requires_2fa: true,
+				pending_token: loginStep.pending_token,
+			});
+		}
+
+		return reply.send(loginStep.result);
 	});
 
 	app.post<{
@@ -209,16 +197,15 @@ export async function authRoutes(app: FastifyInstance) {
 
 		if (!user) throw unauthorized("User not found.");
 
-		const newRefresh = randomBytes(48).toString("base64url");
-		const newExpires = new Date(Date.now() + REFRESH_DAYS * 86400_000);
+		const newExpires = new Date(Date.now() + 7 * 86400_000);
+		const refreshToken = await signRefreshToken(user.id, session.id);
 
 		await db
 			.update(sessions)
-			.set({ refreshToken: newRefresh, expiresAt: newExpires })
+			.set({ refreshToken, expiresAt: newExpires })
 			.where(eq(sessions.id, session.id));
 
 		const accessToken = await signAccessToken(user.id, user.email!);
-		const refreshToken = await signRefreshToken(user.id, session.id);
 
 		return reply.send({
 			access_token: accessToken,
@@ -243,6 +230,17 @@ export async function authRoutes(app: FastifyInstance) {
 				await db.delete(sessions).where(eq(sessions.userId, userId));
 			}
 
+			auditLogFromRequest(request, {
+				workspaceId:
+					typeof request.headers["x-workspace-id"] === "string"
+						? request.headers["x-workspace-id"]
+						: null,
+				actorUserId: userId,
+				action: AUDIT_ACTIONS.AUTH_LOGOUT,
+				targetType: "user",
+				targetId: userId,
+			});
+
 			return reply.send({ ok: true });
 		},
 	);
@@ -261,6 +259,7 @@ export async function authRoutes(app: FastifyInstance) {
 					avatarUrl: users.avatarUrl,
 					locale: users.locale,
 					createdAt: users.createdAt,
+					totpSecret: users.totpSecret,
 				})
 				.from(users)
 				.where(eq(users.id, id))
@@ -271,7 +270,10 @@ export async function authRoutes(app: FastifyInstance) {
 			const memberships = await ensureDemoWorkspaceMembership(id);
 
 			return reply.send({
-				user: serializeAuthUser(user, memberships),
+				user: {
+					...serializeAuthUser(user, memberships),
+					two_factor_enabled: isTotpEnabled(user.totpSecret),
+				},
 			});
 		},
 	);
@@ -411,59 +413,3 @@ export async function authRoutes(app: FastifyInstance) {
 	);
 }
 
-async function loadUserWorkspaces(userId: string) {
-	return db
-		.select({
-			workspaceId: workspaceMembers.workspaceId,
-			role: workspaceMembers.role,
-		})
-		.from(workspaceMembers)
-		.where(eq(workspaceMembers.userId, userId));
-}
-
-/** Ensures dev users can access the demo workspace inbox. */
-async function ensureDemoWorkspaceMembership(userId: string) {
-	let memberships = await loadUserWorkspaces(userId);
-	if (memberships.length > 0) return memberships;
-
-	const demo = await db.query.workspaces.findFirst({
-		where: eq(workspaces.slug, "demo"),
-	});
-	if (!demo) return memberships;
-
-	await db
-		.insert(workspaceMembers)
-		.values({
-			workspaceId: demo.id,
-			userId,
-			role: "agent",
-			status: "active",
-			joinedAt: new Date(),
-		})
-		.onConflictDoNothing();
-
-	memberships = await loadUserWorkspaces(userId);
-	return memberships;
-}
-
-async function createSession(
-	userId: string,
-	userAgent?: string,
-	ip?: string,
-): Promise<{ refreshToken: string; sessionId: string }> {
-	const refreshToken = randomBytes(48).toString("base64url");
-	const expiresAt = new Date(Date.now() + REFRESH_DAYS * 86400_000);
-
-	const [session] = await db
-		.insert(sessions)
-		.values({
-			userId,
-			refreshToken,
-			userAgent: userAgent ?? null,
-			ipAddress: ip ?? null,
-			expiresAt,
-		})
-		.returning({ id: sessions.id });
-
-	return { refreshToken, sessionId: session.id };
-}

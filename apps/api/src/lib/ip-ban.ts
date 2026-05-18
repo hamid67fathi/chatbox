@@ -7,6 +7,52 @@ const IPV4 =
 	/^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
 
 
+export function parseDashboardIpWhitelist(settings: unknown): string[] {
+	if (!settings || typeof settings !== "object") return [];
+	const security = (settings as { security?: unknown }).security;
+	if (!security || typeof security !== "object") return [];
+	const raw =
+		(security as { dashboard_ip_whitelist?: unknown }).dashboard_ip_whitelist ??
+		(security as { dashboardIpWhitelist?: unknown }).dashboardIpWhitelist;
+	if (!Array.isArray(raw)) return [];
+	const out: string[] = [];
+	for (const item of raw) {
+		if (typeof item !== "string") continue;
+		const normalized = normalizeBanRule(item);
+		if (normalized) out.push(normalized);
+	}
+	return [...new Set(out)];
+}
+
+export function isIpAllowedByRules(
+	ip: string | null | undefined,
+	rules: string[],
+): boolean {
+	if (rules.length === 0) return true;
+	if (!ip) return false;
+	return isIpBanned(ip.trim(), rules);
+}
+
+export function mergeDashboardIpWhitelist(
+	settings: unknown,
+	ips: string[],
+): Record<string, unknown> {
+	const base =
+		settings && typeof settings === "object"
+			? { ...(settings as Record<string, unknown>) }
+			: {};
+	const security =
+		base.security && typeof base.security === "object"
+			? { ...(base.security as Record<string, unknown>) }
+			: {};
+	const normalized = ips
+		.map((ip) => normalizeBanRule(ip))
+		.filter((ip): ip is string => Boolean(ip));
+	security.dashboard_ip_whitelist = [...new Set(normalized)];
+	base.security = security;
+	return base;
+}
+
 export function parseBannedIps(settings: unknown): string[] {
 	if (!settings || typeof settings !== "object") return [];
 	const security = (settings as { security?: unknown }).security;

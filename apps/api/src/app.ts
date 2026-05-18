@@ -14,7 +14,11 @@ import { errorHandler } from "./lib/errors.js";
 import { getWidgetBundleJs } from "./lib/widget-bundle.js";
 import { UPLOAD_ROOT } from "./lib/uploads.js";
 import { authRoutes } from "./routes/auth.js";
+import { googleAuthRoutes } from "./routes/google-auth.js";
+import { twoFactorRoutes } from "./routes/two-factor.js";
+import { auditLogRoutes } from "./routes/audit-logs.js";
 import { billingPublicRoutes } from "./routes/billing-public.js";
+import { csatReportRoutes, publicCsatRoutes } from "./routes/csat.js";
 import { billingRoutes } from "./routes/billing.js";
 import { contactRoutes } from "./routes/contacts.js";
 import { cannedResponseRoutes } from "./routes/canned-responses.js";
@@ -33,6 +37,15 @@ import {
 	integrationsProtectedRoutes,
 	integrationsRoutes,
 } from "./routes/integrations.js";
+import { flowRoutes } from "./routes/flows.js";
+import { routingRuleRoutes } from "./routes/routing-rules.js";
+import { contactSegmentRoutes } from "./routes/contact-segments.js";
+import { pushRoutes } from "./routes/push.js";
+import { notificationRoutes } from "./routes/notifications.js";
+import { webhookEndpointRoutes } from "./routes/webhook-endpoints.js";
+import { aiPersonaRoutes } from "./routes/ai-persona.js";
+import { aiTagRoutes } from "./routes/ai-tag.js";
+import { slaPolicyRoutes } from "./routes/sla-policy.js";
 
 export function buildApp() {
 	const app = Fastify({ logger: false, trustProxy: true });
@@ -126,9 +139,13 @@ export function buildApp() {
 	});
 
 	app.register(authRoutes);
+	app.register(twoFactorRoutes);
+	app.register(googleAuthRoutes);
 	app.register(widgetRoutes);
 	app.register(integrationsRoutes);
 	app.register(billingPublicRoutes);
+	app.register(publicCsatRoutes);
+	app.register(notificationRoutes);
 
 	app.register(async function protectedRoutes(instance) {
 		instance.addHook("onRequest", requireAuth);
@@ -145,8 +162,18 @@ export function buildApp() {
 		instance.register(billingRoutes);
 		instance.register(apiTokenRoutes);
 		instance.register(reportRoutes);
+		instance.register(csatReportRoutes);
 		instance.register(securityRoutes);
 		instance.register(integrationsProtectedRoutes);
+		instance.register(flowRoutes);
+		instance.register(routingRuleRoutes);
+		instance.register(contactSegmentRoutes);
+		instance.register(pushRoutes);
+		instance.register(webhookEndpointRoutes);
+		instance.register(slaPolicyRoutes);
+		instance.register(aiTagRoutes);
+		instance.register(aiPersonaRoutes);
+		instance.register(auditLogRoutes);
 	});
 
 	return app;

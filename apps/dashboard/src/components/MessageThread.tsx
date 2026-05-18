@@ -33,6 +33,8 @@ interface Props {
 	conversationId: string;
 	userId?: string;
 	contactName?: string | null;
+	suggestedReply?: string | null;
+	onSuggestedReplyApplied?: () => void;
 }
 
 function upsertMessage(prev: Message[], msg: Message): Message[] {
@@ -50,6 +52,8 @@ export function MessageThread({
 	conversationId,
 	userId,
 	contactName,
+	suggestedReply,
+	onSuggestedReplyApplied,
 }: Props) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [text, setText] = useState("");
@@ -67,6 +71,13 @@ export function MessageThread({
 	const [membersById, setMembersById] = useState<
 		Map<string, WorkspaceMember>
 	>(new Map());
+
+	useEffect(() => {
+		if (suggestedReply?.trim()) {
+			setText(suggestedReply);
+			onSuggestedReplyApplied?.();
+		}
+	}, [suggestedReply, onSuggestedReplyApplied]);
 
 	const markAsRead = useCallback(
 		(messageId: string) => {

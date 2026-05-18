@@ -1,0 +1,38 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+.idea
+
+# Dependencies and build artifacts (rebuilt in image)
+**/node_modules
+**/.next
+**/dist
+**/out
+**/.turbo
+
+# Python
+**/.venv
+**/__pycache__
+**/*.pyc
+
+# Local data and secrets
+.env
+.env.*
+!.env.example
+**/uploads
+apps/api/uploads
+
+# Docs and misc (not needed for app images)
+docs
+*.md
+!apps/**/README.md
+livechat-saas-*.html
+agent-transcripts
+
+# Test / dev only
+**/*.test.ts
+**/__tests__
+**/eval
+apps/widget/demo.html

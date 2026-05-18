@@ -12,6 +12,8 @@ interface AskResponse {
 	intent?: string;
 	route?: string;
 	intent_confidence?: number;
+	language?: string;
+	language_confidence?: number;
 	retrieved_chunks: Array<{ chunk_id: string; score: number }>;
 	input_tokens: number;
 	output_tokens: number;
@@ -27,6 +29,8 @@ export async function askAI(
 	workspaceId: string,
 	question: string,
 	conversationId?: string,
+	defaultLanguage?: string,
+	aiPersona?: Record<string, unknown> | null,
 ): Promise<AskResponse | null> {
 	try {
 		await assertAiBudgetAllowed(workspaceId);
@@ -54,6 +58,8 @@ export async function askAI(
 				workspace_id: workspaceId,
 				question,
 				conversation_id: conversationId,
+				default_language: defaultLanguage,
+				ai_persona: aiPersona ?? undefined,
 			}),
 			signal: controller.signal,
 		});

@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from .config import settings
+from .persona import merge_system_prompt
 from .pii import redact
 from .retriever import retrieve_chunks
 
@@ -84,6 +85,7 @@ async def generate_copilot_suggestions(
     workspace_id: str,
     messages: list[dict[str, str]],
     contact_name: str | None = None,
+    ai_persona: dict | None = None,
 ) -> dict[str, Any]:
     transcript = _format_transcript(messages, contact_name)
     visitor_msg = _last_visitor_text(messages)
@@ -126,10 +128,11 @@ async def generate_copilot_suggestions(
         user_prompt += f"نکته از پایگاه دانش:\n{redact(kb_hint)}\n\n"
     user_prompt += "سه پیشنهاد پاسخ اپراتور را بنویس."
 
+    system_prompt = merge_system_prompt(COPILOT_SYSTEM, ai_persona, "fa")
     response = client.chat.completions.create(
         model=settings.openai_chat_model,
         messages=[
-            {"role": "system", "content": COPILOT_SYSTEM},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.6,
@@ -185,9 +188,12 @@ async def stream_copilot_suggestions(
     workspace_id: str,
     messages: list[dict[str, str]],
     contact_name: str | None = None,
+    ai_persona: dict | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
     """Yield SSE-ready events one suggestion at a time."""
-    result = await generate_copilot_suggestions(workspace_id, messages, contact_name)
+    result = await generate_copilot_suggestions(
+        workspace_id, messages, contact_name, ai_persona
+    )
     yield {"type": "meta", "model": result["model"]}
     for i, s in enumerate(result["suggestions"]):
         yield {

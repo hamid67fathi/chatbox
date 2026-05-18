@@ -3,6 +3,8 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../db/index.js";
 import { workspaceMembers } from "../db/schema/index.js";
 import type { AuthenticatedRequest } from "./auth.js";
+import { assertDashboardIpAllowed, clientIpFromRequest } from "./dashboard-ip-access.js";
+import { assertUser2faForWorkspace } from "./workspace-2fa-policy.js";
 import { forbidden, unauthorized } from "./auth.js";
 
 type Role = "owner" | "admin" | "agent" | "viewer";
@@ -85,5 +87,8 @@ export function requireWorkspace(minRole: Role = "viewer") {
 			id: wsId,
 			role: membership.role as Role,
 		};
+
+		await assertDashboardIpAllowed(wsId, clientIpFromRequest(request));
+		await assertUser2faForWorkspace(userId, wsId);
 	};
 }

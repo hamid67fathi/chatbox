@@ -18,8 +18,19 @@ import {
 	buildConversationReportConditions,
 	type ReportQueryParams,
 } from "../lib/conversation-report-filters.js";
+import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
 import { validationError } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
+import {
+	agentPerformanceToCsv,
+	getAgentPerformanceReport,
+} from "../lib/agent-performance/index.js";
+import {
+	getReportsOverview,
+	reportsOverviewToCsv,
+} from "../lib/reports/overview.js";
+import { getAgentPerformanceLastRefresh } from "../lib/agent-performance/refresh.js";
+import { listSlaViolations } from "../lib/sla/index.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 
 const MAX_PAGE = 100;
@@ -264,6 +275,14 @@ export async function reportRoutes(app: FastifyInstance) {
 			const fromSlug = request.query.from.slice(0, 10);
 			const toSlug = request.query.to.slice(0, 10);
 
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.EXPORT_CONVERSATIONS,
+				targetType: "report",
+				diff: { from: fromSlug, to: toSlug, rows: rows.length },
+			});
+
 			return reply
 				.header("Content-Type", "text/csv; charset=utf-8")
 				.header(
@@ -272,6 +291,161 @@ export async function reportRoutes(app: FastifyInstance) {
 				)
 				.header("X-Export-Truncated", truncated ? "true" : "false")
 				.header("X-Export-Total", String(total))
+				.send(csv);
+		},
+	);
+
+	app.get<{
+		Querystring: { from?: string; to?: string; limit?: string };
+	}>(
+		"/v1/reports/sla-violations",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const fromRaw = request.query.from;
+			const toRaw = request.query.to;
+			if (!fromRaw || !toRaw) {
+				throw validationError("from and to are required.", "from");
+			}
+			const from = new Date(fromRaw);
+			const to = new Date(toRaw);
+			if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+				throw validationError("Invalid date range.", "from");
+			}
+			const limit = Math.min(Number(request.query.limit) || 100, 500);
+			const data = await listSlaViolations(wsId, from, to, limit);
+			return { data, total: data.length };
+		},
+	);
+
+	app.get<{
+		Querystring: { from?: string; to?: string };
+	}>(
+		"/v1/reports/agents",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const fromRaw = request.query.from;
+			const toRaw = request.query.to;
+			if (!fromRaw || !toRaw) {
+				throw validationError("from and to are required.", "from");
+			}
+			const from = new Date(fromRaw);
+			const to = new Date(toRaw);
+			if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+				throw validationError("Invalid date range.", "from");
+			}
+			const data = await getAgentPerformanceReport(wsId, from, to, {
+				refreshedAt: getAgentPerformanceLastRefresh(),
+			});
+			return { data };
+		},
+	);
+
+	app.get<{
+		Querystring: { from?: string; to?: string; format?: string };
+	}>(
+		"/v1/reports/agents/export",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request, reply) => {
+			const format = request.query.format ?? "csv";
+			if (format !== "csv") {
+				throw validationError('Only format=csv is supported.', "format");
+			}
+			const wsId = getWorkspaceId(request);
+			const fromRaw = request.query.from;
+			const toRaw = request.query.to;
+			if (!fromRaw || !toRaw) {
+				throw validationError("from and to are required.", "from");
+			}
+			const from = new Date(fromRaw);
+			const to = new Date(toRaw);
+			if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+				throw validationError("Invalid date range.", "from");
+			}
+			const report = await getAgentPerformanceReport(wsId, from, to);
+			const csv = agentPerformanceToCsv(report.agents);
+			const fromSlug = fromRaw.slice(0, 10);
+			const toSlug = toRaw.slice(0, 10);
+			const user = (request as AuthenticatedRequest).user;
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.EXPORT_AGENTS,
+				targetType: "report",
+				diff: { from: fromSlug, to: toSlug },
+			});
+			return reply
+				.header("Content-Type", "text/csv; charset=utf-8")
+				.header(
+					"Content-Disposition",
+					`attachment; filename="chatbox-agents-${fromSlug}_${toSlug}.csv"`,
+				)
+				.send(csv);
+		},
+	);
+
+	app.get<{
+		Querystring: { from?: string; to?: string };
+	}>(
+		"/v1/reports/overview",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const fromRaw = request.query.from;
+			const toRaw = request.query.to;
+			if (!fromRaw || !toRaw) {
+				throw validationError("from and to are required.", "from");
+			}
+			const from = new Date(fromRaw);
+			const to = new Date(toRaw);
+			if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+				throw validationError("Invalid date range.", "from");
+			}
+			const data = await getReportsOverview(wsId, from, to);
+			return { data };
+		},
+	);
+
+	app.get<{
+		Querystring: { from?: string; to?: string; format?: string };
+	}>(
+		"/v1/reports/overview/export",
+		{ preHandler: [requireWorkspace("viewer")] },
+		async (request, reply) => {
+			const format = request.query.format ?? "csv";
+			if (format !== "csv") {
+				throw validationError('Only format=csv is supported.', "format");
+			}
+			const wsId = getWorkspaceId(request);
+			const fromRaw = request.query.from;
+			const toRaw = request.query.to;
+			if (!fromRaw || !toRaw) {
+				throw validationError("from and to are required.", "from");
+			}
+			const from = new Date(fromRaw);
+			const to = new Date(toRaw);
+			if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+				throw validationError("Invalid date range.", "from");
+			}
+			const overview = await getReportsOverview(wsId, from, to);
+			const csv = reportsOverviewToCsv(overview);
+			const fromSlug = fromRaw.slice(0, 10);
+			const toSlug = toRaw.slice(0, 10);
+			const user = (request as AuthenticatedRequest).user;
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.EXPORT_OVERVIEW,
+				targetType: "report",
+				diff: { from: fromSlug, to: toSlug },
+			});
+			return reply
+				.header("Content-Type", "text/csv; charset=utf-8")
+				.header(
+					"Content-Disposition",
+					`attachment; filename="chatbox-overview-${fromSlug}_${toSlug}.csv"`,
+				)
 				.send(csv);
 		},
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Conversation } from "@/lib/api";
+import type { Conversation, SlaMetricState } from "@/lib/api";
 import { parseSentimentScore, sentimentMood } from "@/lib/sentiment-mood";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
@@ -28,6 +28,40 @@ function statusBadge(status: string) {
 		closed: "⚫",
 	};
 	return map[status] ?? "⚪";
+}
+
+function slaBadge(sla: Conversation["sla"]) {
+	if (!sla?.enabled) return null;
+	const states: SlaMetricState[] = [
+		sla.first_response,
+		sla.resolution,
+	];
+	const worst = states.includes("breached")
+		? "breached"
+		: states.includes("warning")
+			? "warning"
+			: states.includes("pending")
+				? "pending"
+				: "ok";
+	if (worst === "ok" || worst === "disabled") return null;
+
+	const sec =
+		sla.first_response === "breached" || sla.first_response === "warning"
+			? sla.first_response_remaining_sec
+			: sla.resolution_remaining_sec;
+	const mins =
+		sec != null && sec > 0 ? `${Math.ceil(sec / 60)}د` : "SLA";
+
+	const cls =
+		worst === "breached"
+			? "bg-destructive/15 text-destructive"
+			: "bg-amber-500/15 text-amber-700 dark:text-amber-400";
+
+	return (
+		<span className={cn("rounded px-1.5 py-0.5 text-[10px] font-medium", cls)}>
+			{worst === "breached" ? `نقض ${mins}` : `هشدار ${mins}`}
+		</span>
+	);
 }
 
 function timeAgo(iso: string | null): string {
@@ -116,6 +150,7 @@ export function ConversationList({
 									نیاز به اپراتور
 								</span>
 							)}
+							{slaBadge(conv.sla)}
 							{conv.aiHandled && !conv.needsHuman && (
 								<span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
 									AI

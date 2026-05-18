@@ -8,6 +8,7 @@ import { addWorkspaceBannedIp, visitorIpFromMetadata } from "../lib/ip-ban.js";
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import {
+	contacts,
 	conversationNotes,
 	conversationTags,
 	conversations,
@@ -26,13 +27,21 @@ import {
 	notifyPlanUsageIfNeeded,
 } from "../lib/plan-limits.js";
 import { getWorkspaceId } from "../lib/workspace.js";
-import { refreshConversationSummary } from "../lib/conversation-insights.js";
+import {
+	parseHandoffBrief,
+	refreshConversationSummary,
+	refreshHandoffBrief,
+} from "../lib/conversation-insights.js";
 import {
 	archiveMetadataPatch,
 	archivedCondition,
 	notArchivedCondition,
 	unarchiveMetadataPatch,
 } from "../lib/conversation-archive.js";
+import { computeSlaStatus, getSlaPolicyForWorkspace } from "../lib/sla/index.js";
+import { triggerAutoTagging } from "../lib/auto-tag.js";
+import { emitCsatRequest } from "../lib/csat-service.js";
+import { recordResolvedIfNeeded } from "../lib/sla/record.js";
 import { getIO } from "../ws/broadcast.js";
 import {
 	serializeVisitorForApi,
@@ -111,6 +120,12 @@ export async function conversationRoutes(app: FastifyInstance) {
 			with: { contact: true },
 		});
 
+		const slaPolicy = await getSlaPolicyForWorkspace(wsId);
+		const data = rows.map((row) => ({
+			...row,
+			sla: computeSlaStatus(row, slaPolicy),
+		}));
+
 		const last = rows[rows.length - 1];
 		const nextCursor =
 			rows.length === limit && last
@@ -118,7 +133,7 @@ export async function conversationRoutes(app: FastifyInstance) {
 				: null;
 
 		return {
-			data: rows,
+			data,
 			page: { limit, next_cursor: nextCursor, has_more: rows.length === limit },
 		};
 	});
@@ -148,12 +163,22 @@ export async function conversationRoutes(app: FastifyInstance) {
 			await assertConversationAccess(row, wsId, user.id);
 
 			const { tags, notes, contact, ...conv } = row;
+			const slaPolicy = await getSlaPolicyForWorkspace(wsId);
 			const visitor = contact
 				? visitorFromMetadata(contact.metadata)
 				: null;
+			const handoffBrief = parseHandoffBrief(conv.metadata);
+			const meta =
+				conv.metadata && typeof conv.metadata === "object"
+					? (conv.metadata as Record<string, unknown>)
+					: {};
 			return {
 				...conv,
+				sla: computeSlaStatus(conv, slaPolicy),
 				visitor: serializeVisitorForApi(visitor, contact?.metadata),
+				summary:
+					typeof meta.summary === "string" ? meta.summary : null,
+				handoff_brief: handoffBrief,
 				contact,
 				tags: tags.map((t) => t.tag),
 				notes: notes.map((n) => ({
@@ -236,7 +261,9 @@ export async function conversationRoutes(app: FastifyInstance) {
 				.update(conversations)
 				.set({
 					status: status as "open",
-					...(status === "closed" ? { closedAt: new Date() } : {}),
+					...(status === "closed" || status === "resolved"
+						? { closedAt: new Date() }
+						: {}),
 				})
 				.where(
 					and(
@@ -247,6 +274,25 @@ export async function conversationRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!updated) throw notFound("Conversation not found.");
+
+			await recordResolvedIfNeeded(request.params.id, status);
+
+			if (status === "resolved" || status === "closed") {
+				void emitCsatRequest(wsId, request.params.id);
+				triggerAutoTagging(wsId, request.params.id);
+				const { dispatchWebhookEvent } = await import(
+					"../lib/webhooks/index.js"
+				);
+				void dispatchWebhookEvent(wsId, "conversation.resolved", {
+					conversation: {
+						id: updated.id,
+						status: updated.status,
+						channel: updated.channel,
+						resolved_at: updated.resolvedAt?.toISOString() ?? null,
+						closed_at: updated.closedAt?.toISOString() ?? null,
+					},
+				});
+			}
 
 			try {
 				const io = getIO();
@@ -507,6 +553,22 @@ export async function conversationRoutes(app: FastifyInstance) {
 				/* socket.io not yet initialized */
 			}
 
+			if (agent_id) {
+				const contact = await db.query.contacts.findFirst({
+					where: eq(contacts.id, updated.contactId),
+					columns: { fullName: true },
+				});
+				const { emailNotifyAssigned } = await import(
+					"../lib/email-notifications/index.js"
+				);
+				void emailNotifyAssigned(
+					wsId,
+					request.params.id,
+					agent_id,
+					contact?.fullName ?? null,
+				);
+			}
+
 			return updated;
 		},
 	);
@@ -638,11 +700,69 @@ export async function conversationRoutes(app: FastifyInstance) {
 				})
 				.returning();
 
+			const { emailNotifyNoteMentions } = await import(
+				"../lib/email-notifications/index.js"
+			);
+			void emailNotifyNoteMentions(
+				wsId,
+				request.params.id,
+				user.id,
+				body.trim(),
+			);
+
 			return {
 				id: note.id,
 				body: note.body,
 				createdAt: note.createdAt,
 				author: { id: user.id, email: user.email, fullName: null },
+			};
+		},
+	);
+
+	app.get<{ Params: { id: string } }>(
+		"/v1/conversations/:id/handoff-brief",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const convId = request.params.id;
+			const user = (request as AuthenticatedRequest).user;
+
+			const row = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, convId),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!row) throw notFound("Conversation not found.");
+			await assertConversationAccess(row, wsId, user.id);
+
+			let brief = parseHandoffBrief(row.metadata);
+			if (!brief) {
+				brief = await refreshHandoffBrief(wsId, convId, user.id);
+			}
+			return { data: brief };
+		},
+	);
+
+	app.post<{ Params: { id: string } }>(
+		"/v1/conversations/:id/handoff-brief",
+		async (request) => {
+			const wsId = getWorkspaceId(request);
+			const convId = request.params.id;
+			const user = (request as AuthenticatedRequest).user;
+
+			const row = await db.query.conversations.findFirst({
+				where: and(
+					eq(conversations.id, convId),
+					eq(conversations.workspaceId, wsId),
+				),
+			});
+			if (!row) throw notFound("Conversation not found.");
+			await assertConversationAccess(row, wsId, user.id);
+
+			const brief = await refreshHandoffBrief(wsId, convId, user.id);
+			return {
+				data: brief,
+				message: brief ? undefined : "تهیه بریف ارجاع در دسترس نبود.",
 			};
 		},
 	);

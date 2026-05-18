@@ -9,6 +9,9 @@
 		"lint": "biome check .",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
+	"dependencies": {
+		"@chatbox/shared": "workspace:*"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"esbuild": "^0.25.0",

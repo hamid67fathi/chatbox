@@ -57,11 +57,18 @@ export class WidgetSocket {
 			onMessage: (msg: Message) => void;
 			onTyping: (data: { isTyping: boolean }) => void;
 			onRead?: (data: { message_id: string }) => void;
+			onStatusChanged?: (data: { status: string }) => void;
+			onCsatRequested?: (data: {
+				prompt: string;
+				ask_comment: boolean;
+			}) => void;
 		},
 	) {
 		this.onMessage = callbacks.onMessage;
 		this.onTyping = callbacks.onTyping;
 		const onRead = callbacks.onRead;
+		const onStatusChanged = callbacks.onStatusChanged;
+		const onCsatRequested = callbacks.onCsatRequested;
 
 		if (this.socket) {
 			this.socket.disconnect();
@@ -102,6 +109,19 @@ export class WidgetSocket {
 		this.socket.on("message:read", (data: unknown) => {
 			const d = data as { message_id?: string };
 			if (d.message_id) onRead?.({ message_id: d.message_id });
+		});
+
+		this.socket.on("conv:status_changed", (data: unknown) => {
+			const d = data as { status?: string };
+			if (d.status) onStatusChanged?.({ status: d.status });
+		});
+
+		this.socket.on("conv:csat_requested", (data: unknown) => {
+			const d = data as { prompt?: string; ask_comment?: boolean };
+			onCsatRequested?.({
+				prompt: d.prompt ?? "",
+				ask_comment: d.ask_comment === true,
+			});
 		});
 	}
 

@@ -7,9 +7,14 @@ import {
 	type ConversationReportRow,
 	downloadConversationReportCsv,
 	fetchConversationReport,
+	fetchCsatSummary,
+	fetchSlaViolations,
+	type CsatSummary,
 	fetchWorkspaceMembers,
+	type SlaViolationRow,
 } from "@/lib/api";
 import { Download, FileBarChart, Loader2, Search } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface Props {
@@ -78,6 +83,10 @@ export function ReportsPanel({ workspaceId }: Props) {
 	const [assignedTo, setAssignedTo] = useState("");
 	const [tag, setTag] = useState("");
 	const [q, setQ] = useState("");
+	const [slaRows, setSlaRows] = useState<SlaViolationRow[]>([]);
+	const [slaLoading, setSlaLoading] = useState(false);
+	const [csatSummary, setCsatSummary] = useState<CsatSummary | null>(null);
+	const [csatLoading, setCsatLoading] = useState(false);
 
 	const [rows, setRows] = useState<ConversationReportRow[]>([]);
 	const [total, setTotal] = useState(0);
@@ -136,10 +145,34 @@ export function ReportsPanel({ workspaceId }: Props) {
 		void load();
 	}, [load]);
 
+	const loadSla = useCallback(async () => {
+		setSlaLoading(true);
+		const data = await fetchSlaViolations(
+			workspaceId,
+			dayStartIso(fromDate),
+			dayEndIso(toDate),
+		);
+		setSlaRows(data);
+		setSlaLoading(false);
+	}, [workspaceId, fromDate, toDate]);
+
+	const loadCsat = useCallback(async () => {
+		setCsatLoading(true);
+		const data = await fetchCsatSummary(
+			workspaceId,
+			dayStartIso(fromDate),
+			dayEndIso(toDate),
+		);
+		setCsatSummary(data);
+		setCsatLoading(false);
+	}, [workspaceId, fromDate, toDate]);
+
 	function applyFilters(e: React.FormEvent) {
 		e.preventDefault();
 		setOffset(0);
 		setNotice(null);
+		void loadSla();
+		void loadCsat();
 	}
 
 	useEffect(() => {
@@ -175,13 +208,31 @@ export function ReportsPanel({ workspaceId }: Props) {
 	return (
 		<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 			<div className="border-b border-border px-6 py-4">
-				<div className="flex items-center gap-2">
-					<FileBarChart className="h-5 w-5 text-primary" />
-					<h1 className="text-lg font-semibold">گزارش گفتگوها</h1>
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<div>
+						<div className="flex items-center gap-2">
+							<FileBarChart className="h-5 w-5 text-primary" />
+							<h1 className="text-lg font-semibold">گزارش گفتگوها</h1>
+						</div>
+						<p className="mt-1 text-sm text-muted-foreground">
+							فیلتر بر اساس بازه تاریخ، وضعیت، کانال و جستجو در متن پیام‌ها
+						</p>
+					</div>
+					<div className="flex flex-wrap gap-3 text-sm">
+						<Link
+							href="/reports/overview"
+							className="text-primary hover:underline"
+						>
+							نمای کلی
+						</Link>
+						<Link
+							href="/reports/agents"
+							className="text-primary hover:underline"
+						>
+							عملکرد اپراتورها
+						</Link>
+					</div>
 				</div>
-				<p className="mt-1 text-sm text-muted-foreground">
-					فیلتر بر اساس بازه تاریخ، وضعیت، کانال و جستجو در متن پیام‌ها
-				</p>
 			</div>
 
 			<div className="flex-1 overflow-y-auto p-6">
@@ -373,6 +424,94 @@ export function ReportsPanel({ workspaceId }: Props) {
 						</Button>
 					</div>
 				)}
+
+				<div className="mt-10 border-t border-border pt-6">
+					<h2 className="mb-2 text-base font-semibold">نقض SLA</h2>
+					<p className="mb-3 text-sm text-muted-foreground">
+						مکالماتی که در بازهٔ بالا به زمان اولین پاسخ یا حل، نرسیده‌اند.
+					</p>
+					{slaLoading ? (
+						<p className="text-sm text-muted-foreground">در حال بارگذاری…</p>
+					) : slaRows.length === 0 ? (
+						<p className="text-sm text-muted-foreground">نقضی ثبت نشده.</p>
+					) : (
+						<div className="overflow-x-auto rounded-lg border border-border">
+							<table className="w-full min-w-[520px] text-sm">
+								<thead className="bg-muted/50 text-muted-foreground">
+									<tr>
+										<th className="px-3 py-2 text-start">مکالمه</th>
+										<th className="px-3 py-2 text-start">کانال</th>
+										<th className="px-3 py-2 text-start">اولین پاسخ</th>
+										<th className="px-3 py-2 text-start">حل</th>
+									</tr>
+								</thead>
+								<tbody>
+									{slaRows.map((row) => (
+										<tr key={row.conversation_id} className="border-t border-border">
+											<td className="px-3 py-2 font-mono text-xs" dir="ltr">
+												{row.conversation_id.slice(0, 8)}
+											</td>
+											<td className="px-3 py-2">{row.channel}</td>
+											<td className="px-3 py-2">
+												{row.first_response_breached ? "نقض" : "—"}
+											</td>
+											<td className="px-3 py-2">
+												{row.resolution_breached ? "نقض" : "—"}
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</div>
+
+				<div className="mt-10 border-t border-border pt-6">
+					<h2 className="mb-2 text-base font-semibold">خلاصه CSAT</h2>
+					{csatLoading ? (
+						<p className="text-sm text-muted-foreground">در حال بارگذاری…</p>
+					) : !csatSummary?.enabled ? (
+						<p className="text-sm text-muted-foreground">CSAT غیرفعال است.</p>
+					) : (
+						<>
+							<p className="mb-3 text-sm">
+								میانگین:{" "}
+								<span className="font-semibold">
+									{csatSummary.average_score ?? "—"}
+								</span>{" "}
+								از ۵ ({csatSummary.total_responses.toLocaleString("fa-IR")}{" "}
+								پاسخ)
+							</p>
+							{csatSummary.by_agent.length > 0 && (
+								<div className="overflow-x-auto rounded-lg border border-border">
+									<table className="w-full min-w-[400px] text-sm">
+										<thead className="bg-muted/50 text-muted-foreground">
+											<tr>
+												<th className="px-3 py-2 text-start">اپراتور</th>
+												<th className="px-3 py-2 text-start">تعداد</th>
+												<th className="px-3 py-2 text-start">میانگین</th>
+											</tr>
+										</thead>
+										<tbody>
+											{csatSummary.by_agent.map((a) => (
+												<tr
+													key={a.agent_id ?? "none"}
+													className="border-t border-border"
+												>
+													<td className="px-3 py-2">
+														{a.agent_name ?? "بدون assign"}
+													</td>
+													<td className="px-3 py-2">{a.count}</td>
+													<td className="px-3 py-2">{a.average_score}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							)}
+						</>
+					)}
+				</div>
 			</div>
 		</div>
 	);

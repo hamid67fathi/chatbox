@@ -1,5 +1,6 @@
 import {
 	index,
+	jsonb,
 	pgTable,
 	primaryKey,
 	timestamp,
@@ -22,6 +23,17 @@ export const workspaceMembers = pgTable(
 		status: userStatusEnum("status").notNull().default("invited"),
 		invitedBy: uuid("invited_by").references(() => users.id),
 		joinedAt: timestamp("joined_at", { withTimezone: true }),
+		notificationPreferences: jsonb("notification_preferences")
+			.notNull()
+			.default({
+				push_enabled: true,
+				new_conversation: true,
+				new_message: true,
+				email_enabled: true,
+				email_new_conversation: true,
+				email_assigned: true,
+				email_mention: true,
+			}),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),

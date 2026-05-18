@@ -21,6 +21,7 @@ export const workspaces = pgTable(
 		locale: text("locale").notNull().default("fa-IR"),
 		timezone: text("timezone").notNull().default("Asia/Tehran"),
 		settings: jsonb("settings").notNull().default({}),
+		aiPersona: jsonb("ai_persona").notNull().default({}),
 		aiCredits: integer("ai_credits").notNull().default(0),
 		trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
 		createdAt: timestamp("created_at", { withTimezone: true })

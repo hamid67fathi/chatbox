@@ -43,6 +43,8 @@ export const conversations = pgTable(
 			withTimezone: true,
 		}),
 		firstResponseSec: integer("first_response_sec"),
+		firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
+		resolvedAt: timestamp("resolved_at", { withTimezone: true }),
 		closedAt: timestamp("closed_at", { withTimezone: true }),
 		metadata: jsonb("metadata").notNull().default({}),
 		createdAt: timestamp("created_at", { withTimezone: true })

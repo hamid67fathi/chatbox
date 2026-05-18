@@ -3,6 +3,11 @@ import { db } from "../db/index.js";
 import { aiInteractions, conversations, messages } from "../db/schema/index.js";
 import { getAiBudgetStatus, estimateCostUsd, notifyAiBudgetIfNeeded } from "./ai-budget.js";
 import {
+	parseHandoffBrief,
+	requestHandoffBrief,
+	type HandoffBrief,
+} from "./handoff-brief.js";
+import {
 	analyzeSentimentText,
 	summarizeConversationText,
 	type InsightMessage,
@@ -43,6 +48,28 @@ function emitInsightsUpdated(
 		/* socket not ready */
 	}
 }
+
+function emitHandoffBrief(
+	workspaceId: string,
+	conversationId: string,
+	brief: HandoffBrief,
+) {
+	try {
+		const io = getIO();
+		io.to(`workspace:${workspaceId}`).emit("conv:handoff_brief", {
+			conversation_id: conversationId,
+			handoff_brief: brief,
+			summary: brief.summary,
+		});
+		emitInsightsUpdated(workspaceId, conversationId, {
+			summary: brief.summary,
+		});
+	} catch {
+		/* socket not ready */
+	}
+}
+
+export { parseHandoffBrief };
 
 async function loadInsightMessages(
 	workspaceId: string,
@@ -203,12 +230,141 @@ export function triggerContactMessageSentiment(
 	);
 }
 
+export async function refreshHandoffBrief(
+	workspaceId: string,
+	conversationId: string,
+	agentUserId?: string,
+): Promise<HandoffBrief | null> {
+	const conv = await db.query.conversations.findFirst({
+		where: and(
+			eq(conversations.id, conversationId),
+			eq(conversations.workspaceId, workspaceId),
+		),
+		with: { contact: true, tags: true },
+	});
+	if (!conv) return null;
+
+	const insightMessages = await loadInsightMessages(workspaceId, conversationId);
+	if (insightMessages.length === 0) return null;
+
+	const budget = await getAiBudgetStatus(workspaceId);
+	if (budget && !budget.allowAi) {
+		const summary = await refreshConversationSummary(
+			workspaceId,
+			conversationId,
+			"handoff",
+			agentUserId,
+		);
+		return summary
+			? {
+					summary,
+					key_points: [],
+					suggested_reply: "",
+					generated_at: new Date().toISOString(),
+				}
+			: null;
+	}
+
+	const result = await requestHandoffBrief(
+		workspaceId,
+		insightMessages,
+		{
+			contactName: conv.contact?.fullName ?? null,
+			conversationId,
+			channel: conv.channel,
+			subject: conv.subject,
+			tags: conv.tags?.map((t) => t.tag) ?? [],
+		},
+	);
+
+	if (!result?.summary) {
+		const fallback = await refreshConversationSummary(
+			workspaceId,
+			conversationId,
+			"handoff",
+			agentUserId,
+		);
+		return fallback
+			? {
+					summary: fallback,
+					key_points: [],
+					suggested_reply: "",
+					generated_at: new Date().toISOString(),
+				}
+			: null;
+	}
+
+	const brief: HandoffBrief = {
+		summary: result.summary,
+		key_points: result.key_points ?? [],
+		suggested_reply: result.suggested_reply ?? "",
+		generated_at: new Date().toISOString(),
+		context: {
+			channel: conv.channel,
+			contact_name: conv.contact?.fullName ?? null,
+			tags: conv.tags?.map((t) => t.tag) ?? [],
+			subject: conv.subject,
+		},
+	};
+
+	const metadata = {
+		...(typeof conv.metadata === "object" && conv.metadata
+			? (conv.metadata as Record<string, unknown>)
+			: {}),
+		summary: brief.summary,
+		summary_updated_at: brief.generated_at,
+		summary_trigger: "handoff",
+		handoff_brief: brief,
+	};
+
+	await db
+		.update(conversations)
+		.set({ metadata, updatedAt: new Date() })
+		.where(eq(conversations.id, conversationId));
+
+	await db.insert(aiInteractions).values({
+		workspaceId,
+		conversationId,
+		purpose: "handoff_brief",
+		model: result.model,
+		prompt: agentUserId ? `agent:${agentUserId}` : "handoff",
+		response: JSON.stringify({
+			summary: brief.summary,
+			suggested_reply: brief.suggested_reply,
+		}),
+		inputTokens: result.input_tokens,
+		outputTokens: result.output_tokens,
+		costUsd: estimateCostUsd(
+			result.model,
+			result.input_tokens,
+			result.output_tokens,
+		),
+		escalated: true,
+	});
+	await notifyAiBudgetIfNeeded(workspaceId);
+
+	emitHandoffBrief(workspaceId, conversationId, brief);
+	return brief;
+}
+
+export function triggerHandoffBrief(
+	workspaceId: string,
+	conversationId: string,
+	agentUserId?: string,
+) {
+	void refreshHandoffBrief(workspaceId, conversationId, agentUserId);
+}
+
 export function triggerConversationSummary(
 	workspaceId: string,
 	conversationId: string,
 	trigger: "handoff" | "reopen" | "manual",
 	agentUserId?: string,
 ) {
+	if (trigger === "handoff") {
+		triggerHandoffBrief(workspaceId, conversationId, agentUserId);
+		return;
+	}
 	void refreshConversationSummary(
 		workspaceId,
 		conversationId,

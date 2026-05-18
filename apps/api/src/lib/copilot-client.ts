@@ -94,6 +94,7 @@ export async function requestCopilot(
 	messages: CopilotMessage[],
 	contactName?: string | null,
 	conversationId?: string,
+	aiPersona?: Record<string, unknown> | null,
 ): Promise<{ ok: true; data: CopilotResult } | { ok: false; failure: CopilotFailure }> {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT);
@@ -108,6 +109,7 @@ export async function requestCopilot(
 				messages: payload,
 				contact_name: contactName ?? null,
 				conversation_id: conversationId ?? null,
+				ai_persona: aiPersona ?? undefined,
 			}),
 			signal: controller.signal,
 		});
@@ -146,6 +148,7 @@ export async function streamCopilotFromAI(
 	conversationId: string | undefined,
 	onEvent: (event: Record<string, unknown>) => void,
 	signal?: AbortSignal,
+	aiPersona?: Record<string, unknown> | null,
 ): Promise<{ ok: true } | { ok: false; failure: CopilotFailure }> {
 	const payload = messagesForAi(messages);
 
@@ -158,6 +161,7 @@ export async function streamCopilotFromAI(
 				messages: payload,
 				contact_name: contactName ?? null,
 				conversation_id: conversationId ?? null,
+				ai_persona: aiPersona ?? undefined,
 			}),
 			signal,
 		});

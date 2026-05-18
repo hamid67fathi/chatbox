@@ -6,6 +6,8 @@ import type { ConversationDetail, WorkspaceMember } from "@/lib/api";
 import {
 	addConversationNote,
 	addConversationTags,
+	getAiSuggestedTags,
+	requestConversationAiTags,
 	archiveConversation,
 	assignConversation,
 	banConversationContact,
@@ -55,6 +57,7 @@ export function ConversationToolbar({
 	const [detail, setDetail] = useState<ConversationDetail | null>(null);
 	const [members, setMembers] = useState<WorkspaceMember[]>([]);
 	const [tagInput, setTagInput] = useState("");
+	const [aiTagLoading, setAiTagLoading] = useState(false);
 	const [noteInput, setNoteInput] = useState("");
 	const [notesOpen, setNotesOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
@@ -69,7 +72,7 @@ export function ConversationToolbar({
 	useEffect(() => {
 		void (async () => {
 			const d = await reload();
-			if (d && !d.summary) {
+			if (d && !d.summary && !d.needsHuman) {
 				setSummaryLoading(true);
 				const { summary } = await refreshConversationSummary(
 					workspaceId,
@@ -122,7 +125,7 @@ export function ConversationToolbar({
 
 	return (
 		<div className="shrink-0 border-b border-border bg-card">
-			{(detail.summary || summaryLoading) && (
+			!detail.needsHuman && (detail.summary || summaryLoading) && (
 				<div className="border-b border-border bg-muted/30 px-4 py-2 text-sm">
 					<div className="mb-1 flex items-center justify-between gap-2">
 						<span className="text-xs font-medium text-muted-foreground">
@@ -344,6 +347,57 @@ export function ConversationToolbar({
 						{tag}
 					</span>
 				))}
+				{getAiSuggestedTags(detail.metadata)
+					.filter((t) => !(detail.tags ?? []).includes(t))
+					.map((tag) => (
+						<button
+							key={`ai-${tag}`}
+							type="button"
+							disabled={saving}
+							className="rounded-full border border-dashed border-primary/40 px-2 py-0.5 text-xs text-primary hover:bg-primary/5"
+							title="پیشنهاد AI — کلیک برای افزودن"
+							onClick={() => {
+								void run(async () => {
+									await addConversationTags(workspaceId, conversationId, [
+										tag,
+									]);
+									const tags = [...(detail.tags ?? []), tag];
+									setDetail((prev) => (prev ? { ...prev, tags } : prev));
+									onUpdated?.({ tags });
+								});
+							}}
+						>
+							+ {tag}
+						</button>
+					))}
+				<Button
+					type="button"
+					size="sm"
+					variant="ghost"
+					className="h-7 text-xs"
+					disabled={aiTagLoading || saving}
+					onClick={() => {
+						void run(async () => {
+							setAiTagLoading(true);
+							const result = await requestConversationAiTags(
+								workspaceId,
+								conversationId,
+								{ force: true },
+							);
+							setAiTagLoading(false);
+							if (!result?.ok) {
+								window.alert("تگ‌گذاری AI ناموفق بود. ai-service را بررسی کنید.");
+								return;
+							}
+							const d = await reload();
+							if (d) {
+								onUpdated?.({ tags: d.tags, metadata: d.metadata });
+							}
+						});
+					}}
+				>
+					{aiTagLoading ? "AI…" : "تگ AI"}
+				</Button>
 				<div className="flex flex-1 gap-1">
 					<Input
 						value={tagInput}

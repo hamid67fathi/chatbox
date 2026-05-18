@@ -5,6 +5,10 @@ import {
 	BookOpen,
 	CreditCard,
 	FileBarChart,
+	GitBranch,
+	LayoutDashboard,
+	Route,
+	Webhook,
 	Globe,
 	Inbox,
 	Settings,
@@ -18,7 +22,14 @@ const navItems = [
 	{ href: "/", label: "صندوق ورودی", icon: Inbox },
 	{ href: "/visitors", label: "بازدیدکنندگان آنلاین", icon: Globe },
 	{ href: "/canned", label: "پاسخ‌های آماده", icon: Zap },
+	{ href: "/flows", label: "جریان‌های گفتگو", icon: GitBranch },
+	{ href: "/routing", label: "مسیریابی", icon: Route },
+	{ href: "/webhooks", label: "Webhook", icon: Webhook },
+	{ href: "/contacts", label: "مخاطبین", icon: Users },
+	{ href: "/contacts/segments", label: "بخش مخاطبان", icon: Users },
 	{ href: "/reports", label: "گزارش‌ها", icon: FileBarChart },
+	{ href: "/reports/overview", label: "نمای کلی", icon: LayoutDashboard },
+	{ href: "/reports/agents", label: "عملکرد اپراتور", icon: Users },
 	{ href: "/billing", label: "اشتراک", icon: CreditCard },
 	{ href: "/settings", label: "تنظیمات", icon: Settings },
 	{ href: "/team", label: "تیم", icon: Users },
@@ -41,7 +52,13 @@ export function Sidebar() {
 			</div>
 			<nav className="flex flex-1 flex-col gap-1 p-3">
 				{navItems.map(({ href, label, icon: Icon }) => {
-					const active = pathname === href;
+					const active =
+						href === "/reports"
+							? pathname === "/reports"
+							: href.startsWith("/reports/")
+								? pathname === href
+								: pathname === href ||
+									(href !== "/" && pathname.startsWith(`${href}/`));
 					return (
 						<Link
 							key={href}

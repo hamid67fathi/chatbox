@@ -19,6 +19,7 @@ import {
 import { assertConversationAccess } from "../lib/conversation-access.js";
 import { notFound } from "../lib/errors.js";
 import { requireWorkspace } from "../lib/rbac.js";
+import { aiPersonaForAiService, getWorkspaceAiPersona } from "../lib/ai-persona.js";
 import { getWorkspaceId } from "../lib/workspace.js";
 
 function toCopilotRole(senderType: string): CopilotMessage["role"] {
@@ -107,11 +108,13 @@ export async function copilotRoutes(app: FastifyInstance) {
 				});
 			}
 
+			const persona = aiPersonaForAiService(await getWorkspaceAiPersona(wsId));
 			const result = await requestCopilot(
 				wsId,
 				copilotMessages,
 				contactName,
 				convId,
+				persona ?? undefined,
 			);
 			if (!result.ok) {
 				return reply.status(503).send({
@@ -157,6 +160,9 @@ export async function copilotRoutes(app: FastifyInstance) {
 						return;
 					}
 
+					const persona = aiPersonaForAiService(
+						await getWorkspaceAiPersona(wsId),
+					);
 					const streamed = await streamCopilotFromAI(
 						wsId,
 						copilotMessages,
@@ -175,6 +181,8 @@ export async function copilotRoutes(app: FastifyInstance) {
 							}
 							stream.write(`data: ${JSON.stringify(event)}\n\n`);
 						},
+						undefined,
+						persona ?? undefined,
 					);
 
 					if (!streamed.ok) {

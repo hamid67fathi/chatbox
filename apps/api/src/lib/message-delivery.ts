@@ -1,12 +1,21 @@
 import { eq } from "drizzle-orm";
+import { getActiveFlowSession } from "./flow-engine/index.js";
+import { isSupportClosed } from "./business-hours-handler.js";
+import { recordFirstResponseIfNeeded } from "./sla/record.js";
+import { applyRoutingRules } from "./routing/index.js";
 import { db } from "../db/index.js";
 import {
 	aiInteractions,
 	conversations,
 	messages,
-	type contacts,
+	contacts,
 } from "../db/schema/index.js";
 import { askAI } from "./ai-client.js";
+import { getWorkspaceAiLanguage } from "./ai-language-settings.js";
+import {
+	aiPersonaForAiService,
+	getWorkspaceAiPersona,
+} from "./ai-persona.js";
 import {
 	estimateCostUsd,
 	getAiBudgetStatus,
@@ -14,11 +23,17 @@ import {
 } from "./ai-budget.js";
 import {
 	triggerContactMessageSentiment,
-	triggerConversationSummary,
+	triggerHandoffBrief,
 } from "./conversation-insights.js";
 import { deliverOutboundToEmail } from "../channels/email/outbound.js";
 import { deliverOutboundToTelegram } from "../channels/telegram/outbound.js";
 import { deliverOutboundToWhatsapp } from "../channels/whatsapp/outbound.js";
+import { emailNotifyNewConversation } from "./email-notifications/index.js";
+import { dispatchWebhookEvent } from "./webhooks/index.js";
+import {
+	notifyNewContactMessage,
+	notifyNewConversation,
+} from "./push-notifications.js";
 import { getIO } from "../ws/broadcast.js";
 
 export function broadcastNewConversation(
@@ -40,6 +55,26 @@ export function broadcastNewConversation(
 	} catch {
 		/* socket.io not yet initialized */
 	}
+
+	void notifyNewConversation(
+		conversation.workspaceId,
+		conversation.id,
+		contact.fullName,
+		conversation.channel,
+	);
+	void emailNotifyNewConversation(
+		conversation.workspaceId,
+		conversation.id,
+		contact.fullName,
+		conversation.channel,
+	);
+
+	void applyRoutingRules({
+		workspaceId: conversation.workspaceId,
+		conversationId: conversation.id,
+		channel: conversation.channel,
+		trigger: "conversation_created",
+	});
 }
 
 /** Updates conversation timestamps (fallback when DB trigger is missing). */
@@ -66,6 +101,7 @@ export async function deliverNewMessage(
 	workspaceId: string,
 ) {
 	await touchConversationOnMessage(conversationId, message);
+	await recordFirstResponseIfNeeded(conversationId, message);
 	const now = new Date();
 	const [delivered] = await db
 		.update(messages)
@@ -82,6 +118,17 @@ export async function deliverNewMessage(
 			published.id,
 			published.body,
 		);
+		const convRow = await db.query.conversations.findFirst({
+			where: eq(conversations.id, conversationId),
+			columns: { channel: true },
+		});
+		void applyRoutingRules({
+			workspaceId,
+			conversationId,
+			channel: convRow?.channel ?? "widget",
+			messageText: published.body,
+			trigger: "contact_message",
+		});
 	}
 
 	void deliverOutboundToTelegram(published, conversationId, workspaceId);
@@ -102,6 +149,7 @@ export async function broadcastNewMessage(
 				id: true,
 				assignedAgentId: true,
 				lastAgentReplyAt: true,
+				contactId: true,
 			},
 		});
 		const payload = {
@@ -114,6 +162,29 @@ export async function broadcastNewMessage(
 		};
 		io.to(`conversation:${conversationId}`).emit("message:new", payload);
 		io.to(`workspace:${workspaceId}`).emit("message:new", payload);
+
+		if (message.senderType === "contact" && message.body?.trim() && conv) {
+			const contact = await db.query.contacts.findFirst({
+				where: eq(contacts.id, conv.contactId),
+				columns: { fullName: true },
+			});
+			void notifyNewContactMessage(
+				workspaceId,
+				conversationId,
+				conv.assignedAgentId,
+				contact?.fullName ?? null,
+				message.body,
+			);
+			void dispatchWebhookEvent(workspaceId, "message.created", {
+				conversation_id: conversationId,
+				message: {
+					id: message.id,
+					sender_type: message.senderType,
+					body: message.body,
+					created_at: message.createdAt?.toISOString(),
+				},
+			});
+		}
 	} catch {
 		/* socket.io not yet initialized */
 	}
@@ -172,15 +243,32 @@ async function runAIReply(
 	question: string,
 	sourceMessageId: string,
 ) {
+	const activeFlow = await getActiveFlowSession(conversationId);
+	if (activeFlow) return;
+
+	if (await isSupportClosed(workspaceId)) return;
+
 	const budget = await getAiBudgetStatus(workspaceId);
 	if (budget && !budget.allowAi) {
 		await escalateBudgetExhausted(workspaceId, conversationId, sourceMessageId);
 		return;
 	}
 
+	const [langSettings, persona] = await Promise.all([
+		getWorkspaceAiLanguage(workspaceId),
+		getWorkspaceAiPersona(workspaceId),
+	]);
+	const personaPayload = aiPersonaForAiService(persona);
 	const start = Date.now();
-	const aiResult = await askAI(workspaceId, question, conversationId);
+	const aiResult = await askAI(
+		workspaceId,
+		question,
+		conversationId,
+		langSettings.default_language,
+		personaPayload ?? undefined,
+	);
 	const latencyMs = Date.now() - start;
+	const detectedLang = aiResult?.language ?? langSettings.default_language;
 
 	if (!aiResult) return;
 
@@ -195,6 +283,7 @@ async function runAIReply(
 			conversationId,
 			messageId: sourceMessageId,
 			purpose: aiPurpose(aiResult),
+			language: detectedLang,
 			model: aiResult.model,
 			response: aiResult.reply,
 			retrievedChunks: aiResult.retrieved_chunks,
@@ -218,7 +307,7 @@ async function runAIReply(
 			});
 		} catch {}
 
-		triggerConversationSummary(workspaceId, conversationId, "handoff");
+		triggerHandoffBrief(workspaceId, conversationId);
 		return;
 	}
 
@@ -240,6 +329,7 @@ async function runAIReply(
 		conversationId,
 		messageId: aiMsg.id,
 		purpose: aiPurpose(aiResult),
+		language: detectedLang,
 		model: aiResult.model,
 		prompt: question,
 		response: aiResult.reply,

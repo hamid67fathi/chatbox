@@ -9,6 +9,7 @@ import {
 	countActiveTokens,
 } from "../lib/api-tokens.js";
 import { conflict, notFound, validationError } from "../lib/errors.js";
+import { AUDIT_ACTIONS, auditLogFromRequest } from "../lib/audit-log.js";
 import { requireWorkspace } from "../lib/rbac.js";
 
 export async function apiTokenRoutes(app: FastifyInstance) {
@@ -81,6 +82,15 @@ export async function apiTokenRoutes(app: FastifyInstance) {
 				})
 				.returning();
 
+			auditLogFromRequest(request, {
+				workspaceId: wsId,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.API_TOKEN_CREATE,
+				targetType: "api_token",
+				targetId: row.id,
+				diff: { name: label },
+			});
+
 			return reply.status(201).send({
 				token: raw,
 				token_prefix: prefix,
@@ -112,6 +122,14 @@ export async function apiTokenRoutes(app: FastifyInstance) {
 				.returning();
 
 			if (!revoked) throw notFound("API token not found.");
+			const user = (request as AuthenticatedRequest).user;
+			auditLogFromRequest(request, {
+				workspaceId: workspace_id,
+				actorUserId: user.id,
+				action: AUDIT_ACTIONS.API_TOKEN_REVOKE,
+				targetType: "api_token",
+				targetId: token_id,
+			});
 			return { ok: true };
 		},
 	);

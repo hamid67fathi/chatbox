@@ -15,6 +15,14 @@ import { messages } from "./messages.js";
 import { sessions } from "./sessions.js";
 import { payments, subscriptions } from "./subscriptions.js";
 import { users } from "./users.js";
+import { flowSessions, flows } from "./flows.js";
+import { routingRules } from "./routing-rules.js";
+import { contactSegments } from "./contact-segments.js";
+import { pushSubscriptions } from "./push-subscriptions.js";
+import { webhookDeliveries, webhookEndpoints } from "./webhook-endpoints.js";
+import { auditLogs } from "./audit-logs.js";
+import { csatResponses } from "./csat-responses.js";
+import { slaPolicies } from "./sla-policies.js";
 import { workspaceMembers } from "./workspace-members.js";
 import { workspaces } from "./workspaces.js";
 
@@ -28,6 +36,41 @@ export const workspacesRelations = relations(workspaces, ({ many }) => ({
 	subscriptions: many(subscriptions),
 	payments: many(payments),
 	apiTokens: many(apiTokens),
+	flows: many(flows),
+	flowSessions: many(flowSessions),
+	routingRules: many(routingRules),
+	contactSegments: many(contactSegments),
+	pushSubscriptions: many(pushSubscriptions),
+	webhookEndpoints: many(webhookEndpoints),
+	slaPolicies: many(slaPolicies),
+	csatResponses: many(csatResponses),
+	auditLogs: many(auditLogs),
+}));
+
+export const csatResponsesRelations = relations(csatResponses, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [csatResponses.workspaceId],
+		references: [workspaces.id],
+	}),
+	conversation: one(conversations, {
+		fields: [csatResponses.conversationId],
+		references: [conversations.id],
+	}),
+	contact: one(contacts, {
+		fields: [csatResponses.contactId],
+		references: [contacts.id],
+	}),
+	assignedAgent: one(users, {
+		fields: [csatResponses.assignedAgentId],
+		references: [users.id],
+	}),
+}));
+
+export const slaPoliciesRelations = relations(slaPolicies, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [slaPolicies.workspaceId],
+		references: [workspaces.id],
+	}),
 }));
 
 export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
@@ -44,6 +87,18 @@ export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
 export const usersRelations = relations(users, ({ many }) => ({
 	memberships: many(workspaceMembers),
 	sessions: many(sessions),
+	auditLogs: many(auditLogs),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [auditLogs.workspaceId],
+		references: [workspaces.id],
+	}),
+	actor: one(users, {
+		fields: [auditLogs.actorUserId],
+		references: [users.id],
+	}),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -93,8 +148,89 @@ export const conversationsRelations = relations(
 		messages: many(messages),
 		tags: many(conversationTags),
 		notes: many(conversationNotes),
+		flowSessions: many(flowSessions),
 	}),
 );
+
+export const flowsRelations = relations(flows, ({ one, many }) => ({
+	workspace: one(workspaces, {
+		fields: [flows.workspaceId],
+		references: [workspaces.id],
+	}),
+	sessions: many(flowSessions),
+}));
+
+export const routingRulesRelations = relations(routingRules, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [routingRules.workspaceId],
+		references: [workspaces.id],
+	}),
+}));
+
+export const contactSegmentsRelations = relations(contactSegments, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [contactSegments.workspaceId],
+		references: [workspaces.id],
+	}),
+}));
+
+export const pushSubscriptionsRelations = relations(
+	pushSubscriptions,
+	({ one }) => ({
+		user: one(users, {
+			fields: [pushSubscriptions.userId],
+			references: [users.id],
+		}),
+		workspace: one(workspaces, {
+			fields: [pushSubscriptions.workspaceId],
+			references: [workspaces.id],
+		}),
+	}),
+);
+
+export const webhookEndpointsRelations = relations(
+	webhookEndpoints,
+	({ one, many }) => ({
+		workspace: one(workspaces, {
+			fields: [webhookEndpoints.workspaceId],
+			references: [workspaces.id],
+		}),
+		deliveries: many(webhookDeliveries),
+	}),
+);
+
+export const webhookDeliveriesRelations = relations(
+	webhookDeliveries,
+	({ one }) => ({
+		endpoint: one(webhookEndpoints, {
+			fields: [webhookDeliveries.endpointId],
+			references: [webhookEndpoints.id],
+		}),
+		workspace: one(workspaces, {
+			fields: [webhookDeliveries.workspaceId],
+			references: [workspaces.id],
+		}),
+	}),
+);
+
+export const flowSessionsRelations = relations(flowSessions, ({ one }) => ({
+	workspace: one(workspaces, {
+		fields: [flowSessions.workspaceId],
+		references: [workspaces.id],
+	}),
+	flow: one(flows, {
+		fields: [flowSessions.flowId],
+		references: [flows.id],
+	}),
+	conversation: one(conversations, {
+		fields: [flowSessions.conversationId],
+		references: [conversations.id],
+	}),
+	contact: one(contacts, {
+		fields: [flowSessions.contactId],
+		references: [contacts.id],
+	}),
+}));
 
 export const conversationTagsRelations = relations(
 	conversationTags,

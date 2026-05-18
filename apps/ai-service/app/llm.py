@@ -15,6 +15,8 @@ async def generate_reply(
     *,
     workspace_id: str | None = None,
     conversation_id: str | None = None,
+    language: str = "fa",
+    persona: dict | None = None,
     use_cache: bool = True,
 ) -> dict:
     normalized_q = normalize_persian(question)
@@ -35,6 +37,8 @@ async def generate_reply(
         context_chunks,
         workspace_id=workspace_id,
         conversation_id=conversation_id,
+        language=language,
+        persona=persona,
     )
 
     if use_cache and cache_key and not result.get("handoff"):
