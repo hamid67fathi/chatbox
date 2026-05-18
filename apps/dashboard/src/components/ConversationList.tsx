@@ -43,7 +43,7 @@ function slaBadge(sla: Conversation["sla"]) {
 			: states.includes("pending")
 				? "pending"
 				: "ok";
-	if (worst === "ok" || worst === "disabled") return null;
+	if (worst === "ok") return null;
 
 	const sec =
 		sla.first_response === "breached" || sla.first_response === "warning"
